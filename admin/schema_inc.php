@@ -25,14 +25,14 @@ $gBitInstaller->registerPackageInfo( STATS_PKG_NAME, array(
 ) );
 
 // ### Default Preferences
-$gBitInstaller->registerPreferences( SHOUTBOX_PKG_NAME, array(
+$gBitInstaller->registerPreferences( STATS_PKG_NAME, array(
 	array('', 'feature_referer_stats','y')
 ) );
 
 // ### Default UserPermissions
-$gBitInstaller->registerUserPermissions( SHOUTBOX_PKG_NAME, array(
-	array('bit_p_view_referer_stats', 'Can view referer stats', 'editors', 'shoutbox'),
-	array('bit_p_view_stats', 'Can view site stats', 'basic', 'shoutbox'),
+$gBitInstaller->registerUserPermissions( STATS_PKG_NAME, array(
+	array('bit_p_view_referer_stats', 'Can view referer stats', 'editors', 'stats'),
+	array('bit_p_view_stats', 'Can view site stats', 'basic', 'stats'),
 ) );
 
 

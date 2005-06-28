@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1 2005/06/19 05:05:49 bitweaver Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.2 2005/06/28 07:45:59 spiderr Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
@@ -28,8 +28,9 @@
 			<a href="#quiz_stats">{tr}Quizzes{/tr}</a>{/if}
 	</div>
 
-	<div class="body">
+	<div class="clear"></div>
 
+	<div class="body">
 		<a name="site_stats"></a>
 		<table class="panel">
 			<caption>{tr}Site Statistics{/tr}</caption>
