@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.1 2005/06/23 12:53:16 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.2 2005/07/16 17:55:40 spiderr Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
@@ -146,7 +146,7 @@
 			<!-- Users stats -->
 			{if $user_stats}
 				<tr><th colspan="2"><a name="user_stats"></a>{tr}User Stats{/tr}</th></tr>
-				<tr><td>{tr}Users{/tr}</td><td style="text-align:right;">{$user_stats.users}</td></tr>
+				<tr><td>{tr}<a href="{$gBitLoc.STATS_PKG_URL}users.php">Users</a>{/tr}</td><td style="text-align:right;">{$user_stats.users}</td></tr>
 				<tr><td>{tr}User bookmarks{/tr}</td><td style="text-align:right;">{$user_stats.bookmarks}</td></tr>
 				<tr><td>{tr}Average bookmarks per user{/tr}</td><td style="text-align:right;">{$user_stats.bpu|string_format:"%.2f"}</td></tr>
 				<tr><td colspan="2">&nbsp;</td></tr>
@@ -181,7 +181,7 @@
 			<input type="submit" name="pv_chart" value="{tr}display{/tr}" />
 		{/form}
 
-		{if $pv_chart eq 'y'} 
+		{if $pv_chart eq 'y'}
 			<div align="center">
 				<img src="{$gBitLoc.STATS_PKG_URL}pv_chart.php?days={$days}" alt="" />
 			</div>
