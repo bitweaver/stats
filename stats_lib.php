@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.2 2005/06/28 07:45:58 spiderr Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.3 2005/07/17 17:36:17 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.2 2005/06/28 07:45:58 spiderr Exp $
+ * $Id: stats_lib.php,v 1.3 2005/07/17 17:36:17 squareing Exp $
  * @package stats
  */
 
@@ -324,6 +324,18 @@ class StatsLib extends BitBase {
 		$stats["faqs"] = $this->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_faqs`",array());
 		$stats["questions"] = $this->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_faq_questions`",array());
 		$stats["qpf"] = ($stats["faqs"] ? $stats["questions"] / $stats["faqs"] : 0);
+		return $stats;
+	}
+
+	function registrationStats( $pPeriod ) {
+		if( !is_numeric( $pPeriod ) || empty( $pPeriod ) ) {
+			$pPeriod = 86400;
+		}
+		$query = "SELECT ((`registration_date` / ?) * ?) AS day, COUNT(`user_id`) FROM `".BIT_DB_PREFIX."users_users`
+				  GROUP BY( `registration_date` / ? ) ORDER BY COUNT(`user_id`) DESC";
+		$stats['per_period'] = $this->GetAssoc( $query, array( $pPeriod, $pPeriod, $pPeriod ) );
+		$stats['max'] = !empty( $stats['per_period'] ) ? current( $stats['per_period'] ) : 0;
+		krsort( $stats['per_period'] );
 		return $stats;
 	}
 
