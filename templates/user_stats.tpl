@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.2 2005/07/17 17:36:17 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.3 2005/07/25 20:02:45 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Site Registrations{/tr}</h1>
@@ -15,18 +15,24 @@
 	<div class="clear"></div>
 
 	<div class="body">
-		<ul class="data">
+		<table class="data">
+			<caption>{tr}User Registrations at {$siteTitle}{/tr}</caption>
+			<tr>
+				<th style="width:20%;">{tr}Period{/tr}</td>
+				<th style="width:80%;">{tr}Number of Registrations{/tr}</td>
+			</tr>
 			{foreach item=reg key=period from=$userStats.per_period}
-				<li class="item {cycle values="even,odd"}">
-					{$period|bit_long_date}
-					{tr}{$reg} registrations{/tr}
-					<div style="width:{math equation="round( (r / m) * 100 )" r=$reg m=$userStats.max}%; background:#f80;height:20px;"></div>
-				</li>
+				<tr class="{cycle values="even,odd"}">
+					<td>{$period|bit_short_date}</td>
+					<td><div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg m=$userStats.max}%; background:#f80;padding:0 0 0 5px;">{$reg}</div></td>
+				</tr>
 			{foreachelse}
-				<li class="norecords">
-					No results for {$periodName}
-				</li>
+				<tr class="norecords">
+					<td colspan="2">
+						{tr}No results for {$periodName}{/tr}
+					</td>
+				</tr>
 			{/foreach}
-		</ul>
+		</table>
 	</div> <!-- end .body -->
 </div> <!-- end .statistics -->
