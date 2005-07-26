@@ -1,12 +1,12 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/users.php,v 1.1.2.1 2005/07/16 17:55:40 spiderr Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/users.php,v 1.1.2.2 2005/07/26 15:50:28 drewslater Exp $
  *
  * Copyright (c) 2005 bitweaver.org
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: users.php,v 1.1.2.1 2005/07/16 17:55:40 spiderr Exp $
+ * $Id: users.php,v 1.1.2.2 2005/07/26 15:50:28 drewslater Exp $
  * @package stats
  * @subpackage functions
  */
@@ -35,11 +35,11 @@ switch( $_REQUEST["period"] ) {
 		$periodName = 'Daily';
 		break;
 }
-$smarty->assign( 'periodName', $periodName );
+$gBitSmarty->assign( 'periodName', $periodName );
 
 $stats = $statslib->registrationStats( $_REQUEST["period"] );
 
-$smarty->assign_by_ref( 'userStats', $stats );
+$gBitSmarty->assign_by_ref( 'userStats', $stats );
 
 // Display the template
 $gBitSystem->display( 'bitpackage:stats/user_stats.tpl');
