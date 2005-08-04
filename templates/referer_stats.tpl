@@ -24,11 +24,9 @@
 				<tr class="norecords"><td colspan="3">{tr}No records found{/tr}</td></tr>
 			{/section}
 		</table>
-	</div> <!-- end .body -->
 
-	<div class="navbar">
 		<a href="{$gBitLoc.STATS_PKG_URL}referer_stats.php?clear=1">{tr}clear stats{/tr}</a>
-	</div>
+	</div> <!-- end .body -->
 
 	{include file="bitpackage:kernel/pagination.tpl"}
 

@@ -1,21 +1,19 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.1.2.3 2005/07/17 20:21:47 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.1.2.4 2005/08/04 08:46:42 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Site Registrations{/tr}</h1>
 	</div>
 
-	<div class="navbar">
-		<ul>
-			<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=86400">{tr}Daily{/tr}</a></li>
-			<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=604800">{tr}Weekly{/tr}</a></li>
-			<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=2592000">{tr}30 Days{/tr}</a></li>
-		</ul>
-	</div>
-
-	<div class="clear"></div>
-
 	<div class="body">
-		<table class="data">
+		<div class="navbar">
+			<ul>
+				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=86400">{tr}Daily{/tr}</a></li>
+				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=604800">{tr}Weekly{/tr}</a></li>
+				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=2592000">{tr}30 Days{/tr}</a></li>
+			</ul>
+		</div>
+
+		<table class="clear data">
 			<caption>{tr}User Registrations at {$siteTitle}{/tr}</caption>
 			<tr>
 				<th style="width:20%;">{tr}Period{/tr}</td>
