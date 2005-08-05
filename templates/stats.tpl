@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.3 2005/08/04 08:46:42 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.4 2005/08/05 23:00:09 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
@@ -136,7 +136,7 @@
 			<!-- Users stats -->
 			{if $user_stats}
 				<tr><th colspan="2"><a name="user_stats"></a>{tr}User Stats{/tr}</th></tr>
-				<tr><td>{tr}<a href="{$gBitLoc.STATS_PKG_URL}users.php">Users</a>{/tr}</td><td style="text-align:right;">{$user_stats.users}</td></tr>
+				<tr><td>{tr}<a href="{$smarty.const.STATS_PKG_URL}users.php">Users</a>{/tr}</td><td style="text-align:right;">{$user_stats.users}</td></tr>
 				<tr><td>{tr}User bookmarks{/tr}</td><td style="text-align:right;">{$user_stats.bookmarks}</td></tr>
 				<tr><td>{tr}Average bookmarks per user{/tr}</td><td style="text-align:right;">{$user_stats.bpu|string_format:"%.2f"}</td></tr>
 				<tr><td colspan="2">&nbsp;</td></tr>
@@ -161,7 +161,7 @@
 
 		{if $usage_chart eq 'y'}
 			<div align="center">
-				<img src="{$gBitLoc.STATS_PKG_URL}usage_chart.php" alt="{tr}Usage chart image{/tr}" />
+				<img src="{$smarty.const.STATS_PKG_URL}usage_chart.php" alt="{tr}Usage chart image{/tr}" />
 			</div>
 		{/if}
 
@@ -173,7 +173,7 @@
 
 		{if $pv_chart eq 'y'}
 			<div align="center">
-				<img src="{$gBitLoc.STATS_PKG_URL}pv_chart.php?days={$days}" alt="" />
+				<img src="{$smarty.const.STATS_PKG_URL}pv_chart.php?days={$days}" alt="" />
 			</div>
 		{/if}
 	</div> <!-- end .body -->

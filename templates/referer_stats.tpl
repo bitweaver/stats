@@ -25,7 +25,7 @@
 			{/section}
 		</table>
 
-		<a href="{$gBitLoc.STATS_PKG_URL}referer_stats.php?clear=1">{tr}clear stats{/tr}</a>
+		<a href="{$smarty.const.STATS_PKG_URL}referer_stats.php?clear=1">{tr}clear stats{/tr}</a>
 	</div> <!-- end .body -->
 
 	{include file="bitpackage:kernel/pagination.tpl"}
