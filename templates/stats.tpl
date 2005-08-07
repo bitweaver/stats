@@ -1,38 +1,28 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.3 2005/07/17 17:36:17 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.4 2005/08/07 17:46:44 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
 	</div>
 
-	<div class="navbar">
-		<a href="#site_stats">{tr}Site{/tr}</a>
-		{if $wiki_stats}
-			<a href="#wiki_stats">{tr}Wiki{/tr}</a>{/if}
-		{if $igal_stats}
-			<a href="#igal_stats">{tr}Image galleries{/tr}</a>{/if}
-		{if $fgal_stats}
-			<a href="#fgal_stats">{tr}File galleries{/tr}</a>{/if}
-		{if $cms_stats}
-			<a href="#cms_stats">{tr}Articles{/tr}</a>{/if}
-		{if $forum_stats}
-			<a href="#forum_stats">{tr}Forums{/tr}</a>{/if}
-		{if $blog_stats}
-			<a href="#blog_stats">{tr}Weblogs{/tr}</a>{/if}
-		{if $poll_stats}
-			<a href="#poll_stats">{tr}Polls{/tr}</a>{/if}
-		{if $faq_stats}
-			<a href="#faq_stats">{tr}FAQs{/tr}</a>{/if}
-		{if $user_stats}
-			<a href="#user_stats">{tr}Users{/tr}</a>{/if}
-		{if $quiz_stats}
-			<a href="#quiz_stats">{tr}Quizzes{/tr}</a>{/if}
-	</div>
-
-	<div class="clear"></div>
-
 	<div class="body">
+		<div class="navbar">
+			<ul>
+				<li><a href="#site_stats">{tr}Site{/tr}</a></li>
+				{if $wiki_stats}<li><a href="#wiki_stats">{tr}Wiki{/tr}</a></li>{/if}
+				{if $igal_stats}<li><a href="#igal_stats">{tr}Image galleries{/tr}</a></li>{/if}
+				{if $fgal_stats}<li><a href="#fgal_stats">{tr}File galleries{/tr}</a></li>{/if}
+				{if $cms_stats}<li><a href="#cms_stats">{tr}Articles{/tr}</a></li>{/if}
+				{if $forum_stats}<li><a href="#forum_stats">{tr}Forums{/tr}</a></li>{/if}
+				{if $blog_stats}<li><a href="#blog_stats">{tr}Weblogs{/tr}</a></li>{/if}
+				{if $poll_stats}<li><a href="#poll_stats">{tr}Polls{/tr}</a></li>{/if}
+				{if $faq_stats}<li><a href="#faq_stats">{tr}FAQs{/tr}</a></li>{/if}
+				{if $user_stats}<li><a href="#user_stats">{tr}Users{/tr}</a></li>{/if}
+				{if $quiz_stats}<li><a href="#quiz_stats">{tr}Quizzes{/tr}</a></li>{/if}
+			</ul>
+		</div>
+
 		<a name="site_stats"></a>
-		<table class="panel">
+		<table class="clear data">
 			<caption>{tr}Site Statistics{/tr}</caption>
 			<tr><th colspan="2">{tr}Global Stats{/tr}</th></tr>
 			<tr><td>{tr}Started{/tr}</td><td style="text-align:right;">{$site_stats.started|bit_short_date}</td></tr>
@@ -146,7 +136,7 @@
 			<!-- Users stats -->
 			{if $user_stats}
 				<tr><th colspan="2"><a name="user_stats"></a>{tr}User Stats{/tr}</th></tr>
-				<tr><td>{tr}<a href="{$gBitLoc.STATS_PKG_URL}users.php">Users</a>{/tr}</td><td style="text-align:right;">{$user_stats.users}</td></tr>
+				<tr><td>{tr}<a href="{$smarty.const.STATS_PKG_URL}users.php">Users</a>{/tr}</td><td style="text-align:right;">{$user_stats.users}</td></tr>
 				<tr><td>{tr}User bookmarks{/tr}</td><td style="text-align:right;">{$user_stats.bookmarks}</td></tr>
 				<tr><td>{tr}Average bookmarks per user{/tr}</td><td style="text-align:right;">{$user_stats.bpu|string_format:"%.2f"}</td></tr>
 				<tr><td colspan="2">&nbsp;</td></tr>
@@ -171,7 +161,7 @@
 
 		{if $usage_chart eq 'y'}
 			<div align="center">
-				<img src="{$gBitLoc.STATS_PKG_URL}usage_chart.php" alt="{tr}Usage chart image{/tr}" />
+				<img src="{$smarty.const.STATS_PKG_URL}usage_chart.php" alt="{tr}Usage chart image{/tr}" />
 			</div>
 		{/if}
 
@@ -183,7 +173,7 @@
 
 		{if $pv_chart eq 'y'}
 			<div align="center">
-				<img src="{$gBitLoc.STATS_PKG_URL}pv_chart.php?days={$days}" alt="" />
+				<img src="{$smarty.const.STATS_PKG_URL}pv_chart.php?days={$days}" alt="" />
 			</div>
 		{/if}
 	</div> <!-- end .body -->

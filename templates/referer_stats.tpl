@@ -6,6 +6,8 @@
 	</div>
 
 	<div class="body">
+		{minifind}
+
 		<table class="data">
 			<caption>{tr}Referer Statistics{/tr}</caption>
 			<tr>
@@ -24,13 +26,9 @@
 				<tr class="norecords"><td colspan="3">{tr}No records found{/tr}</td></tr>
 			{/section}
 		</table>
+
+		<a href="{$smarty.const.STATS_PKG_URL}referer_stats.php?clear=1">{tr}clear stats{/tr}</a>
 	</div> <!-- end .body -->
 
-	<div class="navbar">
-		<a href="{$gBitLoc.STATS_PKG_URL}referer_stats.php?clear=1">{tr}clear stats{/tr}</a>
-	</div>
-
 	{include file="bitpackage:kernel/pagination.tpl"}
-
-	{minifind}
 </div> <!-- end .statistics -->
