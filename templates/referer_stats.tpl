@@ -6,6 +6,8 @@
 	</div>
 
 	<div class="body">
+		{minifind}
+
 		<table class="data">
 			<caption>{tr}Referer Statistics{/tr}</caption>
 			<tr>
@@ -29,6 +31,4 @@
 	</div> <!-- end .body -->
 
 	{include file="bitpackage:kernel/pagination.tpl"}
-
-	{minifind}
 </div> <!-- end .statistics -->
