@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.7 2005/08/09 10:17:25 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.8 2005/08/10 11:50:58 spiderr Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.1.1.1.2.7 2005/08/09 10:17:25 squareing Exp $
+ * $Id: stats_lib.php,v 1.1.1.1.2.8 2005/08/10 11:50:58 spiderr Exp $
  * @package stats
  */
 
@@ -61,7 +61,7 @@ class StatsLib extends BitBase {
 
 			$query = "update `".BIT_DB_PREFIX."tiki_referer_stats` set `hits`=`hits`+1,`last`=? where `referer`=?";
 			$rs = $this->mDb->query($query,array((int)$now,$referer));
-			if( !$this->mDb->Affected_Rows() ) {
+			if( !$this->mDb->mDb->Affected_Rows() ) {
 				$query = "insert into `".BIT_DB_PREFIX."tiki_referer_stats`(`last`,`referer`,`hits`) values(?,?,1)";
 				$result = $this->mDb->query($query,array((int)$now,$referer));
 			}
