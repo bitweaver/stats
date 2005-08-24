@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.5 2005/08/11 13:03:47 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.6 2005/08/24 20:57:55 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.5 2005/08/11 13:03:47 squareing Exp $
+ * $Id: stats_lib.php,v 1.6 2005/08/24 20:57:55 squareing Exp $
  * @package stats
  */
 
@@ -376,6 +376,36 @@ class StatsLib extends BitBase {
 		$this->mDb->CompleteTrans();
 	}
 
+	function get_pv_chart_data($days) {
+		$now = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
+		$dfrom = 0;
+		if ($days != 0) $dfrom = $now - ($days * 24 * 60 * 60);
+
+		$query = "select `day`, `pageviews` from `".BIT_DB_PREFIX."tiki_pageviews` where `day`<=? and `day`>=?";
+		$result = $this->mDb->query($query,array((int)$now,(int)$dfrom));
+		$ret = array();
+		$n = ceil($result->numRows() / 10);
+		$i = 0;
+
+		while ($res = $result->fetchRow()) {
+		if ($i % $n == 0) {
+			$data = array(
+				date("j M", $res["day"]),
+				$res["pageviews"]
+				);
+		} else {
+			$data = array(
+				"",
+				$res["pageviews"]
+				);
+		}
+
+		$i++;
+		$ret[] = $data;
+		}
+
+		return $ret;
+	}
 
 	function get_usage_chart_data() {
 		global $gBitSystem;

@@ -16,11 +16,11 @@
 				<th>{smartlink ititle="Last Hit" isort=last offset=$offset}</th>
 			</tr>
 
-			{section name=user loop=$channels}
+			{section name=user loop=$referers}
 				<tr class="{cycle values='odd,even'}">
-					<td style="text-align:right;">{$channels[user].hits}</td>
-					<td>{$channels[user].referer}</td>
-					<td style="text-align:right;">{$channels[user].last|bit_short_datetime}</td>
+					<td style="text-align:right;">{$referers[user].hits}</td>
+					<td>{$referers[user].referer}</td>
+					<td style="text-align:right;">{$referers[user].last|bit_short_datetime}</td>
 				</tr>
 			{sectionelse}
 				<tr class="norecords"><td colspan="3">{tr}No records found{/tr}</td></tr>

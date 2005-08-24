@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/referer_stats.php,v 1.3 2005/08/01 18:41:26 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/referer_stats.php,v 1.4 2005/08/24 20:57:55 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: referer_stats.php,v 1.3 2005/08/01 18:41:26 squareing Exp $
+ * $Id: referer_stats.php,v 1.4 2005/08/24 20:57:55 squareing Exp $
  * @package stats
  * @subpackage functions
  */
@@ -60,13 +60,13 @@ if (isset($_REQUEST["find"])) {
 $gBitSmarty->assign('find', $find);
 
 $gBitSmarty->assign_by_ref('sort_mode', $sort_mode);
-$channels = $statslib->list_referer_stats($offset, $maxRecords, $sort_mode, $find);
+$referers = $statslib->list_referer_stats($offset, $maxRecords, $sort_mode, $find);
 
-$cant_pages = ceil($channels["cant"] / $maxRecords);
+$cant_pages = ceil($referers["cant"] / $maxRecords);
 $gBitSmarty->assign_by_ref('cant_pages', $cant_pages);
 $gBitSmarty->assign('actual_page', 1 + ($offset / $maxRecords));
 
-if ($channels["cant"] > ($offset + $maxRecords)) {
+if ($referers["cant"] > ($offset + $maxRecords)) {
 	$gBitSmarty->assign('next_offset', $offset + $maxRecords);
 } else {
 	$gBitSmarty->assign('next_offset', -1);
@@ -79,7 +79,7 @@ if ($offset > 0) {
 	$gBitSmarty->assign('prev_offset', -1);
 }
 
-$gBitSmarty->assign_by_ref('channels', $channels["data"]);
+$gBitSmarty->assign_by_ref('referers', $referers["data"]);
 
 
 
