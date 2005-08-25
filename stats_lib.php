@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.9 2005/08/14 12:02:39 wolff_borg Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.10 2005/08/25 20:29:59 lsces Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.1.1.1.2.9 2005/08/14 12:02:39 wolff_borg Exp $
+ * $Id: stats_lib.php,v 1.1.1.1.2.10 2005/08/25 20:29:59 lsces Exp $
  * @package stats
  */
 
@@ -56,7 +56,8 @@ class StatsLib extends BitBase {
 
 	function register_referer($referer) {
 		if( !empty( $referer ) ) {
-			$now = date("U");
+			global $gBitSystem;
+			$now = $gBitSystem->getUTCTime();
 			$cant = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_referer_stats` where `referer`=?",array($referer));
 
 			$query = "update `".BIT_DB_PREFIX."tiki_referer_stats` set `hits`=`hits`+1,`last`=? where `referer`=?";
