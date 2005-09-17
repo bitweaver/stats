@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.10 2005/08/25 20:29:59 lsces Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.11 2005/09/17 16:56:31 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.1.1.1.2.10 2005/08/25 20:29:59 lsces Exp $
+ * $Id: stats_lib.php,v 1.1.1.1.2.11 2005/09/17 16:56:31 squareing Exp $
  * @package stats
  */
 
@@ -329,15 +329,19 @@ class StatsLib extends BitBase {
 	}
 
 	function registrationStats( $pPeriod ) {
+		global $gBitDbType;
 		if( !is_numeric( $pPeriod ) || empty( $pPeriod ) ) {
 			$pPeriod = 86400;
 		}
-		$query = "SELECT ((`registration_date` / ?) * ?) AS day, COUNT(`user_id`) FROM `".BIT_DB_PREFIX."users_users`
-				  GROUP BY( `registration_date` / ? ) ORDER BY COUNT(`user_id`) DESC";
-		$stats['per_period'] = $this->mDb->getAssoc( $query, array( $pPeriod, $pPeriod, $pPeriod ) );
-		$stats['max'] = !empty( $stats['per_period'] ) ? current( $stats['per_period'] ) : 0;
-		krsort( $stats['per_period'] );
-		return $stats;
+
+		if( $gBitDbType == 'postgres' ) {
+			$query = "SELECT ((`registration_date` / ?) * ?) AS day, COUNT(`user_id`) FROM `".BIT_DB_PREFIX."users_users`
+					  GROUP BY( `registration_date` / ? ) ORDER BY COUNT(`user_id`) DESC";
+			$stats['per_period'] = $this->mDb->getAssoc( $query, array( $pPeriod, $pPeriod, $pPeriod ) );
+			$stats['max'] = !empty( $stats['per_period'] ) ? current( $stats['per_period'] ) : 0;
+			krsort( $stats['per_period'] );
+			return $stats;
+		}
 	}
 
 	function user_stats() {
