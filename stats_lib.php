@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.11 2005/09/17 16:56:31 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.12 2005/09/26 08:57:32 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.1.1.1.2.11 2005/09/17 16:56:31 squareing Exp $
+ * $Id: stats_lib.php,v 1.1.1.1.2.12 2005/09/26 08:57:32 squareing Exp $
  * @package stats
  */
 
@@ -280,7 +280,7 @@ class StatsLib extends BitBase {
 			$stats["reads"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=?",array( BITARTICLE_CONTENT_TYPE_GUID ));
 			$stats["rpa"] = ($stats["articles"] ? $stats["reads"] / $stats["articles"] : 0);
 //			$stats["size"] = $this->mDb->getOne("select sum(`size`) from `".BIT_DB_PREFIX."tiki_articles`",array());
-			$stats["bpa"] = ($stats["articles"] ? $stats["size"] / $stats["articles"] : 0);
+//			$stats["bpa"] = ($stats["articles"] ? $stats["size"] / $stats["articles"] : 0);
 			$stats["topics"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_article_topics` where `active`=?",array('y'));
 		}
 		return $stats;
