@@ -14,7 +14,7 @@ if( $gBitSystem->isPackageActive( STATS_PKG_NAME ) ) {
 		// Referer tracking
 		if (isset($_SERVER['HTTP_REFERER'])) {
 			$pref = parse_url($_SERVER['HTTP_REFERER']);
-			if (!strstr($_SERVER["HTTP_HOST"], $pref["host"])) {
+			if( !empty( $pref["host"] ) && !strstr( $_SERVER["HTTP_HOST"], $pref["host"] ) ) {
 				$statslib->register_referer($pref["host"]);
 			}
 		}

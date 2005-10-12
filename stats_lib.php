@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.7 2005/08/30 22:34:38 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.8 2005/10/12 15:13:55 spiderr Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.7 2005/08/30 22:34:38 squareing Exp $
+ * $Id: stats_lib.php,v 1.8 2005/10/12 15:13:55 spiderr Exp $
  * @package stats
  */
 
@@ -280,7 +280,7 @@ class StatsLib extends BitBase {
 			$stats["reads"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=?",array( BITARTICLE_CONTENT_TYPE_GUID ));
 			$stats["rpa"] = ($stats["articles"] ? $stats["reads"] / $stats["articles"] : 0);
 //			$stats["size"] = $this->mDb->getOne("select sum(`size`) from `".BIT_DB_PREFIX."tiki_articles`",array());
-			$stats["bpa"] = ($stats["articles"] ? $stats["size"] / $stats["articles"] : 0);
+//			$stats["bpa"] = ($stats["articles"] ? $stats["size"] / $stats["articles"] : 0);
 			$stats["topics"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_article_topics` where `active`=?",array('y'));
 		}
 		return $stats;
@@ -329,15 +329,19 @@ class StatsLib extends BitBase {
 	}
 
 	function registrationStats( $pPeriod ) {
+		global $gBitDbType;
 		if( !is_numeric( $pPeriod ) || empty( $pPeriod ) ) {
 			$pPeriod = 86400;
 		}
-		$query = "SELECT ((`registration_date` / ?) * ?) AS day, COUNT(`user_id`) FROM `".BIT_DB_PREFIX."users_users`
-				  GROUP BY( `registration_date` / ? ) ORDER BY COUNT(`user_id`) DESC";
-		$stats['per_period'] = $this->mDb->getAssoc( $query, array( $pPeriod, $pPeriod, $pPeriod ) );
-		$stats['max'] = !empty( $stats['per_period'] ) ? current( $stats['per_period'] ) : 0;
-		krsort( $stats['per_period'] );
-		return $stats;
+
+		if( $gBitDbType == 'postgres' ) {
+			$query = "SELECT ((`registration_date` / ?) * ?) AS day, COUNT(`user_id`) FROM `".BIT_DB_PREFIX."users_users`
+					  GROUP BY( `registration_date` / ? ) ORDER BY COUNT(`user_id`) DESC";
+			$stats['per_period'] = $this->mDb->getAssoc( $query, array( $pPeriod, $pPeriod, $pPeriod ) );
+			$stats['max'] = !empty( $stats['per_period'] ) ? current( $stats['per_period'] ) : 0;
+			krsort( $stats['per_period'] );
+			return $stats;
+		}
 	}
 
 	function user_stats() {
