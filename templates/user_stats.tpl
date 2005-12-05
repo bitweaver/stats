@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.6 2005/10/23 14:42:17 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.7 2005/12/05 23:54:01 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Site Registrations{/tr}</h1>
@@ -7,11 +7,11 @@
 	<div class="body">
 		<div class="navbar">
 			<ul>
-				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=day">{tr}Daily{/tr}</a></li>
-				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=week">{tr}Weekly{/tr}</a></li>
-				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=month">{tr}Monthly{/tr}</a></li>
-				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=quarter">{tr}Quarterly{/tr}</a></li>
-				<li><a href="{$gTikiLoc.STATS_PKG_URL}users.php?period=year">{tr}Yearly{/tr}</a></li>
+				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=day">{tr}Daily{/tr}</a></li>
+				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=week">{tr}Weekly{/tr}</a></li>
+				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=month">{tr}Monthly{/tr}</a></li>
+				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=quarter">{tr}Quarterly{/tr}</a></li>
+				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=year">{tr}Yearly{/tr}</a></li>
 			</ul>
 		</div>
 
