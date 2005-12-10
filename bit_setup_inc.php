@@ -5,7 +5,7 @@ $gBitSystem->registerPackage( 'stats', dirname( __FILE__ ).'/' );
 
 if( $gBitSystem->isPackageActive( STATS_PKG_NAME ) ) {
 	if( $gBitUser->hasPermission( 'bit_p_view_site_stats' ) || $gBitUser->hasPermission( 'bit_p_view_ref_stats' ) ) {
-		$gBitSystem->registerAppMenu( 'stats', 'Stats', STATS_PKG_URL.'index.php', 'bitpackage:stats/menu_stats.tpl', 'stats');
+		$gBitSystem->registerAppMenu( STATS_PKG_DIR, 'Stats', STATS_PKG_URL.'index.php', 'bitpackage:stats/menu_stats.tpl', 'stats');
 	}
 	global $statslib;
 	require_once( STATS_PKG_PATH.'stats_lib.php' );
