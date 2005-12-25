@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.5 2005/09/26 09:22:08 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.6 2005/12/25 21:31:00 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
@@ -159,7 +159,48 @@
 			<!-- Quiz stats -->
 		</table>
 
-		{form legend="Usage Chart" ianchor="chart"}
+		<h1>{tr}Graph options{/tr}</h1>
+		{legend legend="Individual Item Statistics"}
+			<div class="row">
+				{formlabel label="Item Statistics"}
+				{forminput}
+					{smartlink ititle=All chart_type=points item_chart=1 ianchor="item_chart"}
+					<br />
+					{foreach from=$gLibertySystem->mContentTypes item=contentType}
+						{smartlink ititle=$contentType.content_description content_type_guid=$contentType.content_type_guid chart_type=points item_chart=1 ianchor="item_chart"}
+						<br />
+					{/foreach}
+					{formhelp note="Please note that these graphs use a logarythmic y-axis."}
+				{/forminput}
+			</div>
+		{/legend}
+
+		{if $smarty.request.item_chart}
+			<a name="item_chart"></a>
+			<div style="text-align:center;">
+				<img src="{$smarty.const.STATS_PKG_URL}item_chart.php?content_type_guid={$smarty.request.content_type_guid}" alt="{tr}Usage chart image{/tr}" />
+			</div>
+		{/if}
+
+		{legend legend="Usage Statistics"}
+			<div class="row">
+				{formlabel label="Usage Statistics"}
+				{forminput}
+					{smartlink ititle="Display as Pie-chart" chart_type=pie usage_chart=1 ianchor="usage_chart"}
+					<br />
+					{smartlink ititle="Display as Bar-chart" chart_type=bars usage_chart=1 ianchor="usage_chart"}
+				{/forminput}
+			</div>
+		{/legend}
+
+		{if $smarty.request.usage_chart}
+			<a name="usage_chart"></a>
+			<div style="text-align:center;">
+				<img src="{$smarty.const.STATS_PKG_URL}usage_chart.php?chart_type={$smarty.request.chart_type}" alt="{tr}Usage chart image{/tr}" />
+			</div>
+		{/if}
+
+		{form legend="Site Usage Chart" ianchor="pv_chart"}
 			<div class="row">
 				{formlabel label="Stats Period" for="days"}
 				{forminput}
@@ -173,17 +214,10 @@
 			</div>
 		{/form}
 
-		{if $usage_chart eq 'y'}
-			<a name="chart"></a>
-			<div style="text-align:center;">
-				<img src="{$smarty.const.STATS_PKG_URL}usage_chart.php" alt="{tr}Usage chart image{/tr}" />
-			</div>
-		{/if}
-
 		{if $pv_chart eq 'y'}
-			<a name="chart"></a>
+			<a name="pv_chart"></a>
 			<div style="text-align:center;">
-				<img src="{$smarty.const.STATS_PKG_URL}pv_chart.php?days={$days}" alt="" />
+				<img src="{$smarty.const.STATS_PKG_URL}pv_chart.php?days={$days}" alt="Site Usage Statistics" />
 			</div>
 		{/if}
 	</div> <!-- end .body -->
