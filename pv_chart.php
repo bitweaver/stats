@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/pv_chart.php,v 1.1.1.1.2.4 2005/12/26 08:04:37 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/pv_chart.php,v 1.1.1.1.2.5 2005/12/26 12:46:17 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: pv_chart.php,v 1.1.1.1.2.4 2005/12/26 08:04:37 squareing Exp $
+ * $Id: pv_chart.php,v 1.1.1.1.2.5 2005/12/26 12:46:17 squareing Exp $
  * @package stats
  * @subpackage functions
  */
@@ -33,7 +33,7 @@ $graph =& new PHPlot( 600, 600 );
 $graph->SetDataValues( $data );
 $graph->SetTitle( tra( 'Total Pageviews' ) );
 $graph->SetYTitle( tra( 'Pageviews' ) );
-$graph->SetXTitle( tra( 'Days') ); 
+$graph->SetXTitle( tra( 'Time') ); 
 $graph->SetPlotType( ( count( $data ) > 50 ) ? 'lines' : 'linepoints' );
 $graph->SetDrawXDataLabels( TRUE );
 $graph->SetXLabelAngle( 90 );
