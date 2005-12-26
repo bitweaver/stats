@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.9 2005/10/23 14:42:17 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.10 2005/12/26 12:26:04 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.9 2005/10/23 14:42:17 squareing Exp $
+ * $Id: stats_lib.php,v 1.10 2005/12/26 12:26:04 squareing Exp $
  * @package stats
  */
 
@@ -396,79 +396,89 @@ class StatsLib extends BitBase {
 		$this->mDb->CompleteTrans();
 	}
 
-	function get_pv_chart_data($days) {
-		$now = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
+	function get_pv_chart_data( $days ) {
+		$now = mktime( 0, 0, 0, date( "m" ), date( "d" ), date( "Y" ) );
 		$dfrom = 0;
-		if ($days != 0) $dfrom = $now - ($days * 24 * 60 * 60);
+		if( $days != 0 ) $dfrom = $now - ( $days * 24 * 60 * 60 );
 
-		$query = "select `day`, `pageviews` from `".BIT_DB_PREFIX."tiki_pageviews` where `day`<=? and `day`>=?";
-		$result = $this->mDb->query($query,array((int)$now,(int)$dfrom));
+		$query = "SELECT `day`, `pageviews` from `".BIT_DB_PREFIX."tiki_pageviews` WHERE `day`<=? AND `day`>=?";
+		$result = $this->mDb->query( $query,array( ( int )$now,( int )$dfrom ) );
 		$ret = array();
-		$n = ceil($result->numRows() / 10);
+		$n = ceil( $result->numRows() / 10 );
 		$i = 0;
 
-		while ($res = $result->fetchRow()) {
-		if ($i % $n == 0) {
-			$data = array(
-				date("j M", $res["day"]),
-				$res["pageviews"]
+		while( $res = $result->fetchRow() ) {
+			if( $i % $n == 0 ) {
+				$data = array(
+					date( "j M Y", $res["day"] ),
+					$res["pageviews"]
 				);
-		} else {
-			$data = array(
-				"",
-				$res["pageviews"]
+			} else {
+				$data = array(
+					"",
+					$res["pageviews"]
 				);
-		}
-
-		$i++;
-		$ret[] = $data;
+			}
+			$ret[] = $data;
+			$i++;
 		}
 
 		return $ret;
 	}
 
 	function get_usage_chart_data() {
-		global $gBitSystem;
-		if( $gBitSystem->isPackageActive( 'wiki' ) ) {
-			$data[] = array( WIKI_PKG_NAME,   $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_content` WHERE content_type_guid=?",array( BITPAGE_CONTENT_TYPE_GUID )));
+		global $gBitSystem, $gLibertySystem;
+		$ret['data'][0][] = 'a';
+		foreach( $gLibertySystem->mContentTypes as $contentType ) {
+			if( $gBitSystem->isPackageActive( $contentType['handler_package'] ) ) {
+				$hits = $this->mDb->getOne( "SELECT SUM(`hits`) FROM `".BIT_DB_PREFIX."tiki_content` WHERE content_type_guid=?", array( $contentType['content_type_guid'] ) );
+				if( !empty( $hits ) ) {
+					$ret['legend'][] = tra( $contentType['content_description'] );
+					$ret['data'][0][] = $hits;
+				}
+			}
 		}
-		if( $gBitSystem->isPackageActive( 'blogs' ) ) {
-			require_once( BLOGS_PKG_PATH.'BitBlogPost.php' );
-			$postHits = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_content` WHERE content_type_guid=?",array( BITBLOGPOST_CONTENT_TYPE_GUID ) );
-			$blogHits = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_blogs`" );
-			$data[] = array( "blogs", $blogHits + $postHits );
-		}
-/*
-not liberated
-		if( $gBitSystem->isPackageActive( 'imagegals' ) ) {
-			$data[] = array( IMAGEGALS_PKG_NAME,  $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_galleries`",array()));
-		}
-		if( $gBitSystem->isPackageActive( 'filegals' ) ) {
-			$data[] = array( FILEGALS_PKG_NAME, $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_file_galleries`",array()));
-		}
-		if( $gBitSystem->isPackageActive( 'fags' ) ) {
-			$data[] = array( FAQS_PACKAGE_NAME,   $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_faqs`",array()));
-		}
-		if( $gBitSystem->isPackageActive( 'quizzes' ) ) {
-			global $quizlib;
-			$quizlib->compute_quiz_stats();
-			$data[] = array( QUIZZES_PKG_NAME,$this->mDb->getOne("select sum(`times_taken`) from `".BIT_DB_PREFIX."tiki_quiz_stats_sum`",array()));
-		}
-		if( $gBitSystem->isPackageActive( 'articles' ) ) {
-			$data[] = array( ARTICLES_PKG_NAME,   $this->mDb->getOne("select sum(`reads`) from `".BIT_DB_PREFIX."tiki_articles`",array()));
-		}
-		if( $gBitSystem->isPackageActive( 'bitforums' ) ) {
-			$data[] = array( BITFORUMS_PKG_NAME, $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_forums`",array()));
-		}
-		if( $gBitSystem->isPackageActive( 'games' ) ) {
-			$data[] = array( "games",  $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_games`",array()));
-		}
-*/
-		return $data;
+		return $ret;
 	}
 
+	function get_item_chart_data( $pContentTypeGuid=NULL ) {
+		global $gBitSystem, $gLibertySystem;
+		$ret['data'] = array();
 
-
+		if( in_array( $pContentTypeGuid, array_keys( $gLibertySystem->mContentTypes ) ) ) {
+			$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
+			$result = $this->mDb->query( $query, array( $pContentTypeGuid ), 159 );
+			// this is needed to ensure all arrays have same size
+			$tmpHash[] = array( NULL, 0 );
+			while( $res = $result->fetchRow() ) {
+				$tmpHash[] = array(
+					$res['title'],
+					$res['hits'],
+				);
+			}
+			$ret['data'][$pContentTypeGuid] = array_chunk( $tmpHash, 40 );
+			$ret['title'] = $gLibertySystem->mContentTypes[$pContentTypeGuid]['content_description'];
+		} else {
+			foreach( $gLibertySystem->mContentTypes as $contentType ) {
+				if( $gBitSystem->isPackageActive( $contentType['handler_package'] ) ) {
+					$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
+					$result = $this->mDb->query( $query, array( $contentType['content_type_guid'] ), 40 );
+					// this is needed to ensure all arrays have same size
+					$ret['data'][$contentType['content_type_guid']] = array_fill( 0, 40, array( NULL, NULL ) );
+					$i = 0;
+					while( $res = $result->fetchRow() ) {
+						$ret['data'][$contentType['content_type_guid']][$i++] = array(
+							$res['title'],
+							$res['hits'],
+						);
+					}
+				}
+			}
+			$ret['title'] = 'All Content';
+		}
+		$ret['max'] = $this->mDb->getOne( "SELECT MAX(`hits`) FROM `".BIT_DB_PREFIX."tiki_content`" );
+		return $ret;
+	}
 }
 
 global $statslib;
