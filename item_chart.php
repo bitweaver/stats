@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/item_chart.php,v 1.1.2.1 2005/12/25 21:30:59 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/item_chart.php,v 1.1.2.2 2005/12/27 11:53:13 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: item_chart.php,v 1.1.2.1 2005/12/25 21:30:59 squareing Exp $
+ * $Id: item_chart.php,v 1.1.2.2 2005/12/27 11:53:13 squareing Exp $
  * @package stats
  * @subpackage functions
  */

@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.6 2005/12/25 21:31:00 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.1.1.1.2.7 2005/12/27 11:53:14 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
@@ -160,7 +160,7 @@
 		</table>
 
 		<h1>{tr}Graph options{/tr}</h1>
-		{legend legend="Individual Item Statistics"}
+		{legend legend="Individual Package Statistics"}
 			<div class="row">
 				{formlabel label="Item Statistics"}
 				{forminput}
