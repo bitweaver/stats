@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.10 2005/12/26 12:26:04 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.11 2005/12/29 18:27:48 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.10 2005/12/26 12:26:04 squareing Exp $
+ * $Id: stats_lib.php,v 1.11 2005/12/29 18:27:48 squareing Exp $
  * @package stats
  */
 
@@ -401,10 +401,10 @@ class StatsLib extends BitBase {
 		$dfrom = 0;
 		if( $days != 0 ) $dfrom = $now - ( $days * 24 * 60 * 60 );
 
-		$query = "SELECT `day`, `pageviews` from `".BIT_DB_PREFIX."tiki_pageviews` WHERE `day`<=? AND `day`>=?";
+		$query = "SELECT `day`, `pageviews` FROM `".BIT_DB_PREFIX."tiki_pageviews` WHERE `day`<=? AND `day`>=? ORDER BY `day` ASC";
 		$result = $this->mDb->query( $query,array( ( int )$now,( int )$dfrom ) );
 		$ret = array();
-		$n = ceil( $result->numRows() / 10 );
+		$n = ceil( $result->numRows() / 20 );
 		$i = 0;
 
 		while( $res = $result->fetchRow() ) {
