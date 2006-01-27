@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.7 2005/12/05 23:54:01 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.8 2006/01/27 22:59:52 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Site Registrations{/tr}</h1>
@@ -16,7 +16,7 @@
 		</div>
 
 		<table class="clear data">
-			<caption>{tr}User Registrations at {$siteTitle}{/tr}</caption>
+			<caption>{tr}User Registrations at {$gBitSystemPrefs.siteTitle}{/tr}</caption>
 			<tr>
 				<th style="width:20%;">{tr}Period{/tr}</td>
 				<th style="width:80%;">{tr}Number of Registrations{/tr}</td>
