@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.13 2006/02/01 16:18:23 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.14 2006/02/01 18:43:14 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.13 2006/02/01 16:18:23 squareing Exp $
+ * $Id: stats_lib.php,v 1.14 2006/02/01 18:43:14 squareing Exp $
  * @package stats
  */
 
@@ -110,7 +110,7 @@ class StatsLib extends BitBase {
 		// If sort mode is versions then offset is 0, maxRecords is -1 (again) and sort_mode is nil
 		// If sort mode is links then offset is 0, maxRecords is -1 (again) and sort_mode is nil
 		// If sort mode is backlinks then offset is 0, maxRecords is -1 (again) and sort_mode is nil
-		$query = "select * from `".BIT_DB_PREFIX."wiki_pages` tp INNER JOIN `".BIT_DB_PREFIX."tiki_content` tc ON( tc.`content_id`=tp.`content_id` ) $mid order by ".$this->mDb->convert_sortmode($sort_mode);
+		$query = "select * from `".BIT_DB_PREFIX."wiki_pages` tp INNER JOIN `".BIT_DB_PREFIX."liberty_content` lc ON( lc.`content_id`=tp.`content_id` ) $mid order by ".$this->mDb->convert_sortmode($sort_mode);
 		$query_cant = "select count(*) from `".BIT_DB_PREFIX."wiki_pages` $mid";
 		$result = $this->mDb->query($query,$bindvars,-1,0);
 		$cant = $this->mDb->getOne($query_cant,$bindvars);
@@ -121,7 +121,7 @@ class StatsLib extends BitBase {
 			$title = $res["title"];
 			$queryc = "select count(*) from `".BIT_DB_PREFIX."liberty_content_links` where `to_content_id`=?";
 			$cant = $this->mDb->getOne( $queryc,array($res['content_id'] ) );
-			$queryc = "select count(*) from `".BIT_DB_PREFIX."tiki_structures` ts WHERE ts.`content_id`=?";
+			$queryc = "select count(*) from `".BIT_DB_PREFIX."liberty_structures` ls WHERE ls.`content_id`=?";
 			$cant += $this->mDb->getOne( $queryc, array( $res['content_id'] ) );
 
 			if ($cant == 0) {
@@ -201,7 +201,7 @@ class StatsLib extends BitBase {
 			} else {
 				$stats["vpp"] = 0;
 			}
-			$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=?",array( BITPAGE_CONTENT_TYPE_GUID ));
+			$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=?",array( BITPAGE_CONTENT_TYPE_GUID ));
 			$or = $this->list_orphan_pages(0, -1, 'title_desc', '');
 			$stats["orphan"] = $or["cant"];
 			$links = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."liberty_content_links`",array());
@@ -260,13 +260,13 @@ class StatsLib extends BitBase {
 	function file_gal_stats() {
 		$stats = array();
 		$stats["galleries"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_file_galleries`",array());
-		$stats["files"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_files`",array());
+		$stats["files"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."liberty_files`",array());
 		$stats["fpg"] = ($stats["galleries"] ? $stats["files"] / $stats["galleries"] : 0);
-		$stats["size"] = $this->mDb->getOne("select sum(`filesize`) from `".BIT_DB_PREFIX."tiki_files`",array());
+		$stats["size"] = $this->mDb->getOne("select sum(`filesize`) from `".BIT_DB_PREFIX."liberty_files`",array());
 		$stats["size"] = $stats["size"] / 1000000;
 		$stats["bpf"] = ($stats["galleries"] ? $stats["size"] / $stats["galleries"] : 0);
 		$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_file_galleries`",array());
-		$stats["downloads"] = $this->mDb->getOne("select sum(`downloads`) from `".BIT_DB_PREFIX."tiki_files`",array());
+		$stats["downloads"] = $this->mDb->getOne("select sum(`downloads`) from `".BIT_DB_PREFIX."liberty_files`",array());
 		return $stats;
 	}
 
@@ -277,7 +277,7 @@ class StatsLib extends BitBase {
 			require_once( ARTICLES_PKG_PATH.'BitArticle.php' );
 
 			$stats["articles"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."articles`",array());
-			$stats["reads"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=?",array( BITARTICLE_CONTENT_TYPE_GUID ));
+			$stats["reads"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=?",array( BITARTICLE_CONTENT_TYPE_GUID ));
 			$stats["rpa"] = ($stats["articles"] ? $stats["reads"] / $stats["articles"] : 0);
 //			$stats["size"] = $this->mDb->getOne("select sum(`size`) from `".BIT_DB_PREFIX."articles`",array());
 //			$stats["bpa"] = ($stats["articles"] ? $stats["size"] / $stats["articles"] : 0);
@@ -289,8 +289,8 @@ class StatsLib extends BitBase {
 	function forum_stats() {
 		$stats = array();
 		$stats["forums"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_forums`",array());
-		$stats["topics"] = $this->mDb->getOne( "select count(*) from `".BIT_DB_PREFIX."tiki_comments`,`".BIT_DB_PREFIX."tiki_forums` where `object`=".$this->mDb->sql_cast('`forum_id`','string')." and `object_type`=? and `parent_id`=?",array('forum',0));
-		$stats["threads"] = $this->mDb->getOne( "select count(*) from `".BIT_DB_PREFIX."tiki_comments`,`".BIT_DB_PREFIX."tiki_forums` where `object`=".$this->mDb->sql_cast('`forum_id`','string')." and `object_type`=? and `parent_id`<>?",array('forum',0));
+		$stats["topics"] = $this->mDb->getOne( "select count(*) from `".BIT_DB_PREFIX."liberty_comments`,`".BIT_DB_PREFIX."tiki_forums` where `object`=".$this->mDb->sql_cast('`forum_id`','string')." and `object_type`=? and `parent_id`=?",array('forum',0));
+		$stats["threads"] = $this->mDb->getOne( "select count(*) from `".BIT_DB_PREFIX."liberty_comments`,`".BIT_DB_PREFIX."tiki_forums` where `object`=".$this->mDb->sql_cast('`forum_id`','string')." and `object_type`=? and `parent_id`<>?",array('forum',0));
 		$stats["tpf"] = ($stats["forums"] ? $stats["topics"] / $stats["forums"] : 0);
 		$stats["tpt"] = ($stats["topics"] ? $stats["threads"] / $stats["topics"] : 0);
 		$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_forums`",array());
@@ -307,7 +307,7 @@ class StatsLib extends BitBase {
 			$stats["ppb"] = ($stats["blogs"] ? $stats["posts"] / $stats["blogs"] : 0);
 	//		$stats["size"] = $this->mDb->getOne("select sum(`data_size`) from `".BIT_DB_PREFIX."blog_posts`",array());
 	//		$stats["bpp"] = ($stats["posts"] ? $stats["size"] / $stats["posts"] : 0);
-			$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=?",array( BITBLOGPOST_CONTENT_TYPE_GUID ));
+			$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=?",array( BITBLOGPOST_CONTENT_TYPE_GUID ));
 		}
 		return $stats;
 	}
@@ -431,7 +431,7 @@ class StatsLib extends BitBase {
 		$ret['data'][0][] = 'a';
 		foreach( $gLibertySystem->mContentTypes as $contentType ) {
 			if( $gBitSystem->isPackageActive( $contentType['handler_package'] ) ) {
-				$hits = $this->mDb->getOne( "SELECT SUM(`hits`) FROM `".BIT_DB_PREFIX."tiki_content` WHERE content_type_guid=?", array( $contentType['content_type_guid'] ) );
+				$hits = $this->mDb->getOne( "SELECT SUM(`hits`) FROM `".BIT_DB_PREFIX."liberty_content` WHERE content_type_guid=?", array( $contentType['content_type_guid'] ) );
 				if( !empty( $hits ) ) {
 					$ret['legend'][] = tra( $contentType['content_description'] );
 					$ret['data'][0][] = $hits;
@@ -446,7 +446,7 @@ class StatsLib extends BitBase {
 		$ret['data'] = array();
 
 		if( in_array( $pContentTypeGuid, array_keys( $gLibertySystem->mContentTypes ) ) ) {
-			$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
+			$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
 			$result = $this->mDb->query( $query, array( $pContentTypeGuid ), 159 );
 			// this is needed to ensure all arrays have same size
 			$tmpHash[] = array( NULL, 0 );
@@ -461,7 +461,7 @@ class StatsLib extends BitBase {
 		} else {
 			foreach( $gLibertySystem->mContentTypes as $contentType ) {
 				if( $gBitSystem->isPackageActive( $contentType['handler_package'] ) ) {
-					$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."tiki_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
+					$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
 					$result = $this->mDb->query( $query, array( $contentType['content_type_guid'] ), 40 );
 					// this is needed to ensure all arrays have same size
 					$ret['data'][$contentType['content_type_guid']] = array_fill( 0, 40, array( NULL, NULL ) );
@@ -476,7 +476,7 @@ class StatsLib extends BitBase {
 			}
 			$ret['title'] = 'All Content';
 		}
-		$ret['max'] = $this->mDb->getOne( "SELECT MAX(`hits`) FROM `".BIT_DB_PREFIX."tiki_content`" );
+		$ret['max'] = $this->mDb->getOne( "SELECT MAX(`hits`) FROM `".BIT_DB_PREFIX."liberty_content`" );
 		return $ret;
 	}
 }
