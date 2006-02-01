@@ -6,7 +6,12 @@ $tables = array(
 	referer C(50) NOTNULL,
 	hits I8, 
 	last I8
-"
+",
+
+'stats_pageviews' => "
+	day I8 PRIMARY,
+	pageviews I8
+",
 
 );
 
