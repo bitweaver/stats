@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.12 2006/01/31 20:20:53 bitweaver Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.13 2006/02/01 16:18:23 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.12 2006/01/31 20:20:53 bitweaver Exp $
+ * $Id: stats_lib.php,v 1.13 2006/02/01 16:18:23 squareing Exp $
  * @package stats
  */
 
@@ -362,7 +362,7 @@ class StatsLib extends BitBase {
 	function user_stats() {
 		$stats = array();
 		$stats["users"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."users_users`",array());
-		$stats["bookmarks"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_user_bookmarks_urls`",array());
+//		$stats["bookmarks"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tidbits_user_bookmarks_urls`",array());
 		$stats["bpu"] = ($stats["users"] ? $stats["bookmarks"] / $stats["users"] : 0);
 		return $stats;
 	}
