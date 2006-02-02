@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.15 2006/02/01 19:05:01 spiderr Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.16 2006/02/02 09:14:14 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.15 2006/02/01 19:05:01 spiderr Exp $
+ * $Id: stats_lib.php,v 1.16 2006/02/02 09:14:14 squareing Exp $
  * @package stats
  */
 
@@ -223,53 +223,6 @@ class StatsLib extends BitBase {
 		return $stats;
 	}
 
-	function quiz_stats() {
-		global $gBitSystem;
-		$stats = array();
-		if( $gBitSystem->isPackageActive( 'quizzes' ) ) {
-			global $quizlib;
-			require_once( QUIZZES_PKG_PATH.'quiz_lib.php' );
-			$quizlib->compute_quiz_stats();
-			$stats = array();
-			$stats["quizzes"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_quizzes`",array());
-			$stats["questions"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_quiz_questions`",array());
-			if ($stats["quizzes"]) {
-				$stats["qpq"] = $stats["questions"] / $stats["quizzes"];
-			} else {
-				$stats["qpq"] = 0;
-			}
-			$stats["visits"] = $this->mDb->getOne("select sum(`times_taken`) from `".BIT_DB_PREFIX."tiki_quiz_stats_sum`",array());
-			$stats["avg"] = $this->mDb->getOne("select avg(`avgavg`) from `".BIT_DB_PREFIX."tiki_quiz_stats_sum`",array());
-			$stats["avgtime"] = $this->mDb->getOne("select avg(`avgtime`) from `".BIT_DB_PREFIX."tiki_quiz_stats_sum`",array());
-		}
-		return $stats;
-	}
-
-	function image_gal_stats() {
-		$stats = array();
-		$stats["galleries"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_galleries`",array());
-		$stats["images"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_images`",array());
-		$stats["ipg"] = ($stats["galleries"] ? $stats["images"] / $stats["galleries"] : 0);
-		$stats["size"] = $this->mDb->getOne("select sum(`filesize`) from `".BIT_DB_PREFIX."tiki_images_data` where `type`=?",array('o'));
-		$stats["bpi"] = ($stats["images"] ? $stats["size"] / $stats["images"] : 0);
-		$stats["size"] = $stats["size"] / 1000000;
-		$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_galleries`",array());
-		return $stats;
-	}
-
-	function file_gal_stats() {
-		$stats = array();
-		$stats["galleries"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_file_galleries`",array());
-		$stats["files"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."liberty_files`",array());
-		$stats["fpg"] = ($stats["galleries"] ? $stats["files"] / $stats["galleries"] : 0);
-		$stats["size"] = $this->mDb->getOne("select sum(`filesize`) from `".BIT_DB_PREFIX."liberty_files`",array());
-		$stats["size"] = $stats["size"] / 1000000;
-		$stats["bpf"] = ($stats["galleries"] ? $stats["size"] / $stats["galleries"] : 0);
-		$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_file_galleries`",array());
-		$stats["downloads"] = $this->mDb->getOne("select sum(`downloads`) from `".BIT_DB_PREFIX."liberty_files`",array());
-		return $stats;
-	}
-
 	function cms_stats() {
 		global $gBitSystem;
 		$stats = array();
@@ -286,17 +239,6 @@ class StatsLib extends BitBase {
 		return $stats;
 	}
 
-	function forum_stats() {
-		$stats = array();
-		$stats["forums"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_forums`",array());
-		$stats["topics"] = $this->mDb->getOne( "select count(*) from `".BIT_DB_PREFIX."liberty_comments`,`".BIT_DB_PREFIX."tiki_forums` where `object`=".$this->mDb->sql_cast('`forum_id`','string')." and `object_type`=? and `parent_id`=?",array('forum',0));
-		$stats["threads"] = $this->mDb->getOne( "select count(*) from `".BIT_DB_PREFIX."liberty_comments`,`".BIT_DB_PREFIX."tiki_forums` where `object`=".$this->mDb->sql_cast('`forum_id`','string')." and `object_type`=? and `parent_id`<>?",array('forum',0));
-		$stats["tpf"] = ($stats["forums"] ? $stats["topics"] / $stats["forums"] : 0);
-		$stats["tpt"] = ($stats["topics"] ? $stats["threads"] / $stats["topics"] : 0);
-		$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."tiki_forums`",array());
-		return $stats;
-	}
-
 	function blog_stats() {
 		global $gBitSystem;
 		$stats = array();
@@ -309,22 +251,6 @@ class StatsLib extends BitBase {
 	//		$stats["bpp"] = ($stats["posts"] ? $stats["size"] / $stats["posts"] : 0);
 			$stats["visits"] = $this->mDb->getOne("select sum(`hits`) from `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=?",array( BITBLOGPOST_CONTENT_TYPE_GUID ));
 		}
-		return $stats;
-	}
-
-	function poll_stats() {
-		$stats = array();
-		$stats["polls"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_polls`",array());
-		$stats["votes"] = $this->mDb->getOne("select sum(`votes`) from `".BIT_DB_PREFIX."tiki_poll_options`",array());
-		$stats["vpp"] = ($stats["polls"] ? $stats["votes"] / $stats["polls"] : 0);
-		return $stats;
-	}
-
-	function faq_stats() {
-		$stats = array();
-		$stats["faqs"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_faqs`",array());
-		$stats["questions"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tiki_faq_questions`",array());
-		$stats["qpf"] = ($stats["faqs"] ? $stats["questions"] / $stats["faqs"] : 0);
 		return $stats;
 	}
 
@@ -362,7 +288,7 @@ class StatsLib extends BitBase {
 	function user_stats() {
 		$stats = array();
 		$stats["users"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."users_users`",array());
-//		$stats["bookmarks"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tidbits_user_bookmarks_urls`",array());
+		$stats["bookmarks"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tidbits_user_bookmarks_urls`",array());
 		$stats["bpu"] = ($stats["users"] ? $stats["bookmarks"] / $stats["users"] : 0);
 		return $stats;
 	}
