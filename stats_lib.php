@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.16 2006/02/02 09:14:14 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.17 2006/02/06 00:11:13 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.16 2006/02/02 09:14:14 squareing Exp $
+ * $Id: stats_lib.php,v 1.17 2006/02/06 00:11:13 squareing Exp $
  * @package stats
  */
 
@@ -28,7 +28,7 @@ class StatsLib extends BitBase {
 		$result = $this->mDb->query($query);
 	}
 
-	function list_referer_stats($offset, $maxRecords, $sort_mode, $find) {
+	function list_referer_stats($offset, $max_records, $sort_mode, $find) {
 		$bindvars = array();
 		if ($find) {
 			$findesc = $this->mDb->qstr('%' . strtoupper( $find ) . '%');
@@ -40,7 +40,7 @@ class StatsLib extends BitBase {
 
 		$query = "select * from `".BIT_DB_PREFIX."stats_referers` $mid order by ".$this->mDb->convert_sortmode($sort_mode);;
 		$query_cant = "select count(*) from `".BIT_DB_PREFIX."stats_referers` $mid";
-		$result = $this->mDb->query($query,$bindvars,$maxRecords,$offset);
+		$result = $this->mDb->query($query,$bindvars,$max_records,$offset);
 		$cant = $this->mDb->getOne($query_cant,$bindvars);
 		$ret = array();
 
@@ -71,7 +71,7 @@ class StatsLib extends BitBase {
 
 
 	/* content methods */
-	function list_orphan_pages($offset = 0, $maxRecords = -1, $sort_mode = 'title_desc', $find = '') {
+	function list_orphan_pages($offset = 0, $max_records = -1, $sort_mode = 'title_desc', $find = '') {
 
 		if ($sort_mode == 'size_desc') {
 			$sort_mode = 'page_size_desc';
@@ -93,11 +93,11 @@ class StatsLib extends BitBase {
 		))) {
 			$old_offset = $offset;
 
-			$old_maxRecords = $maxRecords;
+			$old_max_records = $max_records;
 			$old_sort_mode = $sort_mode;
 			$sort_mode = 'user_desc';
 			$offset = 0;
-			$maxRecords = -1;
+			$max_records = -1;
 		}
 		$bindvars = array();
 		if ($find) {
@@ -107,9 +107,9 @@ class StatsLib extends BitBase {
 			$mid = "";
 		}
 
-		// If sort mode is versions then offset is 0, maxRecords is -1 (again) and sort_mode is nil
-		// If sort mode is links then offset is 0, maxRecords is -1 (again) and sort_mode is nil
-		// If sort mode is backlinks then offset is 0, maxRecords is -1 (again) and sort_mode is nil
+		// If sort mode is versions then offset is 0, max_records is -1 (again) and sort_mode is nil
+		// If sort mode is links then offset is 0, max_records is -1 (again) and sort_mode is nil
+		// If sort mode is backlinks then offset is 0, max_records is -1 (again) and sort_mode is nil
 		$query = "select * from `".BIT_DB_PREFIX."wiki_pages` tp INNER JOIN `".BIT_DB_PREFIX."liberty_content` lc ON( lc.`content_id`=tp.`content_id` ) $mid order by ".$this->mDb->convert_sortmode($sort_mode);
 		$query_cant = "select count(*) from `".BIT_DB_PREFIX."wiki_pages` $mid";
 		$result = $this->mDb->query($query,$bindvars,-1,0);
@@ -145,7 +145,7 @@ class StatsLib extends BitBase {
 			}
 		}
 
-		// If sortmode is versions, links or backlinks sort using the ad-hoc function and reduce using old_offse and old_maxRecords
+		// If sortmode is versions, links or backlinks sort using the ad-hoc function and reduce using old_offse and old_max_records
 		if ($old_sort_mode == 'versions_asc') {
 			usort($ret, 'compare_versions');
 		}
@@ -178,7 +178,7 @@ class StatsLib extends BitBase {
 			'backlinks_asc',
 			'backlinks_desc'
 		))) {
-			$ret = array_slice($ret, $old_offset, $old_maxRecords);
+			$ret = array_slice($ret, $old_offset, $old_max_records);
 		}
 
 		$retval = array();
