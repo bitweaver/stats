@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.17 2006/02/06 00:11:13 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.18 2006/02/16 11:10:26 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.17 2006/02/06 00:11:13 squareing Exp $
+ * $Id: stats_lib.php,v 1.18 2006/02/16 11:10:26 squareing Exp $
  * @package stats
  */
 
@@ -110,7 +110,7 @@ class StatsLib extends BitBase {
 		// If sort mode is versions then offset is 0, max_records is -1 (again) and sort_mode is nil
 		// If sort mode is links then offset is 0, max_records is -1 (again) and sort_mode is nil
 		// If sort mode is backlinks then offset is 0, max_records is -1 (again) and sort_mode is nil
-		$query = "select * from `".BIT_DB_PREFIX."wiki_pages` tp INNER JOIN `".BIT_DB_PREFIX."liberty_content` lc ON( lc.`content_id`=tp.`content_id` ) $mid order by ".$this->mDb->convert_sortmode($sort_mode);
+		$query = "select * from `".BIT_DB_PREFIX."wiki_pages` wp INNER JOIN `".BIT_DB_PREFIX."liberty_content` lc ON( lc.`content_id`=wp.`content_id` ) $mid order by ".$this->mDb->convert_sortmode($sort_mode);
 		$query_cant = "select count(*) from `".BIT_DB_PREFIX."wiki_pages` $mid";
 		$result = $this->mDb->query($query,$bindvars,-1,0);
 		$cant = $this->mDb->getOne($query_cant,$bindvars);
