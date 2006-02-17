@@ -1,7 +1,11 @@
 <?php
 global $gBitSystem;
 
-$gBitSystem->registerPackage( 'stats', dirname( __FILE__ ).'/' );
+$registerHash = array(
+	'package_name' => 'stats',
+	'package_path' => dirname( __FILE__ ).'/',
+);
+$gBitSystem->registerPackage( $registerHash );
 
 if( $gBitSystem->isPackageActive( STATS_PKG_NAME ) ) {
 	if( $gBitUser->hasPermission( 'bit_p_view_site_stats' ) || $gBitUser->hasPermission( 'bit_p_view_ref_stats' ) ) {
