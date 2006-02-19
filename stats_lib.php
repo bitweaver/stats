@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.19 2006/02/19 00:18:11 lsces Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.20 2006/02/19 08:23:55 lsces Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.19 2006/02/19 00:18:11 lsces Exp $
+ * $Id: stats_lib.php,v 1.20 2006/02/19 08:23:55 lsces Exp $
  * @package stats
  */
 
@@ -295,14 +295,14 @@ class StatsLib extends BitBase {
 
 	function site_stats() {
 		$stats = array();
-		$stats["started"] = $this->mDb->getOne("select min(`day`) from `".BIT_DB_PREFIX."stats_pageviews`",array());
+		$stats["started"] = $this->mDb->getOne("select min(`stats_day`) from `".BIT_DB_PREFIX."stats_pageviews`",array());
 		$stats["days"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."stats_pageviews`",array());
 		$stats["pageviews"] = $this->mDb->getOne("select sum(`pageviews`) from `".BIT_DB_PREFIX."stats_pageviews`");
 		$stats["ppd"] = ($stats["days"] ? $stats["pageviews"] / $stats["days"] : 0);
 		$stats["bestpvs"] = $this->mDb->getOne("select max(`pageviews`) from `".BIT_DB_PREFIX."stats_pageviews`",array());
-		$stats["bestday"] = $this->mDb->getOne("select `day` from `".BIT_DB_PREFIX."stats_pageviews` where `pageviews`=?",array((int)$stats["bestpvs"]));
+		$stats["bestday"] = $this->mDb->getOne("select `stats_day` from `".BIT_DB_PREFIX."stats_pageviews` where `pageviews`=?",array((int)$stats["bestpvs"]));
 		$stats["worstpvs"] = $this->mDb->getOne("select min(`pageviews`) from `".BIT_DB_PREFIX."stats_pageviews`",array());
-		$stats["worstday"] = $this->mDb->getOne("select `day` from `".BIT_DB_PREFIX."stats_pageviews` where `pageviews`=?",array((int)$stats["worstpvs"]));
+		$stats["worstday"] = $this->mDb->getOne("select `stats_day` from `".BIT_DB_PREFIX."stats_pageviews` where `pageviews`=?",array((int)$stats["worstpvs"]));
 		return $stats;
 	}
 
@@ -311,12 +311,12 @@ class StatsLib extends BitBase {
 	function add_pageview() {
 		$dayzero = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
 		$this->mDb->StartTrans();
-		$cant = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."stats_pageviews` where `day`=?",array((int)$dayzero));
+		$cant = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."stats_pageviews` where `stats_day`=?",array((int)$dayzero));
 
 		if ($cant) {
-		$query = "update `".BIT_DB_PREFIX."stats_pageviews` set `pageviews`=`pageviews`+1 where `day`=?";
+		$query = "update `".BIT_DB_PREFIX."stats_pageviews` set `pageviews`=`pageviews`+1 where `stats_day`=?";
 		} else {
-		$query = "insert into `".BIT_DB_PREFIX."stats_pageviews`(`day`,`pageviews`) values(?,1)";
+		$query = "insert into `".BIT_DB_PREFIX."stats_pageviews`(`stats_day`,`pageviews`) values(?,1)";
 		}
 		$result = $this->mDb->query($query,array((int)$dayzero));
 		$this->mDb->CompleteTrans();
@@ -327,7 +327,7 @@ class StatsLib extends BitBase {
 		$dfrom = 0;
 		if( $days != 0 ) $dfrom = $now - ( $days * 24 * 60 * 60 );
 
-		$query = "SELECT `day`, `pageviews` FROM `".BIT_DB_PREFIX."stats_pageviews` WHERE `day`<=? AND `day`>=? ORDER BY `day` ASC";
+		$query = "SELECT `stats_day`, `pageviews` FROM `".BIT_DB_PREFIX."stats_pageviews` WHERE `stats_day`<=? AND `stats_day`>=? ORDER BY `stats_day` ASC";
 		$result = $this->mDb->query( $query,array( ( int )$now,( int )$dfrom ) );
 		$ret = array();
 		$n = ceil( $result->numRows() / 20 );
@@ -336,7 +336,7 @@ class StatsLib extends BitBase {
 		while( $res = $result->fetchRow() ) {
 			if( $i % $n == 0 ) {
 				$data = array(
-					date( "j M Y", $res["day"] ),
+					date( "j M Y", $res["stats_day"] ),
 					$res["pageviews"]
 				);
 			} else {

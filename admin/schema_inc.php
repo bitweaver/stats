@@ -9,7 +9,7 @@ $tables = array(
 ",
 
 'stats_pageviews' => "
-	day I8 PRIMARY,
+	stats_day I8 PRIMARY,
 	pageviews I8
 ",
 
