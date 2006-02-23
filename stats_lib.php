@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.20 2006/02/19 08:23:55 lsces Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.21 2006/02/23 15:19:29 bitweaver Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.20 2006/02/19 08:23:55 lsces Exp $
+ * $Id: stats_lib.php,v 1.21 2006/02/23 15:19:29 bitweaver Exp $
  * @package stats
  */
 
@@ -138,7 +138,7 @@ class StatsLib extends BitBase {
 				$aux["comment"] = $res["comment"];
 				$aux["version"] = $res["version"];
 				$aux["flag"] = $res["flag"] == 'y' ? tra('locked') : tra('unlocked');
-				$aux["versions"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."liberty_content_history` WHERE `page_id`=?",array($res['page_id']));
+				$aux["versions"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."liberty_content_history` WHERE `content_id`=?",array($res['content_id']));
 				$aux["links"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."liberty_content_links` WHERE `from_content_id`=?",array( $res['content_id']) );
 				$aux["backlinks"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."liberty_content_links` where `to_content_id`=?",array( $res['content_id'] ) );
 				$ret[] = $aux;
@@ -234,7 +234,7 @@ class StatsLib extends BitBase {
 			$stats["rpa"] = ($stats["articles"] ? $stats["reads"] / $stats["articles"] : 0);
 //			$stats["size"] = $this->mDb->getOne("select sum(`size`) from `".BIT_DB_PREFIX."articles`",array());
 //			$stats["bpa"] = ($stats["articles"] ? $stats["size"] / $stats["articles"] : 0);
-			$stats["topics"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."article_topics` where `active`=?",array('y'));
+			$stats["topics"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."article_topics` where `active_topic`=?",array('y'));
 		}
 		return $stats;
 	}
