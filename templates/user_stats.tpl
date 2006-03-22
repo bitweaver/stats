@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.10 2006/03/01 20:16:30 spiderr Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/user_stats.tpl,v 1.11 2006/03/22 10:24:20 squareing Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Site Registrations{/tr}</h1>
