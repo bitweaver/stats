@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.22 2006/02/23 15:24:02 bitweaver Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.23 2006/03/25 15:40:20 spiderr Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.22 2006/02/23 15:24:02 bitweaver Exp $
+ * $Id: stats_lib.php,v 1.23 2006/03/25 15:40:20 spiderr Exp $
  * @package stats
  */
 
@@ -284,10 +284,13 @@ class StatsLib extends BitBase {
 	}
 
 	function user_stats() {
+		global $gBitSystem;
 		$stats = array();
 		$stats["users"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."users_users`",array());
-		$stats["bookmarks"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tidbits_user_bookmarks_urls`",array());
-		$stats["bpu"] = ($stats["users"] ? $stats["bookmarks"] / $stats["users"] : 0);
+		if( $gBitSystem->isPackageActive( 'tidbits' ) ) {
+			$stats["bookmarks"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."tidbits_user_bookmarks_urls`",array());
+			$stats["bpu"] = ($stats["users"] ? $stats["bookmarks"] / $stats["users"] : 0);
+		}
 		return $stats;
 	}
 
