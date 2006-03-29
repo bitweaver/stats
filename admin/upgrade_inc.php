@@ -11,6 +11,11 @@ array( 'DATADICT' => array(
 	array( 'RENAMETABLE' => array(
 		'tiki_referer_stats' => 'stats_referers',
 	)),
+	array( 'RENAMECOLUMN' => array(
+		'stats_pageviews' => array(
+			'`day`' => 'stats_day'
+		),
+	)),
 )),
 		)
 	),
