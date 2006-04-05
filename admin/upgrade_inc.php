@@ -10,10 +10,11 @@ $upgrades = array(
 array( 'DATADICT' => array(
 	array( 'RENAMETABLE' => array(
 		'tiki_referer_stats' => 'stats_referers',
+		'tiki_pageviews'     => 'stats_pageviews',
 	)),
 	array( 'RENAMECOLUMN' => array(
 		'stats_pageviews' => array(
-			'`day`' => 'stats_day'
+			'`day`' => '`stats_day` I8 PRIMARY'
 		),
 	)),
 )),
