@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/referer_stats.php,v 1.8 2006/04/11 13:09:28 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/referer_stats.php,v 1.9 2006/04/14 20:25:53 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: referer_stats.php,v 1.8 2006/04/11 13:09:28 squareing Exp $
+ * $Id: referer_stats.php,v 1.9 2006/04/14 20:25:53 squareing Exp $
  * @package stats
  * @subpackage functions
  */
@@ -21,7 +21,7 @@ require_once( '../bit_setup_inc.php' );
 include_once ( STATS_PKG_PATH.'stats_lib.php');
 
 $gBitSystem->verifyPackage( 'stats' );
-$gBitSystem->verifyFeature( 'referer_stats' );
+$gBitSystem->verifyFeature( 'stats_referers' );
 $gBitSystem->verifyPermission( 'p_stats_view_referer' );
 
 

@@ -6,7 +6,7 @@
 			<li><a class="item" href="{$smarty.const.STATS_PKG_URL}users.php">{tr}User Stats{/tr}</a></li>
 		{/if}
 	{/if}
-	{if $gBitSystem->isFeatureActive( 'referer_stats' ) and $gBitUser->hasPermission( 'p_stats_view_referer' )}
+	{if $gBitSystem->isFeatureActive( 'stats_referers' ) and $gBitUser->hasPermission( 'p_stats_view_referer' )}
 		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}referer_stats.php">{tr}Referrer Stats{/tr}</a></li>
 	{/if}
 </ul>
