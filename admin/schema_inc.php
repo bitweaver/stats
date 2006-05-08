@@ -24,9 +24,6 @@ foreach( array_keys( $tables ) AS $tableName ) {
 $gBitInstaller->registerPackageInfo( STATS_PKG_NAME, array(
 	'description' => "Stats collects and display information about your site.",
 	'license' => '<a href="http://www.gnu.org/licenses/licenses.html#LGPL">LGPL</a>',
-	'version' => '0.1',
-	'state' => 'stable',
-	'dependencies' => '',
 ) );
 
 // ### Default Preferences
