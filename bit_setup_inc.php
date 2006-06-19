@@ -23,7 +23,7 @@ if( $gBitSystem->isPackageActive( STATS_PKG_NAME ) ) {
 			}
 		}
 	}
-	if( $gBitSystem->isFeatureActive( "users_count_admin_pageviews" ) || !$gBitUser->isAdmin() ) {
+	if( $gBitSystem->isFeatureActive( 'users_count_admin_pageviews' ) && !$gBitUser->isAdmin() ) {
 		if ( isset($_SERVER["REQUEST_URI"]) && !strstr($_SERVER["REQUEST_URI"], 'chat')) {
 			$statslib->add_pageview();
 		}
