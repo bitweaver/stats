@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.24 2006/06/13 15:27:27 sylvieg Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.25 2006/07/10 03:44:22 spiderr Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.24 2006/06/13 15:27:27 sylvieg Exp $
+ * $Id: stats_lib.php,v 1.25 2006/07/10 03:44:22 spiderr Exp $
  * @package stats
  */
 
@@ -266,7 +266,7 @@ class StatsLib extends BitBase {
 				$format = 'Y-m-d';
 				break;
 			case 'week':
-				$format = 'Y-WW';
+				$format = 'Y \Week W';
 				break;
 			case 'month':
 			default:
