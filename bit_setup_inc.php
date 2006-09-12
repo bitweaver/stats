@@ -9,7 +9,12 @@ $gBitSystem->registerPackage( $registerHash );
 
 if( $gBitSystem->isPackageActive( STATS_PKG_NAME ) ) {
 	if( $gBitUser->hasPermission( 'p_stats_view' ) || $gBitUser->hasPermission( 'p_stats_view_referer' ) ) {
-		$gBitSystem->registerAppMenu( STATS_PKG_NAME, ucfirst( STATS_PKG_DIR ), STATS_PKG_URL.'index.php', 'bitpackage:stats/menu_stats.tpl', 'stats');
+		$menuHash = array(
+			'package_name'  => STATS_PKG_NAME,
+			'index_url'     => STATS_PKG_URL.'index.php',
+			'menu_template' => 'bitpackage:stats/menu_stats.tpl',
+		);
+		$gBitSystem->registerAppMenu( $menuHash );
 	}
 	global $statslib;
 	require_once( STATS_PKG_PATH.'stats_lib.php' );
