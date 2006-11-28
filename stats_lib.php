@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.26 2006/10/11 06:17:42 laetzer Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.27 2006/11/28 01:06:26 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.26 2006/10/11 06:17:42 laetzer Exp $
+ * $Id: stats_lib.php,v 1.27 2006/11/28 01:06:26 squareing Exp $
  * @package stats
  */
 
@@ -374,12 +374,13 @@ class StatsLib extends BitBase {
 		$ret['data'][0][] = 'a';
 		foreach( $gLibertySystem->mContentTypes as $contentType ) {
 			if( $gBitSystem->isPackageActive( $contentType['handler_package'] ) ) {
-				$hits = $this->mDb->getOne( "SELECT SUM(`hits`) 
-												FROM `".BIT_DB_PREFIX."liberty_content` 
-												LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits 
-												ON (liberty_content.`content_id` = liberty_content_hits.`content_id`)												
-												WHERE content_type_guid=?", array( $contentType['content_type_guid'] ) 
-												);
+				$hits = $this->mDb->getOne( "
+					SELECT SUM(`hits`)
+					FROM `".BIT_DB_PREFIX."liberty_content`
+						LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits
+							ON (liberty_content.`content_id` = liberty_content_hits.`content_id`)
+					WHERE content_type_guid=?", array( $contentType['content_type_guid'] )
+				);
 				if( !empty( $hits ) ) {
 					$ret['legend'][] = tra( $contentType['content_description'] );
 					$ret['data'][0][] = $hits;
@@ -394,7 +395,12 @@ class StatsLib extends BitBase {
 		$ret['data'] = array();
 
 		if( in_array( $pContentTypeGuid, array_keys( $gLibertySystem->mContentTypes ) ) ) {
-			$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
+			$query = "
+				SELECT `hits`, `title`, `content_type_guid`
+				FROM `".BIT_DB_PREFIX."liberty_content`
+					LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits
+				WHERE `content_type_guid`=?
+				ORDER BY `hits` DESC";
 			$result = $this->mDb->query( $query, array( $pContentTypeGuid ), 159 );
 			// this is needed to ensure all arrays have same size
 			$tmpHash[] = array( NULL, 0 );
@@ -409,7 +415,12 @@ class StatsLib extends BitBase {
 		} else {
 			foreach( $gLibertySystem->mContentTypes as $contentType ) {
 				if( $gBitSystem->isPackageActive( $contentType['handler_package'] ) ) {
-					$query = "SELECT `hits`, `title`, `content_type_guid` FROM `".BIT_DB_PREFIX."liberty_content` WHERE `content_type_guid`=? ORDER BY `hits` DESC";
+					$query = "
+						SELECT `hits`, `title`, `content_type_guid`
+						FROM `".BIT_DB_PREFIX."liberty_content`
+							LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits
+						WHERE `content_type_guid`=?
+						ORDER BY `hits` DESC";
 					$result = $this->mDb->query( $query, array( $contentType['content_type_guid'] ), 40 );
 					// this is needed to ensure all arrays have same size
 					$ret['data'][$contentType['content_type_guid']] = array_fill( 0, 40, array( NULL, NULL ) );
