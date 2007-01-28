@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.15 2005/12/26 12:46:17 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.1.1.1.2.16 2007/01/28 10:20:32 hash9 Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.1.1.1.2.15 2005/12/26 12:46:17 squareing Exp $
+ * $Id: stats_lib.php,v 1.1.1.1.2.16 2007/01/28 10:20:32 hash9 Exp $
  * @package stats
  */
 
@@ -350,7 +350,7 @@ class StatsLib extends BitBase {
 				break;
 		}
 
-		$sqlPeriod = $this->mDb->SQLDate( $format, $this->mDb->SQLIntToTimestamp( '`registration_date`' ) );
+		$sqlPeriod = $this->mDb->SQLDate( $format, $this->mDb->SQLIntToTimestamp( 'registration_date' ) );
 		$query = "SELECT $sqlPeriod AS period, COUNT(`user_id`) FROM `".BIT_DB_PREFIX."users_users`
 					GROUP BY( $sqlPeriod ) ORDER BY COUNT(`user_id`) DESC";
 		$stats['per_period'] = $this->mDb->getAssoc( $query );
