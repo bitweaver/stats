@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.29 2007/01/06 09:46:26 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.30 2007/04/25 17:13:26 spiderr Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.29 2007/01/06 09:46:26 squareing Exp $
+ * $Id: stats_lib.php,v 1.30 2007/04/25 17:13:26 spiderr Exp $
  * @package stats
  */
 
@@ -199,10 +199,10 @@ class StatsLib extends BitBase {
 			} else {
 				$stats["vpp"] = 0;
 			}
-			$stats["visits"] = $this->mDb->getOne("SELECT sum(`hits`) 
+			$stats["visits"] = $this->mDb->getOne("SELECT sum(lch.`hits`) 
 													FROM `".BIT_DB_PREFIX."liberty_content` 
-													LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits 
-													ON (liberty_content.`content_id` = liberty_content_hits.`content_id`)
+													LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` lch
+													ON (liberty_content.`content_id` = lch.`content_id`)
 													WHERE `content_type_guid`=?",array( BITPAGE_CONTENT_TYPE_GUID )
 													);
 			$or = $this->list_orphan_pages(0, -1, 'title_desc', '');
@@ -233,10 +233,10 @@ class StatsLib extends BitBase {
 			require_once( ARTICLES_PKG_PATH.'BitArticle.php' );
 
 			$stats["articles"] = $this->mDb->getOne("select count(*) from `".BIT_DB_PREFIX."articles`",array());
-			$stats["reads"] = $this->mDb->getOne("SELECT sum(`hits`) 
+			$stats["reads"] = $this->mDb->getOne("SELECT sum(lch.`hits`) 
 													FROM `".BIT_DB_PREFIX."liberty_content` 
-													LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits 
-													ON (liberty_content.`content_id` = liberty_content_hits.`content_id`)												
+													LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` lch 
+														ON (liberty_content.`content_id` = lch.`content_id`)
 													WHERE `content_type_guid`=?",array( BITARTICLE_CONTENT_TYPE_GUID )
 													);
 			$stats["rpa"] = ($stats["articles"] ? $stats["reads"] / $stats["articles"] : 0);
@@ -257,10 +257,9 @@ class StatsLib extends BitBase {
 			$stats["ppb"] = ($stats["blogs"] ? $stats["posts"] / $stats["blogs"] : 0);
 	//		$stats["size"] = $this->mDb->getOne("select sum(`data_size`) from `".BIT_DB_PREFIX."blog_posts`",array());
 	//		$stats["bpp"] = ($stats["posts"] ? $stats["size"] / $stats["posts"] : 0);
-			$stats["visits"] = $this->mDb->getOne("SELECT sum(`hits`) 
+			$stats["visits"] = $this->mDb->getOne("SELECT sum(lch.`hits`) 
 													FROM `".BIT_DB_PREFIX."liberty_content` 
-													LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits 
-													ON (liberty_content.`content_id` = liberty_content_hits.`content_id`)
+														LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` lch ON (liberty_content.`content_id` = lch.`content_id`)
 													WHERE `content_type_guid`=?",array( BITBLOGPOST_CONTENT_TYPE_GUID )
 													);
 		}
