@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/usage_chart.php,v 1.4 2006/04/11 13:09:28 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/usage_chart.php,v 1.5 2007/06/22 12:35:26 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: usage_chart.php,v 1.4 2006/04/11 13:09:28 squareing Exp $
+ * $Id: usage_chart.php,v 1.5 2007/06/22 12:35:26 squareing Exp $
  * @package stats
  * @subpackage functions
  */
@@ -24,8 +24,9 @@ global $gBitSystem;
 $gBitSystem->isPackageActive( 'stats' );
 $gBitSystem->verifyPermission( 'p_stats_view' );
 
-// data to be displayed
-$data = $statslib->get_usage_chart_data();
+$stats = new Statistics();
+
+$data = $stats->getUsageChartData();
 
 $chart_type = !empty( $_REQUEST['chart_type'] ) ? $_REQUEST['chart_type'] : 'bars';
 

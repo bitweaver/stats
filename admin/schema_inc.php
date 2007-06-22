@@ -4,7 +4,7 @@ $tables = array(
 
 'stats_referers' => "
 	referer C(50) NOTNULL,
-	hits I8, 
+	hits I8,
 	last I8
 ",
 

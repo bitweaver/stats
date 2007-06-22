@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/pv_chart.php,v 1.6 2006/04/11 13:09:28 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/pv_chart.php,v 1.7 2007/06/22 12:35:26 squareing Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: pv_chart.php,v 1.6 2006/04/11 13:09:28 squareing Exp $
+ * $Id: pv_chart.php,v 1.7 2007/06/22 12:35:26 squareing Exp $
  * @package stats
  * @subpackage functions
  */
@@ -17,16 +17,16 @@
  * required setup
  */
 require_once( '../bit_setup_inc.php' );
-//Include the code
-include_once( STATS_PKG_PATH . "stats_lib.php" );
+include_once( STATS_PKG_PATH . "Statistics.php" );
 include_once( UTIL_PKG_PATH . "phplot.php" );
-global $gBitSystem;
 
 $gBitSystem->isPackageActive( 'stats' );
 $gBitSystem->verifyPermission( 'p_stats_view' );
 
+$stats = new Statistics();
+
 $days = isset( $_REQUEST["days"] ) ? $_REQUEST['days'] : 7;
-$data = $statslib->get_pv_chart_data( $days );
+$data = $stats->getPageviewChartData( $days );
 
 // initialise phplot and insert data
 $graph =& new PHPlot( 600, 600 );
