@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.31 2007/06/22 06:33:49 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Attic/stats_lib.php,v 1.32 2007/06/22 11:15:00 lsces Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,13 +8,12 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: stats_lib.php,v 1.31 2007/06/22 06:33:49 squareing Exp $
+ * $Id: stats_lib.php,v 1.32 2007/06/22 11:15:00 lsces Exp $
  * @package stats
  */
 
 /**
  * @package stats
- * @subpackage StatsLib
  */
 class StatsLib extends BitBase {
 	function StatsLib() {
