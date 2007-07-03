@@ -1,12 +1,12 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/users.php,v 1.7 2007/06/22 12:35:26 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/users.php,v 1.8 2007/07/03 20:47:44 spiderr Exp $
  *
  * Copyright (c) 2005 bitweaver.org
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: users.php,v 1.7 2007/06/22 12:35:26 squareing Exp $
+ * $Id: users.php,v 1.8 2007/07/03 20:47:44 spiderr Exp $
  * @package stats
  * @subpackage functions
  */
@@ -14,7 +14,7 @@
  * Required files
  */
 require_once( '../bit_setup_inc.php' );
-include_once( STATS_PKG_PATH.'stats_lib.php' );
+require_once( STATS_PKG_PATH.'Statistics.php' );
 
 $stats = new Statistics();
 
