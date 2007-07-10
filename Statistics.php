@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.1 2007/06/22 12:35:26 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.2 2007/07/10 06:06:54 lsces Exp $
  *
- * $Id: Statistics.php,v 1.1 2007/06/22 12:35:26 squareing Exp $
+ * $Id: Statistics.php,v 1.2 2007/07/10 06:06:54 lsces Exp $
  * @package stats
  */
 
@@ -185,7 +185,7 @@ class Statistics extends BitBase {
 			SELECT lc.`content_type_guid` AS `hash_key`, COUNT( lc.`content_id` ) AS `content_count`, SUM( lch.`hits` ) AS `total_hits`
 			FROM `".BIT_DB_PREFIX."liberty_content` lc
 			LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` lch ON( lc.`content_id` = lch.`content_id` )
-			GROUP BY lc.`content_type_guid` ORDER BY".$this->mDb->convertSortmode( $pParamHash['sort_mode'] );
+			GROUP BY lc.`content_type_guid` ORDER BY ".$this->mDb->convertSortmode( $pParamHash['sort_mode'] );
 		$ret = $this->mDb->getAssoc( $query );
 
 		return $ret;
