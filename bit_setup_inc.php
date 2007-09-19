@@ -19,7 +19,9 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 
 	require_once( STATS_PKG_PATH.'Statistics.php' );
 	$stats = new Statistics();
-	$stats->addPageview();
+	if( $gBitSystem->isFeatureActive('stats_pageviews') ) {
+		$stats->addPageview();
+	}
 
 	// store referer stats if desired
 	if( $gBitSystem->isFeatureActive( 'stats_referers' )) {

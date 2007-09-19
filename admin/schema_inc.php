@@ -28,7 +28,8 @@ $gBitInstaller->registerPackageInfo( STATS_PKG_NAME, array(
 
 // ### Default Preferences
 $gBitInstaller->registerPreferences( STATS_PKG_NAME, array(
-	array(STATS_PKG_NAME, 'stats_referers','y')
+	array(STATS_PKG_NAME, 'stats_referers','y'),
+	array(STATS_PKG_NAME, 'stats_pageviews','y')
 ) );
 
 // ### Default UserPermissions
