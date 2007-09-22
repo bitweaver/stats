@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.2 2007/07/10 06:06:54 lsces Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.3 2007/09/22 12:10:32 threna Exp $
  *
- * $Id: Statistics.php,v 1.2 2007/07/10 06:06:54 lsces Exp $
+ * $Id: Statistics.php,v 1.3 2007/09/22 12:10:32 threna Exp $
  * @package stats
  */
 
@@ -13,7 +13,7 @@
 class Statistics extends BitBase {
 
 	/**
-	 * Initiate class 
+	 * Initiate class
 	 */
 	function Statistics() {
 		BitBase::BitBase();
@@ -21,8 +21,8 @@ class Statistics extends BitBase {
 
 	/**
 	 * getRefererList gets a list of referers
-	 * 
-	 * @param array $pListHash 
+	 *
+	 * @param array $pListHash
 	 * @access public
 	 * @return array of referers
 	 */
@@ -32,6 +32,11 @@ class Statistics extends BitBase {
 		}
 
 		LibertyContent::prepGetList( $pListHash );
+
+		// LibertyContent::prepGetList assumes that 'hits_' refers to liberty_content what is wrong in this case
+		if ( is_string( $pListHash['sort_mode'] ) && strpos( $pListHash['sort_mode'], 'lch.' ) === 0 ) {
+			$pListHash['sort_mode'] = substr($pListHash['sort_mode'],4);
+		}
 
 		$ret = $bindVars = array();
 		$selectSql = $joinSql = $whereSql = "";
@@ -54,7 +59,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * expungeReferers will remove all referers unconditionally
-	 * 
+	 *
 	 * @access public
 	 * @return TRUE on success, FALSE on failure
 	 */
@@ -64,7 +69,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * storeReferer will insert new record in referer table
-	 * 
+	 *
 	 * @access public
 	 * @return TRUE on success, FALSE on failure - mErrors will contain reason for failure
 	 */
@@ -92,7 +97,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * addPageview to the pageview count
-	 * 
+	 *
 	 * @access public
 	 * @return void
 	 */
@@ -109,9 +114,9 @@ class Statistics extends BitBase {
 	}
 
 	/**
-	 * registrationStats 
-	 * 
-	 * @param array $pPeriod 
+	 * registrationStats
+	 *
+	 * @param array $pPeriod
 	 * @access public
 	 * @return TRUE on success, FALSE on failure - mErrors will contain reason for failure
 	 */
@@ -151,7 +156,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * getSiteStats will get a brief overview over the site
-	 * 
+	 *
 	 * @access public
 	 * @return array with site stats
 	 */
@@ -169,8 +174,8 @@ class Statistics extends BitBase {
 
 	/**
 	 * getContentOverview will get a simple overview based on stats available available in liberty
-	 * 
-	 * @param array $pParamHash 
+	 *
+	 * @param array $pParamHash
 	 * @access public
 	 * @return array with content type stats
 	 */
@@ -193,7 +198,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * getContentStats will check all available content for the method Object::getStats() and will call and include the data
-	 * 
+	 *
 	 * @access public
 	 * @return array with content-specific stats
 	 */
@@ -215,7 +220,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * getPageviewChartData will fetch all data needed to create a graph with PHPlot
-	 * 
+	 *
 	 * @param numeric $pDays Number of days we will use to create a graph
 	 * @access public
 	 * @return array for PHPlot graph
@@ -252,7 +257,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * getUsageChartData will fetch all data needed to create a graph with PHPlot
-	 * 
+	 *
 	 * @access public
 	 * @return array for PHPlot graph
 	 */
@@ -279,7 +284,7 @@ class Statistics extends BitBase {
 
 	/**
 	 * getContentTypeChartData will fetch all data needed to create a graph with PHPlot
-	 * 
+	 *
 	 * @param array $pContentTypeGuid specify the content_type_guid you want to create a graph for
 	 * @access public
 	 * @return array for PHPlot graph
