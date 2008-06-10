@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/item_chart.php,v 1.5 2007/06/22 12:35:26 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/item_chart.php,v 1.6 2008/06/10 09:03:32 omniscent Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See copyright.txt for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See license.txt for details
  *
- * $Id: item_chart.php,v 1.5 2007/06/22 12:35:26 squareing Exp $
+ * $Id: item_chart.php,v 1.6 2008/06/10 09:03:32 omniscent Exp $
  * @package stats
  * @subpackage functions
  */
@@ -17,7 +17,7 @@
  * required setup
  */
 require_once( '../bit_setup_inc.php' );
-include_once( STATS_PKG_PATH . "stats_lib.php" );
+include_once( STATS_PKG_PATH . "Statistics.php" );
 include_once( UTIL_PKG_PATH . "phplot.php" );
 global $gBitSystem;
 
