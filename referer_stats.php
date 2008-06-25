@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/referer_stats.php,v 1.10 2007/06/22 12:35:26 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/referer_stats.php,v 1.11 2008/06/25 22:21:24 spiderr Exp $
  *
- * $Id: referer_stats.php,v 1.10 2007/06/22 12:35:26 squareing Exp $
+ * $Id: referer_stats.php,v 1.11 2008/06/25 22:21:24 spiderr Exp $
  * @package stats
  */
 
@@ -25,5 +25,5 @@ if( isset( $_REQUEST["clear"] )) {
 
 $gBitSmarty->assign( 'referers', $gStats->getRefererList( $_REQUEST ));
 $gBitSmarty->assign( 'listInfo', $_REQUEST['listInfo'] );
-$gBitSystem->display( 'bitpackage:stats/referer_stats.tpl', tra( 'Referer Statistics' ));
+$gBitSystem->display( 'bitpackage:stats/referer_stats.tpl', tra( 'Referer Statistics' ), array( 'display_mode' => 'display' ));
 ?>

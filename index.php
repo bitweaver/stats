@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/index.php,v 1.7 2007/06/22 12:35:26 squareing Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/index.php,v 1.8 2008/06/25 22:21:24 spiderr Exp $
  *
- * $Id: index.php,v 1.7 2007/06/22 12:35:26 squareing Exp $
+ * $Id: index.php,v 1.8 2008/06/25 22:21:24 spiderr Exp $
  * @package stats
  * @subpackage functions
  */
@@ -22,5 +22,5 @@ $gBitSmarty->assign( 'siteStats', $gStats->getSiteStats() );
 $gBitSmarty->assign( 'contentOverview', $gStats->getContentOverview( $_REQUEST ));
 $gBitSmarty->assign( 'contentStats', $gStats->getContentStats() );
 
-$gBitSystem->display( 'bitpackage:stats/stats.tpl', tra( "Statistics" ) );
+$gBitSystem->display( 'bitpackage:stats/stats.tpl', tra( "Statistics" ) , array( 'display_mode' => 'display' ));
 ?>
