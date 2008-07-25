@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.3 2007/09/22 12:10:32 threna Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.4 2008/07/25 14:59:11 wolff_borg Exp $
  *
- * $Id: Statistics.php,v 1.3 2007/09/22 12:10:32 threna Exp $
+ * $Id: Statistics.php,v 1.4 2008/07/25 14:59:11 wolff_borg Exp $
  * @package stats
  */
 
@@ -301,11 +301,10 @@ class Statistics extends BitBase {
 						ON (lc.`content_id` = liberty_content_hits.`content_id`)
 				WHERE `content_type_guid`=?
 				ORDER BY `hits` DESC";
-			$result = $this->mDb->query( $query, array( $pContentTypeGuid ), 159 );
+			$result = $this->mDb->query( $query, array( $pContentTypeGuid ), 40 );
 			// this is needed to ensure all arrays have same size
-			$tmpHash[] = array( NULL, 0 );
 			while( $res = $result->fetchRow() ) {
-				$tmpHash[] = array(
+				$tmpHash = array(
 					$res['title'],
 					$res['hits'],
 				);
@@ -323,23 +322,18 @@ class Statistics extends BitBase {
 					ORDER BY `hits` DESC";
 				$result = $this->mDb->query( $query, array( $contentType['content_type_guid'] ), 40 );
 				// this is needed to ensure all arrays have same size
-				$ret['data'][$contentType['content_type_guid']] = array_fill( 0, 40, array( NULL, NULL ));
 				$i = 0;
+				$tmpHash = array( NULL, NULL );
 				while( $res = $result->fetchRow() ) {
-					$ret['data'][$contentType['content_type_guid']][$i++] = array(
+					$tmpHash = array(
 						$res['title'],
 						$res['hits'],
 					);
 				}
+			  $ret['data'][$contentType['content_type_guid']] = array_chunk( $tmpHash, 40 );
 			}
 			$ret['title'] = 'All Content';
 		}
-		$ret['max'] = $this->mDb->getOne( "
-			SELECT MAX(`hits`)
-			FROM `".BIT_DB_PREFIX."liberty_content` lc
-				LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits
-					ON (lc.`content_id` = liberty_content_hits.`content_id`)
-		");
 		return $ret;
 	}
 }
