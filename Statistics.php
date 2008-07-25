@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.4 2008/07/25 14:59:11 wolff_borg Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.5 2008/07/25 15:03:11 wolff_borg Exp $
  *
- * $Id: Statistics.php,v 1.4 2008/07/25 14:59:11 wolff_borg Exp $
+ * $Id: Statistics.php,v 1.5 2008/07/25 15:03:11 wolff_borg Exp $
  * @package stats
  */
 
@@ -302,6 +302,7 @@ class Statistics extends BitBase {
 				WHERE `content_type_guid`=?
 				ORDER BY `hits` DESC";
 			$result = $this->mDb->query( $query, array( $pContentTypeGuid ), 40 );
+			$tmpHash = array();
 			// this is needed to ensure all arrays have same size
 			while( $res = $result->fetchRow() ) {
 				$tmpHash = array(
