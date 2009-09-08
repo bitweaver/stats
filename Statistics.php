@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.5 2008/07/25 15:03:11 wolff_borg Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.6 2009/09/08 22:14:50 spiderr Exp $
  *
- * $Id: Statistics.php,v 1.5 2008/07/25 15:03:11 wolff_borg Exp $
+ * $Id: Statistics.php,v 1.6 2009/09/08 22:14:50 spiderr Exp $
  * @package stats
  */
 
@@ -78,17 +78,19 @@ class Statistics extends BitBase {
 
 		if( !empty( $_SERVER['HTTP_REFERER'] ) && $parsed = parse_url( $_SERVER['HTTP_REFERER'] )) {
 			if( !empty( $parsed["host"] ) && !strstr( $_SERVER["HTTP_HOST"], $parsed["host"] )) {
-				$now = $gBitSystem->getUTCTime();
+				if( !empty( $parsed['scheme'] ) ) {
+					$now = $gBitSystem->getUTCTime();
 
-				$store = $parsed['scheme'].'://'.$parsed['host'];
+					$store = $parsed['scheme'].'://'.$parsed['host'];
 
-				$query = "UPDATE `".BIT_DB_PREFIX."stats_referers` SET `hits`=`hits`+1,`last`=? WHERE `referer`=?";
-				$this->mDb->query( $query, array( $now, $store ));
+					$query = "UPDATE `".BIT_DB_PREFIX."stats_referers` SET `hits`=`hits`+1,`last`=? WHERE `referer`=?";
+					$this->mDb->query( $query, array( $now, $store ));
 
-				// if the above didn't affect the db, we know that the entry doesn't exist yet.
-				if( !$this->mDb->mDb->Affected_Rows() ) {
-					$query = "INSERT INTO `".BIT_DB_PREFIX."stats_referers`( `last`, `referer`, `hits` ) VALUES( ?, ?, ? )";
-					$this->mDb->query( $query, array( $now, $store, 1 ));
+					// if the above didn't affect the db, we know that the entry doesn't exist yet.
+					if( !$this->mDb->mDb->Affected_Rows() ) {
+						$query = "INSERT INTO `".BIT_DB_PREFIX."stats_referers`( `last`, `referer`, `hits` ) VALUES( ?, ?, ? )";
+						$this->mDb->query( $query, array( $now, $store, 1 ));
+					}
 				}
 			}
 		}
