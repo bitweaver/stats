@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.6 2009/09/08 22:14:50 spiderr Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.7 2009/11/11 17:38:46 spiderr Exp $
  *
- * $Id: Statistics.php,v 1.6 2009/09/08 22:14:50 spiderr Exp $
+ * $Id: Statistics.php,v 1.7 2009/11/11 17:38:46 spiderr Exp $
  * @package stats
  */
 
@@ -122,29 +122,10 @@ class Statistics extends BitBase {
 	 * @access public
 	 * @return TRUE on success, FALSE on failure - mErrors will contain reason for failure
 	 */
-	function registrationStats( $pPeriod ) {
+	function registrationStats( $pPeriodFormat ) {
 		global $gBitDbType;
 
-		switch( $pPeriod ) {
-			case 'year':
-				$format = 'Y';
-				break;
-			case 'quarter':
-				$format = 'Y-\QQ';
-				break;
-			case 'day':
-				$format = 'Y-m-d';
-				break;
-			case 'week':
-				$format = 'Y \Week W';
-				break;
-			case 'month':
-			default:
-				$format = 'Y-m';
-				break;
-		}
-
-		$sqlPeriod = $this->mDb->SQLDate( $format, $this->mDb->SQLIntToTimestamp( 'registration_date' ));
+		$sqlPeriod = $this->mDb->SQLDate( $pPeriodFormat, $this->mDb->SQLIntToTimestamp( 'registration_date' ));
 		$query = "
 			SELECT $sqlPeriod AS period, COUNT(`user_id`)
 			FROM `".BIT_DB_PREFIX."users_users`
