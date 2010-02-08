@@ -1,19 +1,19 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/users.php,v 1.12 2009/11/11 17:38:46 spiderr Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/users.php,v 1.13 2010/02/08 21:27:25 wjames5 Exp $
  *
  * Copyright (c) 2005 bitweaver.org
  * All Rights Reserved. See below for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See http://www.gnu.org/copyleft/lesser.html for details
  *
- * $Id: users.php,v 1.12 2009/11/11 17:38:46 spiderr Exp $
+ * $Id: users.php,v 1.13 2010/02/08 21:27:25 wjames5 Exp $
  * @package stats
  * @subpackage functions
  */
 /**
  * Required files
  */
-require_once( '../bit_setup_inc.php' );
+require_once( '../kernel/setup_inc.php' );
 require_once( STATS_PKG_PATH.'Statistics.php' );
 
 $stats = new Statistics();

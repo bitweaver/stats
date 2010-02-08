@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/usage_chart.php,v 1.8 2009/10/01 14:17:05 wjames5 Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/usage_chart.php,v 1.9 2010/02/08 21:27:25 wjames5 Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See below for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See http://www.gnu.org/copyleft/lesser.html for details
  *
- * $Id: usage_chart.php,v 1.8 2009/10/01 14:17:05 wjames5 Exp $
+ * $Id: usage_chart.php,v 1.9 2010/02/08 21:27:25 wjames5 Exp $
  * @package stats
  * @subpackage functions
  */
@@ -16,7 +16,7 @@
 /**
  * required setup
  */
-require_once( '../bit_setup_inc.php' );
+require_once( '../kernel/setup_inc.php' );
 include_once( STATS_PKG_PATH . "Statistics.php" );
 include_once( UTIL_PKG_PATH . "phplot.php" );
 global $gBitSystem;

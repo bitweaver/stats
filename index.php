@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/index.php,v 1.8 2008/06/25 22:21:24 spiderr Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/index.php,v 1.9 2010/02/08 21:27:25 wjames5 Exp $
  *
- * $Id: index.php,v 1.8 2008/06/25 22:21:24 spiderr Exp $
+ * $Id: index.php,v 1.9 2010/02/08 21:27:25 wjames5 Exp $
  * @package stats
  * @subpackage functions
  */
@@ -10,7 +10,7 @@
 /**
  * required setup
  */
-require_once( '../bit_setup_inc.php' );
+require_once( '../kernel/setup_inc.php' );
 include_once( STATS_PKG_PATH.'Statistics.php' );
 
 $gBitSystem->verifyPackage( 'stats' );
