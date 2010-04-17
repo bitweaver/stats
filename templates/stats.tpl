@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.8 2007/06/22 12:35:26 squareing Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.9 2010/04/17 03:45:08 wjames5 Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
@@ -27,7 +27,7 @@
 
 			{foreach from=$contentOverview item=site key=guid}
 				<tr class="{cycle values="odd,even"}">
-					<td>{if $contentStats.$guid}<a href="#{$guid}">{/if}{$gLibertySystem->getContentTypeDescription($guid)}{if $contentStats.$guid}</a>{/if}</td>
+					<td>{if $contentStats.$guid}<a href="#{$guid}">{/if}{$gLibertySystem->getContentTypeName($guid)}{if $contentStats.$guid}</a>{/if}</td>
 					<td style="text-align:right;">{$site.content_count}</td>
 					<td style="text-align:right;">{$site.total_hits|default:0}</td>
 				</tr>
@@ -40,7 +40,7 @@
 			<caption>{tr}Package Statistics{/tr}</caption>
 			{foreach from=$contentStats item=stats key=guid}
 				<tr>
-					<th colspan="2">{$gLibertySystem->getContentTypeDescription($guid)}</th>
+					<th colspan="2">{$gLibertySystem->getContentTypeName($guid)}</th>
 				</tr>
 				<a name="{$guid}"></a>
 				{foreach from=$stats item=item}
