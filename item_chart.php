@@ -1,6 +1,6 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/item_chart.php,v 1.10 2010/02/08 21:27:25 wjames5 Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/item_chart.php,v 1.11 2010/04/17 04:56:46 wjames5 Exp $
  *
  * Copyright (c) 2004 bitweaver.org
  * Copyright (c) 2003 tikwiki.org
@@ -8,7 +8,7 @@
  * All Rights Reserved. See below for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See http://www.gnu.org/copyleft/lesser.html for details
  *
- * $Id: item_chart.php,v 1.10 2010/02/08 21:27:25 wjames5 Exp $
+ * $Id: item_chart.php,v 1.11 2010/04/17 04:56:46 wjames5 Exp $
  * @package stats
  * @subpackage functions
  */
@@ -45,9 +45,9 @@ foreach( $data['data'] as $guid => $info ) {
 	$graph->SetXLabelAngle( ( count( $info ) > 5 ) ? 90 : 0 );
 	$graph->SetNewPlotAreaPixels( 75, 30 + ( $i * 390 ), 580, 370 + ( $i * 390 ) );
 	if( !empty( $_REQUEST['content_type_guid'] ) ) {
-		$graph->SetYLabel( $gLibertySystem->mContentTypes[$_REQUEST['content_type_guid']]['content_description'].' '.tra( 'Hits' ).' ('.tra( "log" ).')' );
+		$graph->SetYLabel( $gLibertySystem->getContentTypeName( $_REQUEST['content_type_guid'] ).' '.tra( 'Hits' ).' ('.tra( "log" ).')' );
 	} else {
-		$graph->SetYLabel( $gLibertySystem->mContentTypes[$guid]['content_description'].' '.tra( 'Hits' ).' ('.tra( "log" ).')' );
+		$graph->SetYLabel( $gLibertySystem->getContentTypeName( $guid ).' '.tra( 'Hits' ).' ('.tra( "log" ).')' );
 	}
 	$graph->DrawGraph();
 	$i++;

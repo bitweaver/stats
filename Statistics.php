@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.7 2009/11/11 17:38:46 spiderr Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.8 2010/04/17 04:56:46 wjames5 Exp $
  *
- * $Id: Statistics.php,v 1.7 2009/11/11 17:38:46 spiderr Exp $
+ * $Id: Statistics.php,v 1.8 2010/04/17 04:56:46 wjames5 Exp $
  * @package stats
  */
 
@@ -249,15 +249,16 @@ class Statistics extends BitBase {
 		$ret['data'][0][] = 'a';
 		foreach( $gLibertySystem->mContentTypes as $contentType ) {
 			if( $gBitSystem->isPackageActive( $contentType['handler_package'] )) {
+				$guid = $contentType['content_type_guid'];
 				$hits = $this->mDb->getOne( "
 					SELECT SUM(`hits`)
 					FROM `".BIT_DB_PREFIX."liberty_content` lc
 						LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_hits` liberty_content_hits
 							ON (lc.`content_id` = liberty_content_hits.`content_id`)
-					WHERE content_type_guid=?", array( $contentType['content_type_guid'] )
+					WHERE content_type_guid=?", array( $guid )
 				);
 				if( !empty( $hits )) {
-					$ret['legend'][] = tra( $contentType['content_description'] );
+					$ret['legend'][] = $gLibertySystem->getContentTypeName( $guid );
 					$ret['data'][0][] = $hits;
 				}
 			}
@@ -294,7 +295,7 @@ class Statistics extends BitBase {
 				);
 			}
 			$ret['data'][$pContentTypeGuid] = array_chunk( $tmpHash, 40 );
-			$ret['title'] = $gLibertySystem->mContentTypes[$pContentTypeGuid]['content_description'];
+			$ret['title'] = $gLibertySystem->getContentTypeName( $pContentTypeGuid ); 
 		} else {
 			foreach( $gLibertySystem->mContentTypes as $contentType ) {
 				$query = "
