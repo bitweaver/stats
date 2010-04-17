@@ -38,5 +38,7 @@ $gBitInstaller->registerUserPermissions( STATS_PKG_NAME, array(
 	array('p_stats_view', 'Can view site stats', 'basic', STATS_PKG_NAME),
 ) );
 
-
-?>
+// Requirements
+$gBitInstaller->registerRequirements( STATS_PKG_NAME, array(
+    'liberty' => array( 'min' => '2.1.4' ),
+));

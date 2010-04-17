@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.9 2010/04/17 03:45:08 wjames5 Exp $ *}
+{* $Header: /cvsroot/bitweaver/_bit_stats/templates/stats.tpl,v 1.10 2010/04/17 22:46:10 wjames5 Exp $ *}
 <div class="display statistics">
 	<div class="header">
 		<h1>{tr}Stats{/tr}</h1>
@@ -68,7 +68,7 @@
 					{smartlink ititle=All chart_type=points item_chart=1 ianchor="item_chart"}
 					<br />
 					{foreach from=$gLibertySystem->mContentTypes item=contentType}
-						{smartlink ititle=$contentType.content_description content_type_guid=$contentType.content_type_guid chart_type=points item_chart=1 ianchor="item_chart"}
+						{smartlink ititle=$contentType.content_name content_type_guid=$contentType.content_type_guid chart_type=points item_chart=1 ianchor="item_chart"}
 						<br />
 					{/foreach}
 					{formhelp note="Please note that these graphs use a logarythmic y-axis."}
