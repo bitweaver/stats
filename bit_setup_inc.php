@@ -17,7 +17,7 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 		$gBitSystem->registerAppMenu( $menuHash );
 	}
 
-	$gLibertySystem->registerService( LIBERTY_SERVICE_NEWSLETTERS, NEWSLETTERS_PKG_NAME, array(
+	$gLibertySystem->registerService( STATS_PKG_NAME, STATS_PKG_NAME, array(
 			'users_expunge_function'	=> 'stats_user_expunge',
 			'users_register_function'   => 'stats_user_register',
 	) );
