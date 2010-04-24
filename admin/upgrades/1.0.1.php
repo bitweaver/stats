@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_stats/admin/upgrades/1.0.1.php,v 1.1 2010/04/22 21:24:49 spiderr Exp $
+ * @version $Header: /cvsroot/bitweaver/_bit_stats/admin/upgrades/1.0.1.php,v 1.2 2010/04/24 16:31:00 spiderr Exp $
  */
 global $gBitInstaller;
 
@@ -34,8 +34,9 @@ $gBitInstaller->registerPackageUpgrade( $infoHash, array(
 			",	
 		)),
 		array( 'CREATEINDEX' => array(
-			'stats_referer_map_url_idx'       => array( 'stats_referer_urls', 'referer_url_id', array() ),
-			'stats_referer_map_user_idx'       => array( 'stats_referer_urls', 'user_id', array() ),
+			'stats_referer_urls_idx'     => array( 'stats_referer_urls', 'referer_url', array() ),
+			'stats_referer_map_url_idx'  => array( 'stats_referer_users_map', 'referer_url_id', array() ),
+			'stats_referer_map_user_idx' => array( 'stats_referer_users_map', 'user_id', array() ),
 		)),
 		array( 'CREATESEQUENCE' => array(
 			'stats_referer_url_id_seq',
