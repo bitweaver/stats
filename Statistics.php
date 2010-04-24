@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.8 2010/04/17 04:56:46 wjames5 Exp $
+ * $Header: /cvsroot/bitweaver/_bit_stats/Statistics.php,v 1.9 2010/04/24 07:51:12 lsces Exp $
  *
- * $Id: Statistics.php,v 1.8 2010/04/17 04:56:46 wjames5 Exp $
+ * $Id: Statistics.php,v 1.9 2010/04/24 07:51:12 lsces Exp $
  * @package stats
  */
 
@@ -82,15 +82,17 @@ class Statistics extends BitBase {
 					$now = $gBitSystem->getUTCTime();
 
 					$store = $parsed['scheme'].'://'.$parsed['host'];
-
+					
+					$this->mDb->StartTrans();
 					$query = "UPDATE `".BIT_DB_PREFIX."stats_referers` SET `hits`=`hits`+1,`last`=? WHERE `referer`=?";
 					$this->mDb->query( $query, array( $now, $store ));
 
 					// if the above didn't affect the db, we know that the entry doesn't exist yet.
-					if( !$this->mDb->mDb->Affected_Rows() ) {
+					if( !$this->mDb->Affected_Rows() ) {
 						$query = "INSERT INTO `".BIT_DB_PREFIX."stats_referers`( `last`, `referer`, `hits` ) VALUES( ?, ?, ? )";
 						$this->mDb->query( $query, array( $now, $store, 1 ));
 					}
+					$this->mDb->CompleteTrans();
 				}
 			}
 		}
@@ -105,14 +107,15 @@ class Statistics extends BitBase {
 	 */
 	function addPageview() {
 		$dayzero = mktime( 0, 0, 0, date( "m" ), date( "d" ), date( "Y" ));
+		$this->mDb->StartTrans();
 		$query = "UPDATE `".BIT_DB_PREFIX."stats_pageviews` SET `pageviews`=`pageviews`+1 WHERE `stats_day`=?";
 		$this->mDb->query( $query, array( $dayzero ));
-
 		// if the above didn't affect the db, we know that the entry doesn't exist yet.
-		if( !$this->mDb->mDb->Affected_Rows() ) {
+		if( !$this->mDb->Affected_Rows() ) {
 			$query = "INSERT INTO `".BIT_DB_PREFIX."stats_pageviews`( `pageviews`, `stats_day` ) VALUES( ?, ? )";
 			$this->mDb->query( $query, array( 1, $dayzero ));
 		}
+		$this->mDb->CompleteTrans();
 	}
 
 	/**
