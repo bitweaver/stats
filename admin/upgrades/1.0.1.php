@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Header: /cvsroot/bitweaver/_bit_stats/admin/upgrades/1.0.1.php,v 1.2 2010/04/24 16:31:00 spiderr Exp $
+ * @version $Header$
  */
 global $gBitInstaller;
 

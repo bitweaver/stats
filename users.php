@@ -1,12 +1,12 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/users.php,v 1.13 2010/02/08 21:27:25 wjames5 Exp $
+ * $Header$
  *
  * Copyright (c) 2005 bitweaver.org
  * All Rights Reserved. See below for details and a complete list of authors.
  * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE. See http://www.gnu.org/copyleft/lesser.html for details
  *
- * $Id: users.php,v 1.13 2010/02/08 21:27:25 wjames5 Exp $
+ * $Id$
  * @package stats
  * @subpackage functions
  */

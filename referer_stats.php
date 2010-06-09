@@ -1,8 +1,8 @@
 <?php
 /**
- * $Header: /cvsroot/bitweaver/_bit_stats/referer_stats.php,v 1.12 2010/02/08 21:27:25 wjames5 Exp $
+ * $Header$
  *
- * $Id: referer_stats.php,v 1.12 2010/02/08 21:27:25 wjames5 Exp $
+ * $Id$
  * @package stats
  */
 

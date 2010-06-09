@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_stats/templates/admin_stats.tpl,v 1.1 2006/09/10 17:43:28 squareing Exp $ *}
+{* $Header$ *}
 {strip}
 {form legend="Statistics Settings"}
 	<input type="hidden" name="page" value="{$page}" />
