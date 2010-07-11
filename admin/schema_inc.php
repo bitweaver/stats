@@ -15,7 +15,7 @@ $tables = array(
 
 'stats_referer_urls' => "
 	referer_url_id I4 PRIMARY,
-	referer_url X NOTNULL
+	referer_url C(4096) NOTNULL
 ",
 
 'stats_referer_users_map' => "
