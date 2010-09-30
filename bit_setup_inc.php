@@ -65,5 +65,20 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 			$pObject->mDb->CompleteTrans();
 		}
 	}
+
+	function stats_referer_display_short( $pRefererUrl ) {
+		$ret = '';
+		if( $urlHash = parse_url( $pRefererUrl ) ) {
+			$ret = $urlHash['host'];
+			if( strpos( $urlHash['query'], 'q=' ) !== FALSE ) {
+				parse_str( $urlHash['query'] );
+				if( !empty( $q ) ) {
+					$ret .= '/...q='.$q;
+				}
+			}
+		} else {
+			$ret = tra( 'Unknown URL' );
+		}
+		return $ret;
+	}
 }
-?>
