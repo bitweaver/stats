@@ -58,43 +58,56 @@ class Statistics extends BitBase {
 		$ret = $bindVars = array();
 		$selectSql = $joinSql = $whereSql = $groupSql = "";
 
+		$hashSql = "uu.`user_id` AS `hash_key`, ";
+
 		if( empty( $pListHash['sort_mode'] )) {
 			$pListHash['sort_mode'] = 'uu.`registration_date_desc`';
 		}
 
 		self::prepGetList( $pListHash );
 
-		if( !empty( $pListHash['period_format'] ) ) {
+		if( !empty( $pListHash['period_format'] ) && !empty( $pListHash['timeframe'] ) ) {
 			$whereSql .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
 			$whereSql .= $this->mDb->SQLDate( $pListHash['period_format'], $this->mDb->SQLIntToTimestamp( 'registration_date' )).'=?';
-			$bindVars[] = $pListHash['itemize'];
+			$bindVars[] = $pListHash['timeframe'];
+			$hashKey = 'host';
 		}
 
 		if( !empty( $pListHash['find'] ) && is_string( $pListHash['find'] )) {
 			$whereSql  .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
-			$whereSql  .= " UPPER( `referer` ) LIKE ?";
+			$whereSql  .= " UPPER( `referer_url` ) LIKE ?";
 			$bindVars[] = '%'.strtoupper( $pListHash['find'] ).'%';
+			if( !empty( $pListHash['period_format'] ) ) {
+				$hashSql = $this->mDb->SQLDate( $pListHash['period_format'], $this->mDb->SQLIntToTimestamp( 'registration_date' )).' AS `hash_key`,';
+				$hashKey = 'period';
+			}
 		}
 
-		$query = "SELECT uu.`user_id` AS `hash_key`, uu.*, sru.`referer_url` 
+		$query = "SELECT $hashSql uu.*, sru.`referer_url` 
 					FROM `".BIT_DB_PREFIX."users_users` uu
 					 	LEFT JOIN `".BIT_DB_PREFIX."stats_referer_users_map` srum ON(uu.`user_id`=srum.`user_id`)
 						LEFT JOIN  `".BIT_DB_PREFIX."stats_referer_urls` sru ON (sru.`referer_url_id`=srum.`referer_url_id`) 
 				$whereSql ORDER BY ".$this->mDb->convertSortmode( $pListHash['sort_mode'] );
 		if( $rs = $this->mDb->query( $query, $bindVars, -1, $pListHash['offset'] ) ) {
+
 			while( $row = $rs->fetchRow() ) {
-				$host = 'none';
-				if( !empty( $row['referer_url'] ) ) {
-					$parseUrl = parse_url( $row['referer_url'] );
-					$host = $parseUrl['host'];
+				$key = $row['hash_key'];
+				if( $hashKey == 'host' ) {
+					$key = 'none';
+					if( !empty( $row['referer_url'] ) ) {
+						$parseUrl = parse_url( $row['referer_url'] );
+						$key = $parseUrl['host'];
+					}
 				}
-				$ret[$host][$row['user_id']] = $row;
+				$ret[$key][$row['user_id']] = $row;
 			}
 		}
 
 		LibertyContent::postGetList( $pListHash );
 
-		uasort( $ret, array( $this, 'sortRefererHash' ) );
+		if( $hashKey == 'host' ) {
+			uasort( $ret, array( $this, 'sortRefererHash' ) );
+		}
 
 		return $ret;
 	}

@@ -21,10 +21,10 @@
 				<th style="width:20%;" colspan="2">{tr}Period{/tr}</td>
 				<th style="width:80%;">{tr}Number of Registrations{/tr}</td>
 			</tr>
-			{foreach item=reg key=period from=$userStats.per_period}
+			{foreach item=reg key=timeframe from=$userStats.per_period}
 				<tr class="{cycle values="even,odd"}">
-					<td><a href="{$smarty.const.STATS_PKG_URL}users.php?period={$smarty.request.period}&amp;itemize={$period|urlencode}">{$period}</td>
-					<td>[<a href="{$smarty.const.STATS_PKG_URL}referer_stats.php?period={$smarty.request.period}&amp;itemize={$period|urlencode}">Referrers</a>]</td>
+					<td><a href="{$smarty.const.STATS_PKG_URL}users.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">{$timeframe}</td>
+					<td>[<a href="{$smarty.const.STATS_PKG_URL}referer_stats.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">Referrers</a>]</td>
 					<td><div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg m=$userStats.max}%; background:#f80;padding:0 0 0 5px;">{$reg}</div></td>
 				</tr>
 			{foreachelse}

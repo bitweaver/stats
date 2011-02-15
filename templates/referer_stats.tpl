@@ -13,8 +13,8 @@
 			{foreach from=$referers key=host item=reg}
 				{assign var=hostHash value=$host|md5}	
 				<tr>
-					<th style="width:5%;">{$reg|@count} ({math equation="round((x / y) * 100)" x=$reg|@count y=$totalRegistrations}%)</th>
-					<th>{biticon iname='folder-saved-search' onclick="BitBase.toggleElementDisplay('`$hostHash`','table-row-group');" class="floaticon"} <div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg|@count m=$maxRegistrations}%; background:#f80;padding:0 0 0 5px;">{$host|escape}</div></th>
+					<th style="width:5%;">{$reg|@count}</th>
+					<th><div class="floaticon"> [{math equation="round((x / y) * 100)" x=$reg|@count y=$totalRegistrations}% ] <a href="{$smarty.server.PHP_SELF}?period={$smarty.request.period}&amp;find={$host|escape}">{biticon iname='appointment-new'}</a>{biticon iname='folder-saved-search' onclick="BitBase.toggleElementDisplay('`$hostHash`','table-row-group');"}</div> <div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg|@count m=$maxRegistrations}%; background:#f80;padding:0 0 0 5px;">{$host|escape}</div></th>
 				</tr>
 
 				<tbody id="{$hostHash}" style="display:none">
