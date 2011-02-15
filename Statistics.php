@@ -19,6 +19,33 @@ class Statistics extends BitBase {
 		BitBase::BitBase();
 	}
 
+	function prepGetList( &$pListHash ) {
+
+		if( !empty( $pListHash['period'] ) ) {
+			switch( $pListHash["period"] ) {
+				case 'year':
+					$format = 'Y';
+					break;
+				case 'quarter':
+					$format = 'Y-\QQ';
+					break;
+				case 'day':
+					$format = 'Y-m-d';
+					break;
+				case 'week':
+					$format = 'Y \Week W';
+					break;
+				case 'month':
+				default:
+					$format = 'Y-m';
+					break;
+			}
+			$pListHash['period_format'] = $format;
+		}
+
+		parent::prepGetList( $pListHash );
+	}
+
 	/**
 	 * getRefererList gets a list of referers
 	 *
@@ -27,19 +54,21 @@ class Statistics extends BitBase {
 	 * @return array of referers
 	 */
 	function getRefererList( &$pListHash ) {
-		if( empty( $pListHash['sort_mode'] )) {
-			$pListHash['sort_mode'] = 'hits_desc';
-		}
-
-		LibertyContent::prepGetList( $pListHash );
-
-		// LibertyContent::prepGetList assumes that 'hits_' refers to liberty_content what is wrong in this case
-		if ( is_string( $pListHash['sort_mode'] ) && strpos( $pListHash['sort_mode'], 'lch.' ) === 0 ) {
-			$pListHash['sort_mode'] = substr($pListHash['sort_mode'],4);
-		}
 
 		$ret = $bindVars = array();
-		$selectSql = $joinSql = $whereSql = "";
+		$selectSql = $joinSql = $whereSql = $groupSql = "";
+
+		if( empty( $pListHash['sort_mode'] )) {
+			$pListHash['sort_mode'] = 'uu.`registration_date_desc`';
+		}
+
+		self::prepGetList( $pListHash );
+
+		if( !empty( $pListHash['period_format'] ) ) {
+			$whereSql .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
+			$whereSql .= $this->mDb->SQLDate( $pListHash['period_format'], $this->mDb->SQLIntToTimestamp( 'registration_date' )).'=?';
+			$bindVars[] = $pListHash['itemize'];
+		}
 
 		if( !empty( $pListHash['find'] ) && is_string( $pListHash['find'] )) {
 			$whereSql  .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
@@ -47,14 +76,31 @@ class Statistics extends BitBase {
 			$bindVars[] = '%'.strtoupper( $pListHash['find'] ).'%';
 		}
 
-		$query = "SELECT * FROM `".BIT_DB_PREFIX."stats_referers` $whereSql ORDER BY ".$this->mDb->convertSortmode( $pListHash['sort_mode'] );;
-		$ret = $this->mDb->getAll( $query, $bindVars, $pListHash['max_records'], $pListHash['offset'] );
+		$query = "SELECT uu.`user_id` AS `hash_key`, uu.*, sru.`referer_url` 
+					FROM `".BIT_DB_PREFIX."users_users` uu
+					 	LEFT JOIN `".BIT_DB_PREFIX."stats_referer_users_map` srum ON(uu.`user_id`=srum.`user_id`)
+						LEFT JOIN  `".BIT_DB_PREFIX."stats_referer_urls` sru ON (sru.`referer_url_id`=srum.`referer_url_id`) 
+				$whereSql ORDER BY ".$this->mDb->convertSortmode( $pListHash['sort_mode'] );
+		if( $rs = $this->mDb->query( $query, $bindVars, -1, $pListHash['offset'] ) ) {
+			while( $row = $rs->fetchRow() ) {
+				$host = 'none';
+				if( !empty( $row['referer_url'] ) ) {
+					$parseUrl = parse_url( $row['referer_url'] );
+					$host = $parseUrl['host'];
+				}
+				$ret[$host][$row['user_id']] = $row;
+			}
+		}
 
-		$query = "SELECT COUNT(*) FROM `".BIT_DB_PREFIX."stats_referers` $whereSql";
-		$pListHash['cant'] = $this->mDb->getOne( $query, $bindVars);
 		LibertyContent::postGetList( $pListHash );
 
+		uasort( $ret, array( $this, 'sortRefererHash' ) );
+
 		return $ret;
+	}
+
+	function sortRefererHash( $a, $b ) {
+		return count( $a ) < count( $b );
 	}
 
 	/**

@@ -22,8 +22,20 @@ $gStats = new Statistics();
 if( isset( $_REQUEST["clear"] )) {
 	$gStats->expungeReferers();
 }
+$referers = $gStats->getRefererList( $_REQUEST );
+$totalRegistrations = 0;
+$maxRegistrations = 0;
+foreach( array_keys( $referers ) as $k ) {
+	$kCount = count( $referers[$k] );
+	$totalRegistrations += $kCount;
+	if( $kCount > $maxRegistrations ) {
+		$maxRegistrations = $kCount;
+	}
+}
 
-$gBitSmarty->assign( 'referers', $gStats->getRefererList( $_REQUEST ));
+$gBitSmarty->assign_by_ref( 'referers', $referers );
+$gBitSmarty->assign( 'totalRegistrations', $totalRegistrations );
+$gBitSmarty->assign( 'maxRegistrations', $maxRegistrations );
 $gBitSmarty->assign( 'listInfo', $_REQUEST['listInfo'] );
 $gBitSystem->display( 'bitpackage:stats/referer_stats.tpl', tra( 'Referer Statistics' ), array( 'display_mode' => 'display' ));
 ?>
