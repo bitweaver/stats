@@ -61,6 +61,6 @@ $gBitInstaller->registerPreferences( STATS_PKG_NAME, array(
 // ### Default UserPermissions
 $gBitInstaller->registerUserPermissions( STATS_PKG_NAME, array(
 	array('p_stats_view_referer', 'Can view referer stats', 'editors', STATS_PKG_NAME),
-	array('p_stats_view', 'Can view site stats', 'basic', STATS_PKG_NAME),
+	array('p_stats_view', 'Can view site stats', 'editors', STATS_PKG_NAME),
 ) );
 
