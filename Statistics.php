@@ -54,6 +54,7 @@ class Statistics extends BitBase {
 	 * @return array of referers
 	 */
 	function getRefererList( &$pListHash ) {
+		$hashKey = '';
 
 		$ret = $bindVars = array();
 		$selectSql = $joinSql = $whereSql = $groupSql = "";
