@@ -65,7 +65,7 @@ class Statistics extends BitBase {
 			$pListHash['sort_mode'] = 'uu.`registration_date_desc`';
 		}
 
-		self::prepGetList( $pListHash );
+		static::prepGetList( $pListHash );
 
 		if( !empty( $pListHash['period_format'] ) && !empty( $pListHash['timeframe'] ) ) {
 			$whereSql .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
