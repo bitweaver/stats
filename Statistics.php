@@ -16,7 +16,7 @@ class Statistics extends BitBase {
 	 * Initiate class
 	 */
 	function Statistics() {
-		BitBase::BitBase();
+		parent::__construct();
 	}
 
 	function prepGetList( &$pListHash ) {
