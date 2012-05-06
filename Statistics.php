@@ -12,13 +12,6 @@
  */
 class Statistics extends BitBase {
 
-	/**
-	 * Initiate class
-	 */
-	function Statistics() {
-		parent::__construct();
-	}
-
 	function prepGetList( &$pListHash ) {
 
 		if( !empty( $pListHash['period'] ) ) {
