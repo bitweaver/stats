@@ -60,21 +60,24 @@ class Statistics extends BitBase {
 
 		static::prepGetList( $pListHash );
 
+		if( empty( $pListHash['period_format'] ) ) {
+			$pListHash['period_format'] = 'Y-W';
+		}
+
 		if( !empty( $pListHash['period_format'] ) && !empty( $pListHash['timeframe'] ) ) {
 			$whereSql .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
 			$whereSql .= $this->mDb->SQLDate( $pListHash['period_format'], $this->mDb->SQLIntToTimestamp( 'registration_date' )).'=?';
 			$bindVars[] = $pListHash['timeframe'];
 			$hashKey = 'host';
+		} else {
+			$hashSql = $this->mDb->SQLDate( $pListHash['period_format'], $this->mDb->SQLIntToTimestamp( 'registration_date' )).' AS `hash_key`,';
+			$hashKey = 'period';
 		}
 
 		if( !empty( $pListHash['find'] ) && is_string( $pListHash['find'] )) {
 			$whereSql  .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
 			$whereSql  .= " UPPER( `referer_url` ) LIKE ?";
 			$bindVars[] = '%'.strtoupper( $pListHash['find'] ).'%';
-			if( !empty( $pListHash['period_format'] ) ) {
-				$hashSql = $this->mDb->SQLDate( $pListHash['period_format'], $this->mDb->SQLIntToTimestamp( 'registration_date' )).' AS `hash_key`,';
-				$hashKey = 'period';
-			}
 		}
 
 		$query = "SELECT $hashSql uu.*, sru.`referer_url` 
