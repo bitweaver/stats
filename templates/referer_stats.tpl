@@ -2,15 +2,17 @@
 
 <div class="display statistics">
 	<div class="header">
-		<h1>{tr}User Registration Statistics{/tr}</h1>
-		{minifind}
+		<h1>{tr}User Registration Statistics{/tr} {$smarty.request.timeframe|escape}</h1>
+		{minifind period_format="`$smarty.request.period_format`" timeframe="`$smarty.request.timeframe`"}
 	</div>
 
 	<div class="body">
 		<table class="data">
 			<caption>{tr}User Registration Statistics{/tr}</caption>
-
+			{assign var=refCount value=0}
 			{foreach from=$referers key=host item=reg}
+				{assign var=regCount value=$reg|@count}
+				{assign var=totalReg value=$totalReg+$regCount}
 				{assign var=hostHash value=$host|md5}	
 				<tr>
 					<th style="width:5%;">{$reg|@count}</th>
@@ -27,6 +29,10 @@
 			{foreachelse}
 				<tr class="norecords"><td colspan="3">{tr}No records found{/tr}</td></tr>
 			{/foreach}
+				<tr>
+					<th style="width:5%;">{$totalReg}</th>
+					<th>{tr}Total Registrations{/tr}</th>
+				</tr>
 		</table>
 	</div> <!-- end .body -->
 

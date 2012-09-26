@@ -71,7 +71,7 @@ class Statistics extends BitBase {
 			$whereSql  .= empty( $whereSql ) ? ' WHERE ' : ' AND ';
 			$whereSql  .= " UPPER( `referer_url` ) LIKE ?";
 			$bindVars[] = '%'.strtoupper( $pListHash['find'] ).'%';
-			if( !empty( $pListHash['period_format'] ) ) {
+			if( empty( $pListHash['timeframe'] ) && !empty( $pListHash['period_format'] ) ) {
 				$hashSql = $this->mDb->SQLDate( $pListHash['period_format'], $this->mDb->SQLIntToTimestamp( 'registration_date' )).' AS `hash_key`,';
 				$hashKey = 'period';
 			}
@@ -90,6 +90,10 @@ class Statistics extends BitBase {
 					$key = 'none';
 					if( !empty( $row['referer_url'] ) ) {
 						$parseUrl = parse_url( $row['referer_url'] );
+						parse_str( $parseUrl['query'], $params );
+						if( !empty( $params['adurl'] ) ) {
+							parse_str( $params['adurl'], $params );
+						}
 						$key = $parseUrl['host'];
 					}
 				}
