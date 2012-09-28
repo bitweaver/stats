@@ -12,7 +12,7 @@
  */
 class Statistics extends BitBase {
 
-	function prepGetList( &$pListHash ) {
+	public static function prepGetList( &$pListHash ) {
 
 		if( !empty( $pListHash['period'] ) ) {
 			switch( $pListHash["period"] ) {
@@ -84,10 +84,10 @@ class Statistics extends BitBase {
 			}
 		}
 
-		$query = "SELECT $hashSql uu.*, sru.`referer_url` 
+		$query = "SELECT $hashSql uu.*, sru.`referer_url`
 					FROM `".BIT_DB_PREFIX."users_users` uu
 					 	LEFT JOIN `".BIT_DB_PREFIX."stats_referer_users_map` srum ON(uu.`user_id`=srum.`user_id`)
-						LEFT JOIN  `".BIT_DB_PREFIX."stats_referer_urls` sru ON (sru.`referer_url_id`=srum.`referer_url_id`) 
+						LEFT JOIN  `".BIT_DB_PREFIX."stats_referer_urls` sru ON (sru.`referer_url_id`=srum.`referer_url_id`)
 				$whereSql ORDER BY ".$this->mDb->convertSortmode( $pListHash['sort_mode'] );
 		if( $rs = $this->mDb->query( $query, $bindVars, -1, $pListHash['offset'] ) ) {
 
@@ -146,7 +146,7 @@ class Statistics extends BitBase {
 					$now = $gBitSystem->getUTCTime();
 
 					$store = $parsed['scheme'].'://'.$parsed['host'];
-					
+
 					$this->mDb->StartTrans();
 					$query = "UPDATE `".BIT_DB_PREFIX."stats_referers` SET `hits`=`hits`+1,`last`=? WHERE `referer`=?";
 					$this->mDb->query( $query, array( $now, $store ));
@@ -362,7 +362,7 @@ class Statistics extends BitBase {
 				);
 			}
 			$ret['data'][$pContentTypeGuid] = array_chunk( $tmpHash, 40 );
-			$ret['title'] = $gLibertySystem->getContentTypeName( $pContentTypeGuid ); 
+			$ret['title'] = $gLibertySystem->getContentTypeName( $pContentTypeGuid );
 		} else {
 			foreach( $gLibertySystem->mContentTypes as $contentType ) {
 				$query = "
