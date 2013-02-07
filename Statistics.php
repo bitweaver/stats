@@ -15,25 +15,7 @@ class Statistics extends BitBase {
 	public static function prepGetList( &$pListHash ) {
 
 		if( !empty( $pListHash['period'] ) ) {
-			switch( $pListHash["period"] ) {
-				case 'year':
-					$format = 'Y';
-					break;
-				case 'quarter':
-					$format = 'Y-\QQ';
-					break;
-				case 'day':
-					$format = 'Y-m-d';
-					break;
-				case 'week':
-					$format = 'Y \Week W';
-					break;
-				case 'month':
-				default:
-					$format = 'Y-m';
-					break;
-			}
-			$pListHash['period_format'] = $format;
+			$pListHash['period_format'] = BitDb::getPeriodFormat( $pListHash['period_format'] );
 		}
 
 		parent::prepGetList( $pListHash );

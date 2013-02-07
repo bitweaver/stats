@@ -16,7 +16,7 @@
 		</div>
 
 		<table class="clear data">
-			<caption>{tr}User Registrations at {$gBitSystem->getConfig('site_title')}{/tr}</caption>
+			<caption>{$gBitSystem->getConfig('site_title')} {tr}User Registrations{/tr}</caption>
 			<tr>
 				<th style="width:20%;" colspan="2">{tr}Period{/tr}</td>
 				<th style="width:80%;">{tr}Number of Registrations{/tr}</td>
@@ -24,8 +24,10 @@
 			{foreach item=reg key=timeframe from=$userStats.per_period}
 				<tr class="{cycle values="even,odd"}">
 					<td><a href="{$smarty.const.STATS_PKG_URL}users.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">{$timeframe}</td>
-					<td>[<a href="{$smarty.const.STATS_PKG_URL}referer_stats.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">Referrers</a>]</td>
-					<td><div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg m=$userStats.max}%; background:#f80;padding:0 0 0 5px;">{$reg}</div></td>
+					<td>
+						[<a href="{$smarty.const.STATS_PKG_URL}referer_stats.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">Referrers</a>]
+					</td>
+					<td><div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg m=$userStats.max}%; background:#ff9;padding:0 0 0 5px;"><a href="{$smarty.const.USERS_PKG_URL}admin/index.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">{$reg}</a></div></td>
 				</tr>
 			{foreachelse}
 				<tr class="norecords">
