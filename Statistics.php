@@ -97,9 +97,11 @@ class Statistics extends BitBase {
 					$key = 'none';
 					if( !empty( $row['referer_url'] ) ) {
 						$parseUrl = parse_url( $row['referer_url'] );
-						parse_str( $parseUrl['query'], $params );
-						if( !empty( $params['adurl'] ) ) {
-							parse_str( $params['adurl'], $params );
+						if( !empty( $parseUrl['query'] ) ) {
+							parse_str( $parseUrl['query'], $params );
+							if( !empty( $params['adurl'] ) ) {
+								parse_str( $params['adurl'], $params );
+							}
 						}
 						$key = $parseUrl['host'];
 					}
