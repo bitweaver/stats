@@ -5,15 +5,13 @@
 	</div>
 
 	<div class="body">
-		<div class="navbar">
-			<ul>
-				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=day">{tr}Daily{/tr}</a></li>
-				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=week">{tr}Weekly{/tr}</a></li>
-				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=month">{tr}Monthly{/tr}</a></li>
-				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=quarter">{tr}Quarterly{/tr}</a></li>
-				<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=year">{tr}Yearly{/tr}</a></li>
-			</ul>
-		</div>
+		<ul class="inline navbar inline">
+			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=day">{tr}Daily{/tr}</a></li>
+			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=week">{tr}Weekly{/tr}</a></li>
+			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=month">{tr}Monthly{/tr}</a></li>
+			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=quarter">{tr}Quarterly{/tr}</a></li>
+			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=year">{tr}Yearly{/tr}</a></li>
+		</ul>
 
 		<table class="clear data">
 			<caption>{$gBitSystem->getConfig('site_title')} {tr}User Registrations{/tr}</caption>

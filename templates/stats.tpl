@@ -62,7 +62,7 @@
 
 		<h1>{tr}Graph options{/tr}</h1>
 		{legend legend="Individual Package Statistics"}
-			<div class="row">
+			<div class="control-group">
 				{formlabel label="Item Statistics"}
 				{forminput}
 					{smartlink ititle=All chart_type=points item_chart=1 ianchor="item_chart"}
@@ -84,7 +84,7 @@
 		{/if}
 
 		{legend legend="Usage Statistics"}
-			<div class="row">
+			<div class="control-group">
 				{formlabel label="Usage Statistics"}
 				{forminput}
 					{smartlink ititle="Display as Pie-chart" chart_type=pie usage_chart=1 ianchor="usage_chart"}
@@ -102,7 +102,7 @@
 		{/if}
 
 		{form legend="Site Usage Chart" ianchor="pv_chart"}
-			<div class="row">
+			<div class="control-group">
 				{formlabel label="Stats Period" for="days"}
 				{forminput}
 					<input type="text" name="days" id="days" size="5" value="{$smarty.request.days}" /> {tr}days{/tr}
@@ -110,7 +110,7 @@
 				{/forminput}
 			</div>
 
-			<div class="row submit">
+			<div class="control-group submit">
 				<input type="submit" name="pv_chart" value="{tr}Display{/tr}" />
 			</div>
 		{/form}
