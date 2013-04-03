@@ -1,5 +1,5 @@
 {strip}
-<ul>
+<ul class="dropdown-menu sub-menu">
 	<li><a class="item" href="{$smarty.const.KERNEL_PKG_URL}admin/index.php?page=stats">{tr}Stats Settings{/tr}</a></li>
 	<li><a class="item" href="{$smarty.const.STATS_PKG_URL}index.php">{tr}Site Stats{/tr}</a></li>
 	{if $gBitSystem->mDb->mType eq 'postgres'}
