@@ -111,7 +111,7 @@
 			</div>
 
 			<div class="control-group submit">
-				<input type="submit" name="pv_chart" value="{tr}Display{/tr}" />
+				<input type="submit" class="btn" name="pv_chart" value="{tr}Display{/tr}" />
 			</div>
 		{/form}
 
