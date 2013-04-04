@@ -1,12 +1,15 @@
 {strip}
-<ul class="dropdown-menu sub-menu">
-	<li><a class="item" href="{$smarty.const.KERNEL_PKG_URL}admin/index.php?page=stats">{tr}Stats Settings{/tr}</a></li>
-	<li><a class="item" href="{$smarty.const.STATS_PKG_URL}index.php">{tr}Site Stats{/tr}</a></li>
-	{if $gBitSystem->mDb->mType eq 'postgres'}
-		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}users.php">{tr}User Stats{/tr}</a></li>
-	{/if}
-	{if $gBitSystem->isFeatureActive( 'stats_referers' ) and $gBitUser->hasPermission( 'p_stats_view_referer' )}
-		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}referer_stats.php">{tr}Referer Stats{/tr}</a></li>
-	{/if}
-</ul>
+<li class="dropdown-submenu">
+    <a href="#" onclick="return(false);" tabindex="-1" class="sub-menu-root">{tr}{$smarty.const.STATS_PKG_DIR|capitalize}{/tr}</a>
+	<ul class="dropdown-menu sub-menu">
+		<li><a class="item" href="{$smarty.const.KERNEL_PKG_URL}admin/index.php?page=stats">{tr}Stats Settings{/tr}</a></li>
+		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}index.php">{tr}Site Stats{/tr}</a></li>
+		{if $gBitSystem->mDb->mType eq 'postgres'}
+			<li><a class="item" href="{$smarty.const.STATS_PKG_URL}users.php">{tr}User Stats{/tr}</a></li>
+		{/if}
+		{if $gBitSystem->isFeatureActive( 'stats_referers' ) and $gBitUser->hasPermission( 'p_stats_view_referer' )}
+			<li><a class="item" href="{$smarty.const.STATS_PKG_URL}referer_stats.php">{tr}Referer Stats{/tr}</a></li>
+		{/if}
+	</ul>
+</li>
 {/strip}
