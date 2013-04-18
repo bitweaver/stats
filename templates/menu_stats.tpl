@@ -1,5 +1,5 @@
 {strip}
-<a class="dropdown-toggle" data-toggle="dropdown" href="#"> {tr}{$packageMenuTitle}{/tr} <b class="caret"></b></a>
+{if $packageMenuTitle}<a class="dropdown-toggle" data-toggle="dropdown" href="#"> {tr}{$packageMenuTitle}{/tr} <b class="caret"></b></a>{/if}
 <ul class="dropdown-menu">
 	{if $gBitUser->hasPermission( 'p_stats_view' )}
 		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}index.php">{booticon iname="icon-home" iexplain="Site Stats" ilocation=menu}</a></li>
