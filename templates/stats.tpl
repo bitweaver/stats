@@ -5,7 +5,7 @@
 	</div>
 
 	<div class="body">
-		<table class="data">
+		<table class="table data">
 			<caption>{tr}Global Statistics{/tr}</caption>
 			<tr class="{cycle values="odd,even"}"><td>{tr}Started{/tr}</td><td style="text-align:right;">{$siteStats.started|bit_short_date}</td></tr>
 			<tr class="{cycle}"><td>{tr}Days online{/tr}</td><td style="text-align:right;">{$siteStats.days}</td></tr>
@@ -17,7 +17,7 @@
 
 		<br /><hr /><br />
 
-		<table class="data">
+		<table class="table data">
 			<caption>{tr}Site Overview{/tr}</caption>
 			<tr>
 				<th>{smartlink ititle="Content Type" isort=content_type_guid}</th>
@@ -36,7 +36,7 @@
 
 		<br /><hr /><br />
 
-		<table class="data">
+		<table class="table data">
 			<caption>{tr}Package Statistics{/tr}</caption>
 			{foreach from=$contentStats item=stats key=guid}
 				<tr>

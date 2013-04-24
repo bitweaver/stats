@@ -7,7 +7,7 @@
 	</div>
 
 	<div class="body">
-		<table class="data">
+		<table class="table data">
 			<caption>{tr}User Registration Statistics{/tr}</caption>
 			{assign var=refCount value=0}
 			{foreach from=$referers key=host item=reg}

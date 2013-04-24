@@ -19,7 +19,7 @@
 </tr>
 </table>
 
-<table class="data">
+<table class="table data">
 <tr>
 <th><a href="{$smarty.const.SEARCH_PKG_URL}stats.php?offset={$offset}&amp;sort_mode={if $sort_mode eq 'term_desc'}term_asc{else}term_desc{/if}">{tr}Term{/tr}</a></th>
 <th><a href="{$smarty.const.SEARCH_PKG_URL}stats.php?offset={$offset}&amp;sort_mode={if $sort_mode eq 'hits_desc'}hits_asc{else}hits_desc{/if}">{tr}Searched{/tr}</a></th>
