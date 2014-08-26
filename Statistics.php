@@ -15,7 +15,7 @@ class Statistics extends BitBase {
 	public static function prepGetList( &$pListHash ) {
 
 		if( !empty( $pListHash['period'] ) ) {
-			$pListHash['period_format'] = BitDb::getPeriodFormat( $pListHash['period_format'] );
+			$pListHash['period_format'] = BitDb::getPeriodFormat( $pListHash['period'] );
 		}
 
 		parent::prepGetList( $pListHash );
