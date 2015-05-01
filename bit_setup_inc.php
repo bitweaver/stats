@@ -71,9 +71,16 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 		if( $urlHash = parse_url( $pRefererUrl ) ) {
 			$ret = $urlHash['host'];
 			if( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], 'q=' ) !== FALSE ) {
+				// google and bing search param
 				parse_str( $urlHash['query'] );
 				if( !empty( $q ) ) {
 					$ret .= '/...q='.$q;
+				}
+			} elseif( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], 'p=' ) !== FALSE ) {
+				// yahoo search param
+				parse_str( $urlHash['query'] );
+				if( !empty( $p ) ) {
+					$ret .= '/...p='.$p;
 				}
 			}
 		} else {
