@@ -18,6 +18,10 @@ $gBitSystem->verifyPermission( 'p_stats_view_referer' );
 
 $gStats = new Statistics();
 
+if( empty( $_REQUEST['period'] ) || empty( $_REQUEST['timeframe'] ) ) {
+	bit_redirect( STATS_PKG_URL.'users.php' );
+}
+
 // get rid of all referers in the database
 if( isset( $_REQUEST["clear"] )) {
 	$gStats->expungeReferers();
