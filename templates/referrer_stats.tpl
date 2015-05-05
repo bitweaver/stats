@@ -15,16 +15,16 @@
 <div class="floaticon">{bithelp}</div>
 
 <div class="display statistics">
-	<div class="header">
-		<h1>{tr}User Registration Statistics{/tr} {$smarty.request.timeframe|escape}</h1>
-		{minifind period_format="`$smarty.request.period_format`" timeframe="`$smarty.request.timeframe`"}
-	</div>
+	<header class="page-header">
+		
+		<div class="pull-right">{minifind period_format="`$smarty.request.period_format`" timeframe="`$smarty.request.timeframe`"}</div>
+		<h1><a class="btn btn-xs btn-default" href="{$smarty.const.STATS_PKG_URL}users.php">{booticon iname="icon-arrow-left"}</a> {tr}User Registration Statistics{/tr} {$smarty.request.timeframe|escape}</h1>
+	</header>
 
 
 
 	<div class="body">
 		<table class="table data">
-			<caption>{tr}User Registration Statistics{/tr}</caption>
 			{assign var=refCount value=0}
 			{foreach from=$referers key=host item=reg}
 				{assign var=hostKey value=$host|strip:'.':''}
