@@ -5,12 +5,10 @@
 	</div>
 
 	<div class="body">
-		<ul class="list-inline navbar inline">
-			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=day">{tr}Daily{/tr}</a></li>
-			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=week">{tr}Weekly{/tr}</a></li>
-			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=month">{tr}Monthly{/tr}</a></li>
-			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=quarter">{tr}Quarterly{/tr}</a></li>
-			<li><a href="{$smarty.const.STATS_PKG_URL}users.php?period=year">{tr}Yearly{/tr}</a></li>
+		<ul class="nav nav-pills">
+			{foreach from=$periodHash item=periodName key=periodKey}
+			<li role="presentation" class="{if $smarty.request.period==$periodKey} active{/if}"><a href="{$smarty.const.STATS_PKG_URL}users.php?period={$periodKey}">{tr}{$periodName}{/tr}</a></li>
+			{/foreach}
 		</ul>
 
 		<table class="clear data">
@@ -23,7 +21,7 @@
 				<tr class="{cycle values="even,odd"}">
 					<td><a href="{$smarty.const.STATS_PKG_URL}users.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">{$timeframe}</td>
 					<td>
-						[<a href="{$smarty.const.STATS_PKG_URL}referers.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">Referrers</a>]
+						[<a href="{$smarty.const.STATS_PKG_URL}referrers.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">Referrers</a>]
 					</td>
 					<td><div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg m=$userStats.max}%; background:#ff9;padding:0 0 0 5px;"><a href="{$smarty.const.USERS_PKG_URL}admin/index.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">{$reg}</a></div></td>
 				</tr>

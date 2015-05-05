@@ -33,13 +33,14 @@ foreach( array_keys( $referers ) as $k ) {
 	if( $kCount > $maxRegistrations ) {
 		$maxRegistrations = $kCount;
 	}
+
 	foreach( array_keys( $referers[$k] ) as $r ) {
 		$url = parse_url( $referers[$k][$r]['referer_url'] );
 		$revenue = array();
 		if( $gBitSystem->isPackageActive( 'bitcommerce' ) ) {
 			require_once( BITCOMMERCE_PKG_PATH.'includes/bitcommerce_start_inc.php' );
 			require_once( BITCOMMERCE_PKG_PATH.'classes/CommerceStatistics.php' );
-			$revenue = $gCommerceStatistics::getCustomerRevenue( array( 'customers_id' => $referers[$k][$r]['user_id'] ) );
+			$revenue = $gCommerceStatistics->getCustomerRevenue( array( 'customers_id' => $referers[$k][$r]['user_id'] ) );
 			$referers[$k][$r]['revenue'] = $revenue;
 		}
 		if( !empty( $url['query'] ) ) {
@@ -95,5 +96,5 @@ $gBitSmarty->assign_by_ref( 'referers', $referers );
 $gBitSmarty->assign( 'totalRegistrations', $totalRegistrations );
 $gBitSmarty->assign( 'maxRegistrations', $maxRegistrations );
 $gBitSmarty->assign( 'listInfo', $_REQUEST['listInfo'] );
-$gBitSystem->display( 'bitpackage:stats/referer_stats.tpl', tra( 'Referer Statistics' ), array( 'display_mode' => 'display' ));
+$gBitSystem->display( 'bitpackage:stats/referrer_stats.tpl', tra( 'Referer Statistics' ), array( 'display_mode' => 'display' ));
 ?>

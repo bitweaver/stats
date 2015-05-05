@@ -53,6 +53,7 @@
 										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramKey}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramKey}">{$paramKey}</a>
 									</h4>
 								</div>
+{if $paramValues.values}
 								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{$smarty.foreach.agstat.iter}">
 									<div class="panel-body">
 										<div class="panel-group" id="accordion-{$hostHash}-{$paramKey}" role="tablist" aria-multiselectable="true">
@@ -90,6 +91,7 @@
 										</div>
 									</div>
 								</div>
+{/if}
 							</div>
 						{/foreach}
 							{assign var=paramKey value="Everything"}
@@ -104,6 +106,7 @@
 										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramKey}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramKey}">{$paramKey}</a>
 									</h4>
 								</div>
+								{if $reg}
 								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{$smarty.foreach.agstat.iter}">
 									<div class="panel-body">
 										<div class="panel-group" id="accordion-{$hostHash}-{$paramKey}" role="tablist" aria-multiselectable="true">
@@ -118,20 +121,19 @@
 											</thead>
 											<tbody>
 											{foreach from=$reg key=userId item=user}
-												<tr class="{cycle values='odd,even'}">
-													<td class="date">{$user.registration_date|bit_date_format}</td>
-													<td>
-														<strong style="font-size:larger">{displayname hash=$user}</strong>{if $user.referer_url}<br/><a href="{$user.referer_url|escape}">{$user.referer_url|stats_referer_display_short}</a>{/if}
-													</td>
-	<td class="text-right">{if $user.revenue.total_orders}{$user.revenue.total_orders}{/if}</td>
-	<td class="text-right">{if $user.revenue.total_revenue}{$gCommerceCurrencies->format($user.revenue.total_revenue)}{/if}</td>
-												</tr>
+											<tr class="{cycle values='odd,even'}">
+												<td class="date">{$user.registration_date|bit_date_format}</td>
+												<td><strong style="font-size:larger">{displayname hash=$user}</strong>{if $user.referer_url}<br/><a href="{$user.referer_url|escape}">{$user.referer_url|stats_referer_display_short}</a>{/if}</td>
+												<td class="text-right">{if $user.revenue.total_orders}{$user.revenue.total_orders}{/if}</td>
+												<td class="text-right">{if $user.revenue.total_revenue}{$gCommerceCurrencies->format($user.revenue.total_revenue)}{/if}</td>
+											</tr>
 											{/foreach}
 											</tbody>
 											</table>
 										</div>
 									</div>
 								</div>
+								{/if}
 							</div>
 						</div>
 					</td></tr>

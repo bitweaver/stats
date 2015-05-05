@@ -20,6 +20,8 @@ $stats = new Statistics();
 
 $gBitSystem->verifyPackage( 'stats' );
 $gBitSystem->verifyPermission( 'p_stats_view' );
+$periodHash = array( 'day' => 'Daily', 'week' => 'Weekly', 'month' => 'Monthly', 'quarter' => 'Quarterly', 'year' => 'Yearly' );
+$gBitSmarty->assign( 'periodHash', $periodHash );
 
 if( !isset( $_REQUEST["period"] )) {
 	$_REQUEST["period"] = 'month';
