@@ -20,7 +20,9 @@
 				<tr class="{cycle values="even,odd"}">
 					<td>{$timeframe}</td>
 					<td>
-						[<a href="{$smarty.const.STATS_PKG_URL}referrers.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">Referrers</a>]
+					{if $gBitSystem->isFeatureActive( 'stats_referers' ) and $gBitUser->hasPermission( 'p_stats_view_referer' )}
+						[<a href="{$smarty.const.STATS_PKG_URL}referers.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">Referrers</a>]
+					{/if}
 					</td>
 					<td><div style="width:{math equation="round( ( r / m ) * 100 )" r=$reg m=$userStats.max}%; background:#ff9;padding:0 0 0 5px;">{booticon iname="icon-user"} <a href="{$smarty.const.USERS_PKG_URL}admin/index.php?period={$smarty.request.period}&amp;timeframe={$timeframe|urlencode}">{$reg}</a></div></td>
 				</tr>
