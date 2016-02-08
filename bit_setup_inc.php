@@ -31,7 +31,7 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 	if( !$gBitUser->isRegistered() && !empty( $_SERVER['HTTP_REFERER'] )  && strlen( $_SERVER['HTTP_REFERER'] ) > 9 ) {
 		// Explode the HTTP_REFERER address to split up the string 
 		if( $ref = explode('/', $_SERVER['HTTP_REFERER']) ) {
-			if( $ref[0] == 'http:' && $ref[2] != $_SERVER['HTTP_HOST'] ) {
+			if( $ref[2] != $_SERVER['HTTP_HOST'] ) {
 				// we have a standard refering URL
 				if( empty( $_COOKIE['referer_url'] ) ) {
 					setcookie( 'referer_url', $_SERVER['HTTP_REFERER'], time()+60*60*24*180, $gBitSystem->getConfig( 'cookie_path', BIT_ROOT_URL ), $gBitSystem->getConfig( 'cookie_domain', '' ));
