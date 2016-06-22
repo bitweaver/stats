@@ -132,7 +132,7 @@ class Statistics extends BitBase {
 
 					$store = $parsed['scheme'].'://'.$parsed['host'];
 
-					$this->mDb->StartTrans();
+					$this->StartTrans();
 					$query = "UPDATE `".BIT_DB_PREFIX."stats_referers` SET `hits`=`hits`+1,`last`=? WHERE `referer`=?";
 					$this->mDb->query( $query, array( $now, $store ));
 
@@ -141,7 +141,7 @@ class Statistics extends BitBase {
 						$query = "INSERT INTO `".BIT_DB_PREFIX."stats_referers`( `last`, `referer`, `hits` ) VALUES( ?, ?, ? )";
 						$this->mDb->query( $query, array( $now, $store, 1 ));
 					}
-					$this->mDb->CompleteTrans();
+					$this->CompleteTrans();
 				}
 			}
 		}
@@ -156,7 +156,7 @@ class Statistics extends BitBase {
 	 */
 	function addPageview() {
 		$dayzero = mktime( 0, 0, 0, date( "m" ), date( "d" ), date( "Y" ));
-		$this->mDb->StartTrans();
+		$this->StartTrans();
 		$query = "UPDATE `".BIT_DB_PREFIX."stats_pageviews` SET `pageviews`=`pageviews`+1 WHERE `stats_day`=?";
 		$this->mDb->query( $query, array( $dayzero ));
 		// if the above didn't affect the db, we know that the entry doesn't exist yet.
@@ -164,7 +164,7 @@ class Statistics extends BitBase {
 			$query = "INSERT INTO `".BIT_DB_PREFIX."stats_pageviews`( `pageviews`, `stats_day` ) VALUES( ?, ? )";
 			$this->mDb->query( $query, array( 1, $dayzero ));
 		}
-		$this->mDb->CompleteTrans();
+		$this->CompleteTrans();
 	}
 
 	/**

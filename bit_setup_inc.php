@@ -48,21 +48,21 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 	// make sure all referrals are removed
 	function stats_user_expunge( &$pObject ) {
 		if( is_a( $pObject, 'BitUser' ) && !empty( $pObject->mUserId ) ) {
-			$pObject->mDb->StartTrans();
+			$pObject->StartTrans();
 			$pObject->mDb->query( "DELETE FROM `".BIT_DB_PREFIX."stats_referer_users_map` WHERE user_id=?", array( $pObject->mUserId ) );
-			$pObject->mDb->CompleteTrans();
+			$pObject->CompleteTrans();
 		}
 	}
 	
 	function stats_user_register( &$pObject ) {
 		if( !empty( $_COOKIE['referer_url'] ) && is_a( $pObject, 'BitUser' ) && !empty( $pObject->mUserId ) ) {
-			$pObject->mDb->StartTrans();
+			$pObject->StartTrans();
 			if( !$refererId = $pObject->mDb->getOne( "SELECT `referer_url_id` FROM `".BIT_DB_PREFIX."stats_referer_urls` WHERE `referer_url`=?", array(  $_COOKIE['referer_url'] ) ) ) {
 				$refererId = $pObject->mDb->GenID( 'stats_referer_url_id_seq' );
 				$pObject->mDb->query( "INSERT INTO `".BIT_DB_PREFIX."stats_referer_urls` (`referer_url_id`,`referer_url`) VALUES(?,?)", array( $refererId, $_COOKIE['referer_url'] ) );
 			}
 			$pObject->mDb->query( "INSERT INTO `".BIT_DB_PREFIX."stats_referer_users_map` (`user_id`,`referer_url_id`) VALUES(?,?)", array( $pObject->mUserId, $refererId ) );
-			$pObject->mDb->CompleteTrans();
+			$pObject->CompleteTrans();
 		}
 	}
 
