@@ -72,7 +72,7 @@ class Statistics extends BitBase {
 					 	LEFT JOIN `".BIT_DB_PREFIX."stats_referer_users_map` srum ON(uu.`user_id`=srum.`user_id`)
 						LEFT JOIN  `".BIT_DB_PREFIX."stats_referer_urls` sru ON (sru.`referer_url_id`=srum.`referer_url_id`)
 				$whereSql ORDER BY ".$this->mDb->convertSortmode( $pListHash['sort_mode'] );
-		if( $rs = $this->mDb->query( $query, $bindVars, -1, $pListHash['offset'], ($gBitSystem->isLive() ? 1800 : NULL) ) ) {
+		if( $rs = $this->mDb->query( $query, $bindVars, -1, $pListHash['offset'], ($gBitSystem->isLive() ? 3600 : BIT_QUERY_DEFAULT) ) ) {
 
 			while( $row = $rs->fetchRow() ) {
 				$key = $row['hash_key'];
