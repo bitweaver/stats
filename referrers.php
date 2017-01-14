@@ -95,8 +95,8 @@ function computeStats( &$aggregateStats, $k, $key, $value, $revenue, $userHash )
 $gBitThemes->loadCss( CONFIG_PKG_PATH.'themes/bootstrap/bootstrap-table/bootstrap-table.css');
 $gBitThemes->loadJavascript( CONFIG_PKG_PATH.'themes/bootstrap/bootstrap-table/bootstrap-table.js');
 
-$gBitSmarty->assign_by_ref( 'aggregateStats', $aggregateStats );
-$gBitSmarty->assign_by_ref( 'referers', $referers );
+$gBitSmarty->assignByRef( 'aggregateStats', $aggregateStats );
+$gBitSmarty->assignByRef( 'referers', $referers );
 $gBitSmarty->assign( 'totalRegistrations', $totalRegistrations );
 $gBitSmarty->assign( 'maxRegistrations', $maxRegistrations );
 $gBitSmarty->assign( 'listInfo', $_REQUEST['listInfo'] );
