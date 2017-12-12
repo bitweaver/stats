@@ -45,7 +45,7 @@
 				<tbody id="{$hostHash}" style="display:none">
 					<tr><td colspan="6">
 						<div class="panel-group" id="accordion-{$hostHash}" role="tablist" aria-multiselectable="true">
-						{foreach from=$aggregateStats.$host.values item=paramValues key=paramKey name=agstat}
+						{foreach from=$aggregateStats.$host.values item=paramValues key=paramKey}
 							<div class="panel panel-default">
 								<div class="panel-heading" role="tab" id="accordion-{$paramKey}">
 									<div class="pull-right">{$paramValues.registrations} {booticon iname="icon-user"} {$paramValues.orders} {booticon iname="icon-shopping-cart"} {$gCommerceCurrencies->format($paramValues.revenue)}</div>
@@ -54,7 +54,7 @@
 									</h4>
 								</div>
 {if $paramValues.values}
-								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{$smarty.foreach.agstat.iter}">
+								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel">
 									<div class="panel-body">
 										<div class="panel-group" id="accordion-{$hostHash}-{$paramKey}" role="tablist" aria-multiselectable="true">
 <table data-toggle="table">
@@ -107,7 +107,7 @@
 									</h4>
 								</div>
 								{if $reg}
-								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{$smarty.foreach.agstat.iter}">
+								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel">
 									<div class="panel-body">
 										<div class="panel-group" id="accordion-{$hostHash}-{$paramKey}" role="tablist" aria-multiselectable="true">
 											<table data-toggle="table">
