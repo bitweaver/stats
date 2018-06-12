@@ -1,24 +1,30 @@
 {strip}
 {* Google analytics setup *}
-{if $gBitSystem->isLive() && !$gBitUser->hasPermission( 'p_users_admin' )}
+{if $gBitSystem->isTracking()}
+
 	{* **** GOOGLE ANALYTICS **** *}
 	{if $gBitSystem->getConfig('google_analytics_ua')}
-{literal}
+<script async src="https://www.googletagmanager.com/gtag/js?id={$gBitSystem->getConfig('google_analytics_ua')}"></script>
 <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', '{/literal}{$gBitSystem->getConfig('google_analytics_ua')}{literal}', 'auto');
-{/literal}{if $gBitUser->isRegistered()}{literal}
-  ga('set', '&uid', '{/literal}{$gBitUser->mUserId}{literal}'); // Set the user ID using signed-in user_id.
-{/literal}{/if}{literal}
-  ga('require', 'displayfeatures');
-  ga('require', 'linkid', 'linkid.js');
-  ga('send', 'pageview');
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){ldelim}dataLayer.push(arguments);{rdelim}
+	gtag('js', new Date());
+	gtag('config', '{$gBitSystem->getConfig('google_analytics_ua')}');
+	{if $gBitUser->isRegistered()}gtag('set', {ldelim}'user_id': '{$gBitUser->mUserId}'{rdelim});{/if}
 </script>
-{/literal}
+
+{*<script>
+	{literal}(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');{/literal}
+	ga('create', '{$gBitSystem->getConfig('google_analytics_ua')}', 'auto');
+	{if $gBitUser->isRegistered()}ga('set', 'userId', '{$gBitUser->mUserId}');{/if}
+	ga('require', 'displayfeatures');
+	ga('require', 'linkid', 'linkid.js');
+{if $gBitSystem->isPackageActive('bitcommerce')}
+	ga('require', 'ec');
+{/if}
+	ga('send', 'pageview');
+</script>*}
+	{/if}
 
 	{* **** BOOSTSUITE **** *}
 	{*if $gBitSystem->getConfig('boostsuite_site_id')}
@@ -37,6 +43,5 @@ var _bsc = _bsc || {"suffix":""};
 </script>
 	{/if*}
 
-	{/if}
 {/if}
 {/strip}
