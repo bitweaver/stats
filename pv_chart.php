@@ -18,7 +18,7 @@
  */
 require_once( '../kernel/setup_inc.php' );
 include_once( STATS_PKG_PATH . "Statistics.php" );
-include_once( UTIL_PKG_PATH . "phplot.php" );
+include_once( UTIL_PKG_INC . "phplot.php" );
 
 $gBitSystem->isPackageActive( 'stats' );
 $gBitSystem->verifyPermission( 'p_stats_view' );
