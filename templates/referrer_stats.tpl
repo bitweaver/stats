@@ -74,7 +74,7 @@
 		{foreach from=$valueHash.users item=userHash}
 			<li class="item width100p" style="border-bottom:1px solid #cccccc;">
 				<div class="inline-block width10p date">{$userHash.registration_date|bit_date_format}</div>
-				<div class="inline-block width65p">{if $userHash.referer_url}<a href="{$userHash.referer_url|escape}">{$userHash.referer_url|stats_referer_display_short}</a><br/>{/if}{BitUser::getDisplayLink(1,$userHash)} - {$userHash.email}</div>
+				<div class="inline-block width65p">{if $userHash.referer_url}<a href="{$userHash.referer_url|escape}">{$userHash.referer_url|stats_referer_display_short}</a><br/>{/if}{BitUser::getDisplayLink($userHash,1)} - {$userHash.email}</div>
 				<div class="inline-block text-right width10p">{if $userHash.revenue.total_orders}<a target="_new" href="{$smarty.const.BITCOMMERCE_PKG_URL}admin/list_orders.php?user_id={$userHash.user_id}">{$userHash.revenue.total_orders} {tr}orders{/tr}</a>{/if}</div>
 				<div class="inline-block text-right width10p">{if $userHash.revenue.total_revenue}{$gCommerceCurrencies->format($userHash.revenue.total_revenue)}{/if}</div>
 			</li>
