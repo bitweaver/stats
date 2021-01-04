@@ -72,8 +72,9 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 			$ret = $urlHash['host'];
 			if( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], 'q=' ) !== FALSE ) {
 				// google and bing search param
-				parse_str( $urlHash['query'] );
-				if( !empty( $q ) ) {
+				$result = array();
+				parse_str( $urlHash['query'], $result );
+				if( !empty( $result['q'] ) ) {
 					$ret .= '/...q='.$q;
 				}
 			} elseif( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], 'p=' ) !== FALSE ) {
