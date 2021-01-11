@@ -75,7 +75,7 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 				$result = array();
 				parse_str( $urlHash['query'], $result );
 				if( !empty( $result['q'] ) ) {
-					$ret .= '/...q='.$q;
+					$ret .= '/...q='.$result['q'];
 				}
 			} elseif( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], 'p=' ) !== FALSE ) {
 				// yahoo search param
