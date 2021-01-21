@@ -70,18 +70,15 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 		$ret = '';
 		if( $urlHash = parse_url( $pRefererUrl ) ) {
 			$ret = $urlHash['host'];
-			if( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], 'q=' ) !== FALSE ) {
-				// google and bing search param
-				$result = array();
-				parse_str( $urlHash['query'], $result );
-				if( !empty( $result['q'] ) ) {
-					$ret .= '/...q='.$result['q'];
-				}
-			} elseif( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], 'p=' ) !== FALSE ) {
-				// yahoo search param
-				parse_str( $urlHash['query'] );
-				if( !empty( $p ) ) {
-					$ret .= '/...p='.$p;
+			// q= google and bing search param, p= yahoo search param
+			$searchStrings = array( 'q', 'p' );
+			foreach( $searchStrings as $param ) {
+				if( !empty( $urlHash['query'] ) && strpos( $urlHash['query'], $param.'=' ) !== FALSE ) {
+					$result = array();
+					parse_str( $urlHash['query'], $result );
+					if( !empty( $result[$param] ) ) {
+						$ret .= '/...'.$param.'='.$result[$param];
+					}
 				}
 			}
 		} else {
