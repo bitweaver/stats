@@ -42,8 +42,8 @@ foreach( array_keys( $referers ) as $k ) {
 		$url = parse_url( $referers[$k][$r]['referer_url'] );
 		$revenue = array();
 		if( $gBitSystem->isPackageActive( 'bitcommerce' ) ) {
-			require_once( BITCOMMERCE_PKG_INCLUDE_PATH.'includes/bitcommerce_start_inc.php' );
-			require_once( BITCOMMERCE_PKG_PATH.'classes/CommerceStatistics.php' );
+			require_once( BITCOMMERCE_PKG_INCLUDE_PATH.'bitcommerce_start_inc.php' );
+			require_once( BITCOMMERCE_PKG_CLASS_PATH.'CommerceStatistics.php' );
 			$revenue = $gCommerceStatistics->getCustomerRevenue( array( 'customers_id' => $referers[$k][$r]['user_id'] ) );
 			$referers[$k][$r]['revenue'] = $revenue;
 		}
