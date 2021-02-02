@@ -242,8 +242,8 @@ class Statistics extends BitBase {
 
 		$ret = array();
 		foreach( $gLibertySystem->mContentTypes as $guid => $type ) {
-			if( $gLibertySystem->requireHandlerFile( $type )) {
-				$object = new $type['handler_class']();
+			if( $typeClass = $gLibertySystem->getContentClassName( $guid )) {
+				$object = new $typeClass();
 				if( method_exists( $object, 'getStats' )) {
 					$ret[$guid] = $object->getStats();
 				}
