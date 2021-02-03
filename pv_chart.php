@@ -16,7 +16,7 @@
 /**
  * required setup
  */
-require_once( '../kernel/setup_inc.php' );
+require_once( '../kernel/includes/setup_inc.php' );
 include_once( STATS_PKG_PATH . "Statistics.php" );
 include_once( UTIL_PKG_INCLUDE_PATH . "phplot.php" );
 
