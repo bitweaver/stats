@@ -22,7 +22,7 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 			'users_register_function'   => 'stats_user_register',
 	) );
 
-	require_once( STATS_PKG_PATH.'Statistics.php' );
+	require_once( STATS_PKG_CLASS_PATH.'Statistics.php' );
 	$stats = new Statistics();
 	if( $gBitSystem->isFeatureActive('stats_pageviews') ) {
 		$stats->addPageview();
@@ -47,6 +47,7 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 
 	// make sure all referrals are removed
 	function stats_user_expunge( &$pObject ) {
+eb( $pObject );
 		if( is_a( $pObject, 'BitUser' ) && !empty( $pObject->mUserId ) ) {
 			$pObject->StartTrans();
 			$pObject->mDb->query( "DELETE FROM `".BIT_DB_PREFIX."stats_referer_users_map` WHERE user_id=?", array( $pObject->mUserId ) );
