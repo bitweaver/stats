@@ -47,7 +47,6 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 
 	// make sure all referrals are removed
 	function stats_user_expunge( &$pObject ) {
-eb( $pObject );
 		if( is_a( $pObject, 'BitUser' ) && !empty( $pObject->mUserId ) ) {
 			$pObject->StartTrans();
 			$pObject->mDb->query( "DELETE FROM `".BIT_DB_PREFIX."stats_referer_users_map` WHERE user_id=?", array( $pObject->mUserId ) );
