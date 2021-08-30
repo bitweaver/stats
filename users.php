@@ -14,7 +14,7 @@
  * Required files
  */
 require_once( '../kernel/includes/setup_inc.php' );
-require_once( STATS_PKG_PATH.'Statistics.php' );
+require_once( STATS_PKG_CLASS_PATH.'Statistics.php' );
 
 $stats = new Statistics();
 
