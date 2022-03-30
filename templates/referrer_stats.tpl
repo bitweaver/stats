@@ -24,7 +24,7 @@
 
 
 	<div class="body">
-		<table class="table data">
+		<table class="table data referrer-stats">
 			{assign var=refCount value=0}
 			{foreach from=$referers key=host item=reg}
 				{assign var=hostKey value=$host|strip:'.':''}
@@ -37,8 +37,8 @@
 					<th class="text-right"><div class="floaticon"> [{math equation="round((x / y) * 100)" x=$reg|@count y=$totalRegistrations}% ] <a href="{$smarty.server.SCRIPT_NAME}?period={$smarty.request.period}&amp;find={$host|escape}">{booticon iname='icon-clock'}</a></div></th>
 				{if $aggregateStats.$host}
 					<th class="text-right">{$reg|@count} {booticon iname="icon-user"}</th>
-					<th class="text-right">{$aggregateStats.$host.orders|default:"0"} {booticon iname="icon-shopping-cart"}</th>
-					<th class="text-right">{$gCommerceCurrencies->format($aggregateStats.$host.revenue|default:"0.00")}</th>
+					<th class="text-right">{$aggregateStats.$host.info.orders|default:"0"} {booticon iname="icon-shopping-cart"}</th>
+					<th class="text-right">{$gCommerceCurrencies->format($aggregateStats.$host.info.revenue|default:"0.00")}</th>
 				{/if}
 				</tr>
 
@@ -48,47 +48,19 @@
 						{foreach from=$aggregateStats.$host.values item=paramValues key=paramKey}
 							<div class="panel panel-default">
 								<div class="panel-heading" role="tab" id="accordion-{$paramKey}">
-									<div class="pull-right">{$paramValues.registrations} {booticon iname="icon-user"} {$paramValues.orders} {booticon iname="icon-shopping-cart"} {$gCommerceCurrencies->format($paramValues.revenue)}</div>
+									<div class="pull-right">{$paramValues.info.registrations} {booticon iname="icon-user"} {$paramValues.info.orders} {booticon iname="icon-shopping-cart"} {$gCommerceCurrencies->format($paramValues.info.revenue)}</div>
 									<h4 class="panel-title">
 										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramKey}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramKey}">{$paramKey}</a>
 									</h4>
 								</div>
 {if $paramValues.values}
 								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel">
-									<div class="panel-body">
-										<div class="panel-group" id="accordion-{$hostHash}-{$paramKey}" role="tablist" aria-multiselectable="true">
-<table data-toggle="table">
-<thead>
-<tr>
-	<th>{$paramKey}</th>
-	<th class="text-center" data-field="registrations" data-sortable="true">{booticon iname="icon-user"}</th>
-	<th class="text-center" data-field="order_count" data-sortable="true">{booticon iname="icon-shopping-cart"}</th>
-	<th class="text-center" data-field="revenue" data-sortable="true" data-sorter="priceSorter">Revenue</th>
-</tr>
-</thead>
-<tbody>
-										{foreach from=$paramValues.values item=valueHash key=valueKey name=paramval}
-<tr>
-	<td><a href="#" onclick="BitBase.toggleElementDisplay('order-list-{$hostHash}-{$paramKey}-{$valueKey}','block');return false;">{$valueKey|default:"unknown"}</a>
-		<ol class="data" id="order-list-{$hostHash}-{$paramKey}-{$valueKey}" style="display:none">
-		{foreach from=$valueHash.users item=userHash}
-			<li class="item width100p" style="border-bottom:1px solid #cccccc;">
-				<div class="inline-block width10p date">{$userHash.registration_date|bit_date_format}</div>
-				<div class="inline-block width65p">{if $userHash.referer_url}<a href="{$userHash.referer_url|escape}">{$userHash.referer_url|stats_referer_display_short}</a><br/>{/if}{BitUser::getDisplayLinkFromHash($userHash,1)} - {$userHash.email}</div>
-				<div class="inline-block text-right width10p">{if $userHash.revenue.total_orders}<a target="_new" href="{$smarty.const.BITCOMMERCE_PKG_URL}admin/list_orders.php?user_id={$userHash.user_id}">{$userHash.revenue.total_orders} {tr}orders{/tr}</a>{/if}</div>
-				<div class="inline-block text-right width10p">{if $userHash.revenue.total_revenue}{$gCommerceCurrencies->format($userHash.revenue.total_revenue)}{/if}</div>
-			</li>
-		{/foreach}
-		</ol>
-	</td>
-	<td class="text-right">{if $valueHash.users}{$valueHash.users|count}{/if}</td>
-	<td class="text-right">{if $valueHash.orders}{$valueHash.orders}{/if}</td>
-	<td class="text-right">{if $valueHash.revenue}{$gCommerceCurrencies->format($valueHash.revenue)}{/if}</td>
-</tr>
-										{/foreach}
-</tbody>
+									<div class="panel-body" style="padding:0">
+<table class="table">
+	{foreach from=$paramValues.values item=subHash}
+		{include file="bitpackage:stats/referrer_stats_ctm_inc.tpl" tableHash=$subHash depth=1}
+	{/foreach}
 </table>
-										</div>
 									</div>
 								</div>
 {/if}
@@ -108,7 +80,7 @@
 								</div>
 								{if $reg}
 								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel">
-									<div class="panel-body">
+									<div class="panel-body" style="padding:0">
 										<div class="panel-group" id="accordion-{$hostHash}-{$paramKey}" role="tablist" aria-multiselectable="true">
 											<table data-toggle="table">
 											<thead>
@@ -124,7 +96,7 @@
 											<tr class="{cycle values='odd,even'}">
 												<td class="date">{$user.registration_date|bit_date_format}</td>
 												<td><strong style="font-size:larger">{displayname hash=$user}</strong>{if $user.referer_url}<br/><a href="{$user.referer_url|escape}">{$user.referer_url|stats_referer_display_short}</a>{/if}</td>
-												<td class="text-right">{if $user.revenue.total_orders}{$user.revenue.total_orders}{/if}</td>
+												<td class="text-right">{if $user.revenue.total_orders}<a target="_new" href="{$smarty.const.BITCOMMERCE_PKG_URL}admin/list_orders.php?user_id={$user.user_id}">{$user.revenue.total_orders}</a>{/if}</td>
 												<td class="text-right">{if $user.revenue.total_revenue}{$gCommerceCurrencies->format($user.revenue.total_revenue)}{/if}</td>
 											</tr>
 											{/foreach}

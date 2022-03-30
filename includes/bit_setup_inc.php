@@ -68,7 +68,7 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 
 	function stats_referer_display_short( $pRefererUrl ) {
 		$ret = '';
-		if( $urlHash = parse_url( $pRefererUrl ) ) {
+		if( ($urlHash = parse_url( $pRefererUrl )) && !empty( $urlHash['host'] ) ) {
 			$ret = $urlHash['host'];
 			// q= google and bing search param, p= yahoo search param
 			$searchStrings = array( 'q', 'p' );
@@ -82,7 +82,7 @@ if( $gBitSystem->isPackageActive( 'stats' )) {
 				}
 			}
 		} else {
-			$ret = tra( 'Unknown URL' );
+//			$ret = tra( 'Unknown URL' );
 		}
 		return $ret;
 	}
