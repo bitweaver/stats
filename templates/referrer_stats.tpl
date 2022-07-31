@@ -18,10 +18,8 @@
 	<header class="page-header">
 		
 		<div class="pull-right">{minifind period_format="`$smarty.request.period_format`" timeframe="`$smarty.request.timeframe`"}</div>
-		<h1><a class="btn btn-xs btn-default" href="{$smarty.const.STATS_PKG_URL}users.php">{booticon iname="icon-arrow-left"}</a> {tr}User Registration Statistics{/tr} {$smarty.request.timeframe|escape}</h1>
+		<h1><a class="btn btn-xs btn-default" href="{$smarty.const.STATS_PKG_URL}users.php">{booticon iname="fa-arrow-left"}</a> {tr}User Registration Statistics{/tr} {$smarty.request.timeframe|escape}</h1>
 	</header>
-
-
 
 	<div class="body">
 		<table class="table data referrer-stats">
@@ -32,12 +30,12 @@
 				{assign var=totalReg value=$totalReg+$regCount}
 				{assign var=hostHash value=$host|md5}	
 				<tr>
-					<th>{booticon iname='icon-search' class="btn btn-default btn-sm" onclick="BitBase.toggleElementDisplay('`$hostHash`','table-row-group');"}</th>
+					<th>{booticon iname='fa-magnifying-glass' class="btn btn-default btn-sm" onclick="BitBase.toggleElementDisplay('`$hostHash`','table-row-group');"}</th>
 					<th style="position:relative"><div style="position:absolute;z-index:-1;width:{math equation="round( ( r / m ) * 100 )" r=$reg|@count m=$maxRegistrations}%; background:#CAF3FF;padding:0 0 0 5px;">&nbsp;</div>{$host|escape}</th>
-					<th class="text-right"><div class="floaticon"> [{math equation="round((x / y) * 100)" x=$reg|@count y=$totalRegistrations}% ] <a href="{$smarty.server.SCRIPT_NAME}?period={$smarty.request.period}&amp;find={$host|escape}">{booticon iname='icon-clock'}</a></div></th>
+					<th class="text-right"><div class="floaticon"> [{math equation="round((x / y) * 100)" x=$reg|@count y=$totalRegistrations}% ] <a href="{$smarty.server.SCRIPT_NAME}?period={$smarty.request.period}&amp;find={$host|escape}">{booticon iname='fa-clock'}</a></div></th>
 				{if $aggregateStats.$host}
-					<th class="text-right">{$reg|@count} {booticon iname="icon-user"}</th>
-					<th class="text-right">{$aggregateStats.$host.info.orders|default:"0"} {booticon iname="icon-shopping-cart"}</th>
+					<th class="text-right">{$reg|@count} {booticon iname="fa-user"}</th>
+					<th class="text-right">{$aggregateStats.$host.info.orders|default:"0"} {booticon iname="fa-cart-shopping"}</th>
 					<th class="text-right">{$gCommerceCurrencies->format($aggregateStats.$host.info.revenue|default:"0.00")}</th>
 				{/if}
 				</tr>
@@ -48,7 +46,7 @@
 						{foreach from=$aggregateStats.$host.values item=paramValues key=paramKey}
 							<div class="panel panel-default">
 								<div class="panel-heading" role="tab" id="accordion-{$paramKey}">
-									<div class="pull-right">{$paramValues.info.registrations} {booticon iname="icon-user"} {$paramValues.info.orders} {booticon iname="icon-shopping-cart"} {$gCommerceCurrencies->format($paramValues.info.revenue)}</div>
+									<div class="pull-right">{$paramValues.info.registrations} {booticon iname="fa-user"} {$paramValues.info.orders} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($paramValues.info.revenue)}</div>
 									<h4 class="panel-title">
 										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramKey}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramKey}">{$paramKey}</a>
 									</h4>
@@ -71,7 +69,7 @@
 								<div class="panel-heading" role="tab" id="accordion-{$paramKey}">
 								{if $aggregateStats.$host}
 									<div class="pull-right">
-										{$reg|@count} {booticon iname="icon-user"} {$aggregateStats.$host.orders|default:"0"} {booticon iname="icon-shopping-cart"} {$gCommerceCurrencies->format($aggregateStats.$host.revenue|default:"0.00")}
+										{$reg|@count} {booticon iname="fa-user"} {$aggregateStats.$host.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($aggregateStats.$host.revenue|default:"0.00")}
 									</div>
 								{/if}
 									<h4 class="panel-title">
@@ -87,7 +85,7 @@
 											<tr>
 												<th></th>
 												<th data-field="name" data-sortable="true">User</th>
-												<th class="text-center" data-field="order_count" data-sortable="true">{booticon iname="icon-shopping-cart"}</th>
+												<th class="text-center" data-field="order_count" data-sortable="true">{booticon iname="fa-cart-shopping"}</th>
 												<th class="text-center" data-field="revenue" data-sortable="true" data-sorter="priceSorter">Revenue</th>
 											</tr>
 											</thead>

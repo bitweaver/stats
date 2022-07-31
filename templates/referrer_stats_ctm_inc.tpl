@@ -2,8 +2,8 @@
 <tbody style="{if $depth>1}display:none;{/if}" class="group-body-{$parentHash} depth-{$depth}">
 <tr>
 	<th style="padding-left:{$depth|default:1}em;"><a href="#" onclick="$('.group-body-{$titleHash}.depth-{$depth+1}').toggle();return false;">{$tableHash.info.title|default:"unknown"}</a></th>
-	<th class="text-right width10p"><a href="#" onclick="BitBase.toggleElementDisplay('user-list-{$titleHash}','block');return false;">{$tableHash.info.users|count|default:"0"} {booticon iname="icon-user"}</a></th>
-	<th class="text-right width10p">{$tableHash.info.orders|default:"0"} {booticon iname="icon-shopping-cart"}</th>
+	<th class="text-right width10p"><a href="#" onclick="BitBase.toggleElementDisplay('user-list-{$titleHash}','block');return false;">{$tableHash.info.users|count|default:"0"} {booticon iname="fa-user"}</a></th>
+	<th class="text-right width10p">{$tableHash.info.orders|default:"0"} {booticon iname="fa-cart-shopping"}</th>
 	<th class="text-right width10p">{$gCommerceCurrencies->format($tableHash.info.revenue)}</th>
 </tr>
 <tr>
