@@ -2,7 +2,29 @@
 {* Google analytics setup *}
 {if $gBitSystem->isTracking()}
 
-	{* **** GOOGLE ANALYTICS **** *}
+	{* **** GOOGLE TAG MANAGER **** *}
+	{if $gBitSystem->getConfig('google_tagmanager_id')}
+{literal}
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','{/literal}{$gBitSystem->getConfig('google_tagmanager_id')}{literal}');</script>
+<!-- End Google Tag Manager -->
+	{/if}
+
+	{* **** GOOGLE ADWORDS **** *}
+	{if $gBitSystem->getConfig('google_adwordstag_id')}
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={/literal}{$gBitSystem->getConfig('google_adwordstag_id')}{literal}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{/literal}{$gBitSystem->getConfig('google_adwordstag_id')}{literal}')
+</script>
+{/literal}
+	{/if}
+
+	{* **** GOOGLE UNIVERSAL ANALYTICS **** *}
+<!-- Google Univeral Analytics -->
 	{if $gBitSystem->getConfig('analytics_google_ua')}
 <script async src="https://www.googletagmanager.com/gtag/js?id={$gBitSystem->getConfig('analytics_google_ua')}"></script>
 <script>
