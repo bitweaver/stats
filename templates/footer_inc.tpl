@@ -6,7 +6,7 @@
 {/if}
 
 {* **** MICROSOFT ANALYTICS **** *}
-{if $gBitSystem->getConfig('analytics_microsoft_ti')}
-<noscript><img src="//bat.bing.com/action/0?ti={$gBitSystem->getConfig('analytics_microsoft_ti')}&Ver=2" height="0" width="0" style="display:none; visibility: hidden;" alt="."></noscript>
+{if $gBitSystem->getConfig('microsoft_analytics_ti')}
+<noscript><img src="//bat.bing.com/action/0?ti={$gBitSystem->getConfig('microsoft_analytics_ti')}&Ver=2" height="0" width="0" style="display:none; visibility: hidden;" alt="."></noscript>
 {/if}
 
