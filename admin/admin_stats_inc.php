@@ -2,6 +2,7 @@
 $formFeaturesBit = array( 
 	'stats_referers' => array(
 		'label' => 'Referer Statistics',
+		'type' => "checkbox",
 		'note' => 'Records statistics including HTTP_REFERRER',
 	),
 	'google_tagmanager_id' => array(
@@ -23,9 +24,13 @@ $formFeaturesBit = array(
 
 $gBitSmarty->assign( 'formFeaturesBit', $formFeaturesBit );
 
-if( !empty( $_REQUEST['change_prefs'] ) ) {
+if( !empty( $_POST['change_prefs'] ) ) {
 	foreach ( array_keys( $formFeaturesBit ) as $feature) {
-		$gBitSystem->storeConfig( $feature, (isset( $_REQUEST[$feature] ) ? $_REQUEST[$feature] : NULL), STATS_PKG_NAME );
+		if( $formFeaturesBit[$feature]['type'] == 'text' ) {
+			simple_set_value( $feature, STATS_PKG_NAME );
+		} else {
+			simple_set_toggle( $feature, STATS_PKG_NAME );
+		}
 	}
 }
 
