@@ -11,7 +11,7 @@
  * required setup
  */
 require_once( '../kernel/includes/setup_inc.php' );
-include_once( STATS_PKG_PATH.'Statistics.php' );
+require_once( STATS_PKG_CLASS_PATH.'Statistics.php' );
 
 $gBitSystem->verifyPackage( 'stats' );
 $gBitSystem->verifyPermission( 'p_stats_view' );
