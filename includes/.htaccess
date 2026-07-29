@@ -1,0 +1,22 @@
+# Package private directory
+#
+# Block direct HTTP access to this includes directory and every descendant.
+# PHP include/require and filesystem access are unaffected.
+
+<FilesMatch "(?i)^(?:\.htaccess|web\.config)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order Allow,Deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order Allow,Deny
+  Deny from all
+</IfModule>
