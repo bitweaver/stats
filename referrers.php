@@ -140,9 +140,9 @@ function computeStats( &$pAggregateStats, $k, $key, $value, $revenue, &$userHash
 }
 */
 
-$gBitThemes->loadCss( STATS_PKG_PATH.'css/stats.css');
-$gBitThemes->loadCss( CONFIG_PKG_PATH.'themes/bootstrap/bootstrap-table/bootstrap-table.css');
-$gBitThemes->loadJavascript( CONFIG_PKG_PATH.'themes/bootstrap/bootstrap-table/bootstrap-table.js');
+$gBitThemes->loadCss(STATS_PKG_PATH.'css/stats.css', TRUE, 300, TRUE, FALSE, FALSE);
+$gBitThemes->loadCss(CONFIG_PKG_PATH.'themes/bootstrap/bootstrap-table/bootstrap-table.css', TRUE, 300, TRUE, FALSE, FALSE);
+$gBitThemes->loadJavascript(CONFIG_PKG_PATH.'themes/bootstrap/bootstrap-table/bootstrap-table.js', FALSE, 600, TRUE, FALSE);
 
 $gBitSmarty->assignByRef( 'aggregateStats', $aggregateStats );
 $gBitSmarty->assignByRef( 'referers', $referers );
