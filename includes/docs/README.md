@@ -21,14 +21,19 @@ the dependencies do not thereby depend on this package.
 ## Boundary
 
 Does not own canonical content hit storage when that data belongs to Liberty.
+Does not own advertising-account configuration (final URLs, tracking
+templates). Installs that put campaign keys on landing URLs (for example
+`ctm_*`) persist those keys here as first-touch landing query data.
 
 ## Documentation map
 
 - [Architecture](architecture.md) — initialization, components, and request flow.
+  Includes first-touch **referrer** vs **landing** cookies.
 - [Source reference](source-reference.md) — source-derived files, classes,
   controllers, schema artifacts, plugins, and templates.
 - [Development guide](development.md) — safe change workflow, extension points,
   validation, and maintenance guidance.
 - [Security](security.md) — trust boundaries and direct-HTTP access requirements.
 - [Collection and reporting](collection-reporting.md) — pageviews, referrers,
-  registration attribution, content summaries, privacy, and retention.
+  first-touch landing / tracking-query attribution, content summaries, privacy,
+  and retention.

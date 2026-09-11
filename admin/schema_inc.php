@@ -18,12 +18,20 @@ $tables = array(
 	referer_url C(4096) NOTNULL
 ",
 
+'stats_landing_urls' => "
+	landing_url_id I4 PRIMARY,
+	landing_url C(4096) NOTNULL,
+	landing_query C(4096)
+",
+
 'stats_referer_users_map' => "
 	referer_url_id I4 PRIMARY,
-	user_id I4 PRIMARY
+	user_id I4 PRIMARY,
+	landing_url_id I4
 	CONSTRAINT '
 		, CONSTRAINT `stats_referer_users_url_ref`  FOREIGN KEY (`referer_url_id`) REFERENCES `".BIT_DB_PREFIX."stats_referer_urls` (`referer_url_id`)
-		, CONSTRAINT `stats_referer_users_user_ref` FOREIGN KEY (`user_id`) REFERENCES `".BIT_DB_PREFIX."users_users` (`user_id`) '
+		, CONSTRAINT `stats_referer_users_user_ref` FOREIGN KEY (`user_id`) REFERENCES `".BIT_DB_PREFIX."users_users` (`user_id`)
+		, CONSTRAINT `stats_referer_users_landing_ref` FOREIGN KEY (`landing_url_id`) REFERENCES `".BIT_DB_PREFIX."stats_landing_urls` (`landing_url_id`) '
 ",	
 );
 
@@ -42,13 +50,15 @@ $gBitInstaller->registerPackageInfo( STATS_PKG_NAME, array(
 $indices = array (
 	'stats_referer_url_idx' => array( 'table' => 'stats_referer_urls', 'cols' => 'referer_url', 'opts' => 'UNIQUE' ),
 	'stats_referer_map_user_idx' => array( 'table' => 'stats_referer_users_map', 'cols' => 'user_id', 'opts' => NULL ),
+	'stats_referer_map_landing_idx' => array( 'table' => 'stats_referer_users_map', 'cols' => 'landing_url_id', 'opts' => NULL ),
 );
 //	'stats_referer_map_url_idx' => array( 'table' => 'stats_referer_urls', 'cols' => 'referer_url_id', 'opts' => NULL ),
 $gBitInstaller->registerSchemaIndexes( STATS_PKG_NAME, $indices );
 
 // ### Sequences
 $sequences = array (
-	'stats_referer_url_id_seq' => array( 'start' => 1 )
+	'stats_referer_url_id_seq' => array( 'start' => 1 ),
+	'stats_landing_url_id_seq' => array( 'start' => 1 ),
 );
 $gBitInstaller->registerSchemaSequences( STATS_PKG_NAME, $sequences );
 

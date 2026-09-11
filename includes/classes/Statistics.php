@@ -67,10 +67,11 @@ class Statistics extends BitBase {
 			}
 		}
 
-		$query = "SELECT $hashSql uu.*, sru.`referer_url`
+		$query = "SELECT $hashSql uu.*, sru.`referer_url`, slu.`landing_url`, slu.`landing_query`
 					FROM `".BIT_DB_PREFIX."users_users` uu
 					 	LEFT JOIN `".BIT_DB_PREFIX."stats_referer_users_map` srum ON(uu.`user_id`=srum.`user_id`)
 						LEFT JOIN  `".BIT_DB_PREFIX."stats_referer_urls` sru ON (sru.`referer_url_id`=srum.`referer_url_id`)
+						LEFT JOIN  `".BIT_DB_PREFIX."stats_landing_urls` slu ON (slu.`landing_url_id`=srum.`landing_url_id`)
 				$whereSql ORDER BY ".$this->mDb->convertSortmode( $pListHash['sort_mode'] );
 		if( $rs = $this->mDb->query( $query, $bindVars, -1, $pListHash['offset'], ($gBitSystem->isLive() ? 3600 : BIT_QUERY_DEFAULT) ) ) {
 
@@ -86,7 +87,9 @@ class Statistics extends BitBase {
 								parse_str( $params['adurl'], $params );
 							}
 						}
-						$key = $parseUrl['host'];
+						if( !empty( $parseUrl['host'] ) ) {
+							$key = $parseUrl['host'];
+						}
 					}
 				}
 				$ret[$key][$row['user_id']] = $row;
@@ -100,6 +103,63 @@ class Statistics extends BitBase {
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Tracking keys belong on the landing URI (first-touch). Fall back to a
+	 * legacy referrer `adurl=` query used by historical log imports.
+	 */
+	public static function trackingParamsFromRow( $pRow ) {
+		$params = array();
+		if( !empty( $pRow['landing_query'] ) ) {
+			parse_str( $pRow['landing_query'], $params );
+		} elseif( !empty( $pRow['landing_url'] ) && strpos( $pRow['landing_url'], '?' ) !== false ) {
+			$q = parse_url( $pRow['landing_url'], PHP_URL_QUERY );
+			if( !empty( $q ) ) {
+				parse_str( $q, $params );
+			}
+		}
+		if( empty( $params ) && !empty( $pRow['referer_url'] ) ) {
+			$parsed = parse_url( $pRow['referer_url'] );
+			if( !empty( $parsed['query'] ) ) {
+				parse_str( $parsed['query'], $refParams );
+				if( !empty( $refParams['adurl'] ) ) {
+					$ad = parse_url( $refParams['adurl'] );
+					if( !empty( $ad['query'] ) ) {
+						parse_str( $ad['query'], $params );
+					} elseif( strpos( $refParams['adurl'], '?' ) === false && strpos( $refParams['adurl'], 'ctm_' ) !== false ) {
+						parse_str( $refParams['adurl'], $params );
+					}
+				} else {
+					$params = $refParams;
+				}
+			}
+		}
+		return $params;
+	}
+
+	public static function namedCtmCampaign( $pParams ) {
+		return ( !empty( $pParams['ctm_campaign'] ) );
+	}
+
+	public static function isPaidTracking( $pParams ) {
+		if( empty( $pParams ) || !is_array( $pParams ) ) {
+			return false;
+		}
+		foreach( $pParams as $k => $v ) {
+			if( strpos( $k, 'ctm_' ) === 0 ) {
+				return true;
+			}
+		}
+		foreach( array( 'gclid', 'msclkid', 'gad_source', 'gad_campaignid', 'gbraid', 'wbraid' ) as $k ) {
+			if( !empty( $pParams[$k] ) ) {
+				return true;
+			}
+		}
+		if( !empty( $pParams['utm_source'] ) && strtolower( $pParams['utm_source'] ) == 'google' ) {
+			return true;
+		}
+		return false;
 	}
 
 	function sortRefererHash( $a, $b ) {

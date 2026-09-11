@@ -41,6 +41,13 @@ it proves that the server executed a directly requested implementation file.
   templates, responses, logs, or these documents.
 - File operations must use validated storage helpers and must prevent traversal.
 
+## Referrer and landing URLs
+
+`p_stats_view_referer` is the sensitive report. Stored referrer and landing
+strings may contain search terms, click ids, and email-like query values.
+Treat them as untrusted. Escape in templates. Do not log cookie values into
+package documentation.
+
 ## Package boundary
 
 Does not own canonical content hit storage when that data belongs to Liberty.

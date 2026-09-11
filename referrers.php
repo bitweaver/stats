@@ -47,38 +47,32 @@ foreach( array_keys( $referers ) as $refSite ) {
 			$revenue = $gCommerceStatistics->getCustomerRevenue( array( 'customers_id' => $referers[$refSite][$r]['user_id'] ) );
 			$referers[$refSite][$r]['revenue'] = $revenue;
 			$subVals = array( $refSite );
-			if( !empty( $url['query'] ) ) {
-				$urlParams = array();
-				parse_str( $url['query'], $urlParams );
-				if( !empty( $urlParams['adurl'] ) ) {
-					$adUrl = parse_url( $urlParams['adurl'] );
-					if( !empty( $adUrl['query'] ) ) {
-						array_push( $subVals, 'PPC' );
-						$adParams = array();
-						parse_str( $adUrl['query'], $adParams );
-						foreach( array( 'ctm_campaign', 'ctm_adgroup', 'ctm_term' ) as $subKey ) {
-							if( isset( $adParams[$subKey] ) ) {
-								$subKeyVal = !empty( $adParams[$subKey] ) ? $adParams[$subKey] : 'unknown' ;
-								array_push( $subVals, $subKeyVal );
-							}
-						}
-					} else {
-						array_push( $subVals, 'Paid', $adUrl['path'] );
-					}
-				} else {
-					// bing paid query
-					foreach( array( 'pq' => 'Paid', 'q' => 'Organic', 'p' => 'Organic', 'unknown' => 'Unknown' ) as $key=>$title ) {
-						if( $key == 'unknown' || isset( $urlParams[$key] ) ) {
-							array_push( $subVals, $title, BitBase::getParameter( $urlParams, $key, 'unknown' ) );
-							break;
-						}
+			$track = Statistics::trackingParamsFromRow( $referers[$refSite][$r] );
+			if( Statistics::namedCtmCampaign( $track ) ) {
+				array_push( $subVals, 'PPC' );
+				foreach( array( 'ctm_campaign', 'ctm_adgroup', 'ctm_term' ) as $subKey ) {
+					if( isset( $track[$subKey] ) ) {
+						array_push( $subVals, $track[$subKey] !== '' ? $track[$subKey] : 'unknown' );
 					}
 				}
-			} else {
-if( !empty( $url['path'] ) && $url['path'] != '/' ) {
-	array_push( $subVals, $url['path'] );
-}
-
+			} elseif( Statistics::isPaidTracking( $track ) ) {
+				array_push( $subVals, 'untracked paid' );
+				if( !empty( $track['utm_campaign'] ) ) {
+					array_push( $subVals, $track['utm_campaign'] );
+				} elseif( !empty( $track['gclid'] ) ) {
+					array_push( $subVals, 'gclid' );
+				}
+			} elseif( !empty( $url['query'] ) ) {
+				$urlParams = array();
+				parse_str( $url['query'], $urlParams );
+				foreach( array( 'pq' => 'Paid', 'q' => 'Organic', 'p' => 'Organic', 'unknown' => 'Unknown' ) as $key=>$title ) {
+					if( $key == 'unknown' || isset( $urlParams[$key] ) ) {
+						array_push( $subVals, $title, BitBase::getParameter( $urlParams, $key, 'unknown' ) );
+						break;
+					}
+				}
+			} elseif( !empty( $url['path'] ) && $url['path'] != '/' ) {
+				array_push( $subVals, $url['path'] );
 			}
 			computeStats( $aggregateStats, $subVals, $revenue, $referers[$refSite][$r] );
 		}

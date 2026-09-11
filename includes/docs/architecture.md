@@ -18,6 +18,19 @@ load `kernel/includes/setup_inc.php` before using framework globals.
 
 Owns statistics collection, aggregation, ranking views, and related administrative controls.
 
+Registration attribution is **first-touch**:
+
+- `referer_url` cookie — external `HTTP_REFERER` as received. After browsers
+  stopped sending referrer query strings, this is typically `scheme://host`.
+- `landing_url` cookie — first request URI that contains tracking query keys
+  (`ctm_*`, `utm_*`, `gclid`, and similar). Set only if empty. This is the
+  first-party stand-in for the campaign/keyword data that used to arrive on
+  the referrer.
+
+Both are written to `stats_referer_urls` / `stats_landing_urls` and
+`stats_referer_users_map` at register. Do not copy landing query parameters
+onto the stored referrer URL.
+
 ## Dependency direction
 
 This package depends on kernel, liberty, users, themes. Calls into shared packages should
@@ -49,6 +62,10 @@ of tables, sequences, indexes, constraints, permissions, and default
 preferences. Runtime SQL must be checked against that file and relevant upgrade
 scripts. Never infer a deployed database's exact migration state from the base
 schema alone.
+
+`admin/upgrades/1.0.2.php` adds `stats_landing_urls` and
+`stats_referer_users_map.landing_url_id`. Some deployments created those
+objects out of band before the upgrade existed.
 
 ## Presentation
 

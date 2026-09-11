@@ -17,7 +17,17 @@
 - `admin/schema_inc.php`
 - `admin/upgrade_inc.php`
 - `admin/upgrades/1.0.1.php`
+- `admin/upgrades/1.0.2.php` — landing URL table and map column
 - `includes/bit_setup_inc.php`
+- `includes/stats_functions_inc.php` — first-touch cookies and persist helpers
+
+## Declared schema tables
+
+- `stats_pageviews`
+- `stats_referer_urls`
+- `stats_landing_urls`
+- `stats_referer_users_map`
+- `stats_referers`
 
 ## First-party classes and interfaces
 
@@ -29,19 +39,13 @@
 - `admin/schema_inc.php`
 - `admin/upgrade_inc.php`
 - `admin/upgrades/1.0.1.php`
+- `admin/upgrades/1.0.2.php`
 - `index.php`
 - `item_chart.php`
 - `pv_chart.php`
 - `referrers.php`
 - `usage_chart.php`
 - `users.php`
-
-## Declared schema tables
-
-- `stats_pageviews`
-- `stats_referer_urls`
-- `stats_referer_users_map`
-- `stats_referers`
 
 ## Plugin and module directories
 

@@ -5,20 +5,38 @@
 When active, package setup constructs `Statistics`. Feature flags control:
 
 - `stats_pageviews` → `addPageview()`.
-- `stats_referers` → `storeReferer()`.
+- `stats_referers` → `storeReferer()` (host-level hit counter) and first-touch
+  registration cookies.
 
-External referrer information can be stored in a cookie for later registration
-attribution. User service callbacks map that referrer when a user registers and
-remove mappings on user expunge.
+`stats_capture_first_touch()` (anonymous users only, cookie empty):
+
+- `referer_url` from external `HTTP_REFERER`.
+- `landing_url` from `REQUEST_URI` when the query contains tracking keys
+  (`ctm_*`, `utm_*`, `gclid`, `msclkid`, `gad_*`).
+
+Cookies last 180 days, SameSite=Lax, not overwritten. On register,
+`stats_persist_registration_attribution()` inserts URL rows and the user map.
+On expunge the map row is deleted; URL rows are kept.
+
+Do not treat `HTTP_REFERER` as the campaign record. Tracking keys belong on
+the **landing** query. A paid click whose landing has `gclid` / empty `ctm_*`
+and no named `ctm_campaign` is untracked paid traffic, not organic.
+
+`referrers.php` nests named `ctm_campaign` → `ctm_adgroup` → `ctm_term` from
+`Statistics::trackingParamsFromRow()` (landing first, then legacy referrer
+`adurl=`). Revenue is lifetime commerce totals when bitcommerce is active.
 
 ## Tables
 
 - `stats_pageviews` — aggregate/time-oriented pageview data.
-- `stats_referers` — referrer counters/records.
-- `stats_referer_urls` — normalized referrer URL identities.
-- `stats_referer_users_map` — registration attribution.
+- `stats_referers` — referrer host hit counters (`scheme://host`).
+- `stats_referer_urls` — normalized referrer URL identities (first-touch).
+- `stats_landing_urls` — first-touch landing path + query (`landing_query`
+  holds `ctm_*` / `utm_*` / `gclid` when split correctly).
+- `stats_referer_users_map` — `user_id` → referrer and optional landing.
 
-Review exact columns and upgrade state before reporting queries.
+Review exact columns and upgrade state before reporting queries. Deployed
+databases may have `stats_landing_urls` before `schema_inc.php` declared it.
 
 ## Referrer handling
 
