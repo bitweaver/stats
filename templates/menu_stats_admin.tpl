@@ -9,5 +9,8 @@
 {if $gBitSystem->isFeatureActive( 'stats_referers' ) and $gBitUser->hasPermission( 'p_stats_view_referer' )}
 	<li><a class="item" href="{$smarty.const.STATS_PKG_URL}referrers.php">{tr}Referer Stats{/tr}</a></li>
 {/if}
+{if $gBitUser->hasPermission( 'p_stats_admin' )}
+	<li><a class="item" href="{$smarty.const.STATS_PKG_URL}ad_roas.php">{tr}Ad ROAS{/tr}</a></li>
+{/if}
 </ul>
 {/strip}

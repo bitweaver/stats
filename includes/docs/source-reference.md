@@ -7,8 +7,8 @@
 
 | Artifact | Count |
 |---|---:|
-| PHP files | 13 |
-| Smarty templates | 10 |
+| PHP files | 15 |
+| Smarty templates | 11 |
 | JavaScript files | 0 |
 | CSS files | 1 |
 
@@ -20,6 +20,7 @@
 - `admin/upgrades/1.0.2.php` — landing URL table and map column
 - `includes/bit_setup_inc.php`
 - `includes/stats_functions_inc.php` — first-touch cookies and persist helpers
+- `includes/ad_roas_lib.php` — optional warehouse ROAS queries
 
 ## Declared schema tables
 
@@ -44,6 +45,7 @@
 - `item_chart.php`
 - `pv_chart.php`
 - `referrers.php`
+- `ad_roas.php`
 - `usage_chart.php`
 - `users.php`
 
@@ -52,6 +54,7 @@
 
 ## Templates
 
+- `templates/ad_roas.tpl`
 - `templates/admin_stats.tpl`
 - `templates/footer_inc.tpl`
 - `templates/html_head_inc.tpl`

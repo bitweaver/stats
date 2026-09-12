@@ -26,6 +26,16 @@ and no named `ctm_campaign` is untracked paid traffic, not organic.
 `Statistics::trackingParamsFromRow()` (landing first, then legacy referrer
 `adurl=`). Revenue is lifetime commerce totals when bitcommerce is active.
 
+`ad_roas.php` (`p_stats_admin`) compares Commerce ROAS to the selected
+network's ROAS (for setting that network's target). Cost is warehouse
+`ad_metrics_daily.spend`. Commerce value is Bitcommerce paid `order_total`
+through `ad_order_attribution`. When `ad_network.click_window_days` is
+set, a second Commerce total counts only orders within that many days of
+first-touch registration — the same click lookback the advertiser uses.
+`network_value / spend` is the advertiser ROAS (partial). If the click
+window is unknown, the page asks and stores it. Queries live in
+`includes/ad_roas_lib.php`.
+
 ## Tables
 
 - `stats_pageviews` — aggregate/time-oriented pageview data.
@@ -65,7 +75,8 @@ Validate sort modes and bind filter values.
 Menu/report visibility uses `p_stats_view` and
 `p_stats_view_referer`. Referrer/user attribution is more sensitive than
 aggregate site statistics; preserve the narrower permission distinction in
-controllers and templates.
+controllers and templates. First-party ad ROAS (spend and order totals) uses
+`p_stats_admin`.
 
 ## Counting semantics
 

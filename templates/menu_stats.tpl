@@ -10,5 +10,8 @@
 	{if $gBitSystem->isFeatureActive( 'stats_referers' ) and $gBitUser->hasPermission( 'p_stats_view_referer' )}
 		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}referrers.php">{booticon iname="fa-bullhorn" iexplain="Referer Stats"}</a></li>
 	{/if}
+	{if $gBitUser->hasPermission( 'p_stats_admin' )}
+		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}ad_roas.php">{booticon iname="fa-chart-line" iexplain="Ad ROAS"}</a></li>
+	{/if}
 </ul>
 {/strip}

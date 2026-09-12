@@ -31,6 +31,25 @@ Both are written to `stats_referer_urls` / `stats_landing_urls` and
 `stats_referer_users_map` at register. Do not copy landing query parameters
 onto the stored referrer URL.
 
+`ad_roas.php` compares **Commerce ROAS** to **{network} ROAS** so staff can
+set that advertiser's target ROAS:
+
+- **Cost** — `SUM(ad_metrics_daily.spend)` at campaign grain. Any
+  `network_code`.
+- **Commerce value** — paid Bitcommerce `order_total` through
+  `ad_order_attribution` (calendar window). That is this install's books.
+- **Commerce value (click window)** — same orders whose purchase is within
+  `ad_network.click_window_days` of first-touch (`users_users.registration_date`).
+  This is the apples-to-apples comparator for the advertiser's click lookback.
+- **Network value** — `ad_metrics_daily.network_value`. Network ROAS is that
+  over the same spend. Partial / last-click; never substitute for Commerce.
+
+Click-through window is stored on `ad_network`. If it is null, the page asks
+and saves it.
+
+The page does not create warehouse tables or write to ad networks. Without
+Bitcommerce, spend can still list and value is zero.
+
 ## Dependency direction
 
 This package depends on kernel, liberty, users, themes. Calls into shared packages should
