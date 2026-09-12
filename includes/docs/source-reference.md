@@ -21,6 +21,7 @@
 - `includes/bit_setup_inc.php`
 - `includes/stats_functions_inc.php` — first-touch cookies and persist helpers
 - `includes/ad_roas_lib.php` — optional warehouse ROAS queries
+- `includes/ad_setup_inc.php` — ad API key catalog and Microsoft OAuth helper
 
 ## Declared schema tables
 
@@ -46,6 +47,7 @@
 - `pv_chart.php`
 - `referrers.php`
 - `ad_roas.php`
+- `ad_setup.php`
 - `usage_chart.php`
 - `users.php`
 
@@ -55,6 +57,7 @@
 ## Templates
 
 - `templates/ad_roas.tpl`
+- `templates/ad_setup.tpl`
 - `templates/admin_stats.tpl`
 - `templates/footer_inc.tpl`
 - `templates/html_head_inc.tpl`

@@ -12,6 +12,7 @@
 	{/if}
 	{if $gBitUser->hasPermission( 'p_stats_admin' )}
 		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}ad_roas.php">{booticon iname="fa-chart-line" iexplain="Ad ROAS"}</a></li>
+		<li><a class="item" href="{$smarty.const.STATS_PKG_URL}ad_setup.php">{booticon iname="fa-key" iexplain="Ad API setup"}</a></li>
 	{/if}
 </ul>
 {/strip}

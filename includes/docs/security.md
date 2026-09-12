@@ -37,6 +37,8 @@ it proves that the server executed a directly requested implementation file.
 - Content-level access can be stricter than a global package permission.
 - Identifiers must be validated before use in SQL, paths, redirects, or object
   construction.
+- Ad API tokens on `ad_setup.php` require `p_stats_admin`. Saved values are
+  kernel config, not templates or `includes/docs/`. Masked status only.
 - Secrets and credentials must remain in protected configuration, never in
   templates, responses, logs, or these documents.
 - File operations must use validated storage helpers and must prevent traversal.

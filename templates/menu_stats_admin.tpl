@@ -11,6 +11,7 @@
 {/if}
 {if $gBitUser->hasPermission( 'p_stats_admin' )}
 	<li><a class="item" href="{$smarty.const.STATS_PKG_URL}ad_roas.php">{tr}Ad ROAS{/tr}</a></li>
+	<li><a class="item" href="{$smarty.const.STATS_PKG_URL}ad_setup.php">{tr}Ad API setup{/tr}</a></li>
 {/if}
 </ul>
 {/strip}

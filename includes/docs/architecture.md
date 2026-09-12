@@ -47,7 +47,13 @@ set that advertiser's target ROAS:
 Click-through window is stored on `ad_network`. If it is null, the page asks
 and saves it.
 
-The page does not create warehouse tables or write to ad networks. Without
+`ad_setup.php` (`p_stats_admin`) is the control panel for warehouse API
+credentials. Instructions live on the page. Values are stored with
+`storeConfig` (stats package) and are never assigned raw to templates.
+Microsoft OAuth uses this page as the redirect URI to obtain a refresh
+token. CLI pulls read the same keys via `getConfig` after `.secrets`.
+
+The ROAS page does not create warehouse tables or write to ad networks. Without
 Bitcommerce, spend can still list and value is zero.
 
 ## Dependency direction
