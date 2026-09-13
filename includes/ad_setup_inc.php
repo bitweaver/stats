@@ -12,16 +12,17 @@ function stats_ads_setup_catalog() {
 			'keys'  => array(
 				'google_ads_customer_id'       => array( 'label' => 'Customer id', 'hint' => '10 digits, no dashes' ),
 				'google_ads_login_customer_id' => array( 'label' => 'MCC / login customer id', 'hint' => 'Manager account id, no dashes' ),
-				'google_ads_developer_token'   => array( 'label' => 'Developer token', 'hint' => 'Still sent as a header' ),
+				'google_ads_developer_token'   => array( 'label' => 'Developer token', 'hint' => 'MCC API Center. Sent as developer-token on every API call. Not a Bearer access token.' ),
 				'google_ads_api_version'       => array( 'label' => 'API version', 'hint' => 'e.g. v22' ),
-				'google_ads_sa_json'           => array( 'label' => 'Service account JSON path', 'hint' => 'Absolute path on the server, not the JSON itself' ),
+				'google_ads_sa_json'           => array( 'label' => 'Service account JSON', 'hint' => 'Paste the full JSON key. Nightly jobs mint a short-lived access token from this. Do not paste a Bearer token.', 'type' => 'textarea' ),
 			),
 			'steps' => array(
-				'In Google Cloud, enable Google Ads API on the project that owns the service account.',
-				'Create a service account, download its JSON, and store the file outside the web tree.',
+				'Google does not use a long-lived API auth token. Nightly pulls mint a one-hour access token from the service account JSON below, and send the developer token as a header.',
+				'In Google Cloud, enable Google Ads API on the project that owns the service account. Create a service account and download its JSON key.',
 				'On the Google Ads MCC: Admin → Access and security → add the service account email as Read-only.',
+				'Paste the JSON key into Service account JSON on this page (not a file path). Paste the MCC developer token into Developer token.',
 				'Copy the MCC id and the client customer id (digits only) into the fields below.',
-				'Paste the developer token from the MCC API Center if the API still requires the header.',
+				'Production cron is stats/admin/sh_ad_warehouse_pull.php in this package (deployed with the site), not a developer workspace path.',
 			),
 		),
 		'microsoft' => array(
@@ -91,6 +92,10 @@ function stats_ads_mask( $pValue ) {
 		return '';
 	}
 	$len = strlen( $pValue );
+	$trim = ltrim( $pValue );
+	if( $trim !== '' && $trim[0] === '{' ) {
+		return 'set (JSON, '.$len.' chars)';
+	}
 	if( $len <= 4 ) {
 		return 'set ('.$len.' chars)';
 	}
@@ -98,6 +103,9 @@ function stats_ads_mask( $pValue ) {
 }
 
 function stats_ads_get_secret( $pKey ) {
+	if( function_exists( 'ads_get_secret' ) ) {
+		return ads_get_secret( $pKey );
+	}
 	global $gBitSystem;
 	$v = $gBitSystem->getConfig( $pKey );
 	if( $v !== null && $v !== '' ) {
@@ -126,9 +134,11 @@ function stats_ads_status_rows() {
 }
 
 function stats_ads_save_posted_secrets() {
-	global $gBitSystem;
 	if( empty( $_POST['ads_secret'] ) || !is_array( $_POST['ads_secret'] ) ) {
 		return 0;
+	}
+	if( function_exists( 'ads_apply_warehouse_schema' ) ) {
+		ads_apply_warehouse_schema();
 	}
 	$allowed = array_flip( stats_ads_all_keys() );
 	$n = 0;
@@ -140,7 +150,12 @@ function stats_ads_save_posted_secrets() {
 		if( $v === '' ) {
 			continue;
 		}
-		$gBitSystem->storeConfig( $k, $v, STATS_PKG_NAME );
+		if( function_exists( 'ads_store_secret' ) ) {
+			ads_store_secret( $k, $v );
+		} else {
+			global $gBitSystem;
+			$gBitSystem->storeConfig( $k, $v, STATS_PKG_NAME );
+		}
 		$n++;
 	}
 	return $n;
@@ -192,7 +207,14 @@ function stats_ads_microsoft_exchange_code( $pCode ) {
 		$err = isset( $j['error_description'] ) ? $j['error_description'] : ( isset( $j['error'] ) ? $j['error'] : 'HTTP '.$code );
 		return 'Microsoft token exchange failed: '.$err;
 	}
-	global $gBitSystem;
-	$gBitSystem->storeConfig( 'microsoft_ads_refresh_token', $j['refresh_token'], STATS_PKG_NAME );
+	if( function_exists( 'ads_apply_warehouse_schema' ) ) {
+		ads_apply_warehouse_schema();
+	}
+	if( function_exists( 'ads_store_secret' ) ) {
+		ads_store_secret( 'microsoft_ads_refresh_token', $j['refresh_token'] );
+	} else {
+		global $gBitSystem;
+		$gBitSystem->storeConfig( 'microsoft_ads_refresh_token', $j['refresh_token'], STATS_PKG_NAME );
+	}
 	return true;
 }

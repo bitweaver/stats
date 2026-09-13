@@ -51,7 +51,19 @@ and saves it.
 credentials. Instructions live on the page. Values are stored with
 `storeConfig` (stats package) and are never assigned raw to templates.
 Microsoft OAuth uses this page as the redirect URI to obtain a refresh
-token. CLI pulls read the same keys via `getConfig` after `.secrets`.
+token. Google unattended auth is the service-account JSON plus developer
+token; access tokens are minted at pull time and not stored.
+
+Warehouse SQL is `admin/ad_warehouse_schema.sql` (idempotent, including
+`ad_api_secret` for credentials that do not fit `kernel_config` C(250)).
+After deploy, one command applies schema, pulls Google campaign metrics, and
+backfills attribution:
+
+`php stats/admin/sh_ad_warehouse_refresh.php --full`
+
+Nightly: `sh_ad_warehouse_pull.php --metrics=campaign --metrics-only` then
+`sh_ad_warehouse_backfill.php`. Dev: `IS_DEV=1`. Prod: `IS_LIVE=1`. These
+scripts live in this package so they deploy with the site.
 
 The ROAS page does not create warehouse tables or write to ad networks. Without
 Bitcommerce, spend can still list and value is zero.

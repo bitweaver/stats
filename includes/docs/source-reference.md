@@ -7,7 +7,7 @@
 
 | Artifact | Count |
 |---|---:|
-| PHP files | 15 |
+| PHP files | 20 |
 | Smarty templates | 11 |
 | JavaScript files | 0 |
 | CSS files | 1 |
@@ -22,6 +22,8 @@
 - `includes/stats_functions_inc.php` — first-touch cookies and persist helpers
 - `includes/ad_roas_lib.php` — optional warehouse ROAS queries
 - `includes/ad_setup_inc.php` — ad API key catalog and Microsoft OAuth helper
+- `includes/ad_ads_api_inc.php` — Google Ads read-only API (config credentials)
+- `includes/ad_warehouse_inc.php` — warehouse upsert helpers
 
 ## Declared schema tables
 
@@ -37,6 +39,10 @@
 
 ## Web-facing PHP controllers
 
+- `admin/ad_warehouse_schema.sql`
+- `admin/sh_ad_warehouse_pull.php`
+- `admin/sh_ad_warehouse_backfill.php`
+- `admin/sh_ad_warehouse_refresh.php`
 - `admin/admin_stats_inc.php`
 - `admin/schema_inc.php`
 - `admin/upgrade_inc.php`

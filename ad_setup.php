@@ -6,6 +6,8 @@
  */
 
 require_once( '../kernel/includes/setup_inc.php' );
+require_once( STATS_PKG_INCLUDE_PATH.'ad_ads_api_inc.php' );
+require_once( STATS_PKG_INCLUDE_PATH.'ad_warehouse_inc.php' );
 require_once( STATS_PKG_INCLUDE_PATH.'ad_setup_inc.php' );
 
 $gBitSystem->verifyPackage( 'stats' );
@@ -40,9 +42,17 @@ if( !empty( $_POST['save_ads_secrets'] ) ) {
 
 $msAuth = stats_ads_microsoft_authorize_url( $gBitUser->mTicket );
 
+$catalog = stats_ads_setup_catalog();
+foreach( $catalog as $code => $net ) {
+	foreach( $net['keys'] as $key => $meta ) {
+		$val = stats_ads_get_secret( $key );
+		$catalog[$code]['keys'][$key]['set'] = ( $val !== null && $val !== '' );
+		$catalog[$code]['keys'][$key]['mask'] = stats_ads_mask( $val );
+	}
+}
+
 $gBitSmarty->assign( 'feedback', $feedback );
-$gBitSmarty->assign( 'adsCatalog', stats_ads_setup_catalog() );
-$gBitSmarty->assign( 'adsStatus', stats_ads_status_rows() );
+$gBitSmarty->assign( 'adsCatalog', $catalog );
 $gBitSmarty->assign( 'adsRedirectUri', $redirectUri );
 $gBitSmarty->assign( 'adsMsAuthorize', $msAuth );
 
