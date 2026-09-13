@@ -1,10 +1,15 @@
 <?php
 /**
  * Ad warehouse API setup: required keys, how to obtain them, and
- * kernel_config storage. Never print secret values into templates.
+ * stats_prefs storage. Never print secret values into templates.
  */
 
+function stats_ads_href( $pUrl, $pLabel ) {
+	return '<a href="'.htmlspecialchars( $pUrl, ENT_QUOTES, 'UTF-8' ).'" target="_blank" rel="noopener noreferrer">'.htmlspecialchars( $pLabel, ENT_QUOTES, 'UTF-8' ).'</a>';
+}
+
 function stats_ads_setup_catalog() {
+	$azureApps = 'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade';
 	return array(
 		'google' => array(
 			'label' => 'Google Ads',
@@ -17,12 +22,12 @@ function stats_ads_setup_catalog() {
 				'google_ads_sa_json'           => array( 'label' => 'Service account JSON', 'hint' => 'Paste the full JSON key. Nightly jobs mint a short-lived access token from this. Do not paste a Bearer token.', 'type' => 'textarea' ),
 			),
 			'steps' => array(
-				'Google does not use a long-lived API auth token. Nightly pulls mint a one-hour access token from the service account JSON below, and send the developer token as a header.',
-				'In Google Cloud, enable Google Ads API on the project that owns the service account. Create a service account and download its JSON key.',
-				'On the Google Ads MCC: Admin → Access and security → add the service account email as Read-only.',
-				'Paste the JSON key into Service account JSON on this page (not a file path). Paste the MCC developer token into Developer token.',
-				'Copy the MCC id and the client customer id (digits only) into the fields below.',
-				'Production cron is stats/admin/sh_ad_warehouse_pull.php in this package (deployed with the site), not a developer workspace path.',
+				stats_ads_href( 'https://ads.google.com/', 'Google Ads' ).' does not use a long-lived API auth token. Nightly pulls mint a one-hour access token from the service account JSON below, and send the developer token as a header.',
+				'In '.stats_ads_href( 'https://console.cloud.google.com/apis/library/googleads.googleapis.com', 'Google Cloud' ).', enable Google Ads API on the project that owns the service account. Create a service account under '.stats_ads_href( 'https://console.cloud.google.com/iam-admin/serviceaccounts', 'IAM → Service accounts' ).' and download its JSON key.',
+				'In '.stats_ads_href( 'https://ads.google.com/aw/accountaccess', 'Google Ads → Admin → Access and security' ).', add the service account email as Read-only.',
+				'Paste the JSON key into Service account JSON on this page. Paste the MCC developer token from '.stats_ads_href( 'https://ads.google.com/aw/apicenter', 'Google Ads API Center' ).'.',
+				'Copy the MCC id and the client customer id (digits only, no dashes) from '.stats_ads_href( 'https://ads.google.com/', 'Google Ads' ).' into the fields below.',
+				'Production cron is stats/admin/sh_ad_warehouse_pull.php in this package (deployed with the site).',
 			),
 		),
 		'microsoft' => array(
@@ -37,26 +42,30 @@ function stats_ads_setup_catalog() {
 				'microsoft_ads_account_id'      => array( 'label' => 'Account id', 'hint' => 'Digits from Microsoft Ads account settings' ),
 			),
 			'steps' => array(
-				'In Microsoft Advertising (super admin): Tools → Developer, request or copy a developer token. https://developers.ads.microsoft.com/',
-				'In Azure: Microsoft Entra ID → App registrations → New registration. Accounts in any organizational directory. Platform: Web.',
-				'Set the Web redirect URI to the exact URL shown on this page (copy Redirect URI below).',
-				'Certificates & secrets → New client secret. Copy the secret value once.',
-				'Save client id, client secret, and developer token on this page, then click Sign in to Microsoft Advertising.',
+				'In '.stats_ads_href( 'https://ads.microsoft.com/', 'Microsoft Advertising' ).' (super admin): Tools → Developer, or open the '.stats_ads_href( 'https://developers.ads.microsoft.com/', 'developer portal' ).' to request or copy a developer token.',
+				'OAuth apps are created in '.stats_ads_href( 'https://portal.azure.com/', 'Microsoft Azure' ).' (the cloud portal). Open '.stats_ads_href( $azureApps, 'Microsoft Entra ID → App registrations' ).' → New registration. Accounts in any organizational directory. Platform: Web.',
+				'Set the Web redirect URI to the exact URL shown on this page (copy Redirect URI below) in that app registration.',
+				'In the app: Certificates & secrets → New client secret. Copy the secret value once.',
+				'Save client id, client secret, and developer token on this page, then click Sign in to '.stats_ads_href( 'https://ads.microsoft.com/', 'Microsoft Advertising' ).'.',
 				'Consent with a user who can see this install\'s ads account. This page stores the refresh token; it is never shown again.',
-				'Copy Customer id and Account id from Microsoft Ads UI (numbers only, no dashes) into the fields below.',
+				'Copy Customer id (cid) and Account id (aid) from '.stats_ads_href( 'https://ads.microsoft.com/cc/Settings/Account', 'Microsoft Advertising account settings' ).' (numbers only, not the X00… account number).',
 			),
 		),
 		'meta' => array(
 			'label' => 'Meta Ads',
 			'wired' => false,
 			'keys'  => array(),
-			'steps' => array( 'Adapter is not wired. Warehouse network stub exists.' ),
+			'steps' => array(
+				'Adapter is not wired. When it is, credentials come from '.stats_ads_href( 'https://adsmanager.facebook.com/', 'Meta Ads Manager' ).' and '.stats_ads_href( 'https://developers.facebook.com/apps/', 'Meta for Developers' ).'.',
+			),
 		),
 		'tiktok' => array(
 			'label' => 'TikTok Ads',
 			'wired' => false,
 			'keys'  => array(),
-			'steps' => array( 'Adapter is not wired. Warehouse network stub exists.' ),
+			'steps' => array(
+				'Adapter is not wired. When it is, credentials come from '.stats_ads_href( 'https://ads.tiktok.com/', 'TikTok Ads Manager' ).' and '.stats_ads_href( 'https://business-api.tiktok.com/portal/docs', 'TikTok Marketing API' ).'.',
+			),
 		),
 	);
 }

@@ -18,14 +18,16 @@
 
 					<ol>
 						{foreach from=$net.steps item=step}
-							<li>{$step|escape}</li>
+							<li>{$step}</li>
 						{/foreach}
 					</ol>
 
 					{if $code eq 'microsoft'}
 						<p>
 							<strong>{tr}Redirect URI{/tr}</strong>
-							— {tr}paste this exact URL into the Azure app registration (Web redirect URI) before Sign in:{/tr}
+							— {tr}paste this exact URL into the{/tr}
+							<a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noopener noreferrer">{tr}Azure app registration{/tr}</a>
+							{tr}(Web redirect URI) before Sign in:{/tr}
 							<code>{$adsRedirectUri|escape}</code>
 						</p>
 						{if $adsMsAuthorize}
@@ -36,7 +38,11 @@
 								{tr}(saves the refresh token){/tr}
 							</p>
 						{else}
-							<p class="help-block">{tr}Save Azure client id and client secret first, then Sign in appears here.{/tr}</p>
+							<p class="help-block">
+								{tr}Save{/tr}
+								<a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noopener noreferrer">{tr}Azure{/tr}</a>
+								{tr}client id and client secret first, then Sign in appears here.{/tr}
+							</p>
 						{/if}
 					{/if}
 
