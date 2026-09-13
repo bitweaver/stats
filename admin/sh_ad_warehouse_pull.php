@@ -23,8 +23,8 @@ foreach( array( 'IS_DEV', 'IS_LIVE', 'IS_SANDBOX', 'SITE_NAME' ) as $k ) {
 	}
 }
 require_once dirname( __FILE__ ).'/../../config/kernel/cron_setup_inc.php';
-require_once STATS_PKG_INCLUDE_PATH.'ad_ads_api_inc.php';
-require_once STATS_PKG_INCLUDE_PATH.'ad_warehouse_inc.php';
+require_once STATS_PKG_INCLUDE_PATH.'ads_api_lib.php';
+require_once STATS_PKG_INCLUDE_PATH.'ads_warehouse_lib.php';
 ads_refuse_upload( $argv );
 
 $since = date( 'Y-m-d', strtotime( '-30 days' ) );
@@ -54,7 +54,7 @@ foreach( $argv as $arg ) {
 	}
 }
 
-$row = ads_require_warehouse_db();
+$row = ads_require_warehouse_db( $_SERVER );
 fwrite( STDERR, "warehouse pull on {$row['addr']} {$row['db']}\n" );
 if( $doApply ) {
 	$n = ads_apply_warehouse_schema();
@@ -71,7 +71,7 @@ $db = $gBitSystem->mDb;
 
 function warehouse_upsert_account( $network, $cid, $fields ) {
 	ads_upsert_touch(
-		'ad_account',
+		'stats_ad_account',
 		array( 'network_code', 'account_id' ),
 		array(
 			'network_code' => $network,
@@ -91,7 +91,7 @@ function warehouse_upsert_account( $network, $cid, $fields ) {
 
 function warehouse_upsert_campaign( $network, $cid, $camp ) {
 	ads_upsert_touch(
-		'ad_campaign',
+		'stats_ad_campaign',
 		array( 'network_code', 'account_id', 'campaign_id' ),
 		array(
 			'network_code'     => $network,
@@ -142,7 +142,7 @@ function warehouse_flush_metrics( &$batch ) {
 		$binds[] = isset( $row['extra'] ) ? json_encode( $row['extra'] ) : '{}';
 		$binds[] = $now;
 	}
-	$sql = 'INSERT INTO ad_metrics_daily ('.implode( ',', $cols ).') VALUES '.implode( ',', $values ).'
+	$sql = 'INSERT INTO stats_ad_metrics_daily ('.implode( ',', $cols ).') VALUES '.implode( ',', $values ).'
 		ON CONFLICT (metric_date, network_code, account_id, grain, campaign_id, adgroup_id, ad_id, keyword_id) DO UPDATE SET
 		  spend = EXCLUDED.spend,
 		  clicks = EXCLUDED.clicks,
@@ -193,25 +193,25 @@ if( $doMigrate && !ads_warehouse_table_exists( 'ads_spend_daily' ) ) {
 }
 
 if( $doMigrate ) {
-	fwrite( STDERR, "migrate ads_spend_daily -> ad_metrics_daily grain=campaign\n" );
+	fwrite( STDERR, "migrate ads_spend_daily -> stats_ad_metrics_daily grain=campaign\n" );
 	$db->query(
-		"INSERT INTO ad_account (network_code, account_id, account_name, is_manager, currency, first_seen_at, last_seen_at)
+		"INSERT INTO stats_ad_account (network_code, account_id, account_name, is_manager, currency, first_seen_at, last_seen_at)
 		 SELECT 'google', customer_id::text, 'Presto Photo', false, 'USD', now(), now()
 		 FROM ads_spend_daily GROUP BY customer_id
 		 ON CONFLICT (network_code, account_id) DO UPDATE SET last_seen_at = now()"
 	);
 	$db->query(
-		"INSERT INTO ad_campaign (network_code, account_id, campaign_id, campaign_name, channel, status, first_seen_at, last_seen_at)
+		"INSERT INTO stats_ad_campaign (network_code, account_id, campaign_id, campaign_name, channel, status, first_seen_at, last_seen_at)
 		 SELECT 'google', customer_id::text, campaign_id::text, MIN(campaign_name), MIN(channel), MIN(campaign_status), now(), now()
 		 FROM ads_spend_daily GROUP BY customer_id, campaign_id
 		 ON CONFLICT (network_code, account_id, campaign_id) DO UPDATE SET
-		   campaign_name = COALESCE(EXCLUDED.campaign_name, ad_campaign.campaign_name),
-		   channel = COALESCE(EXCLUDED.channel, ad_campaign.channel),
-		   status = COALESCE(EXCLUDED.status, ad_campaign.status),
+		   campaign_name = COALESCE(EXCLUDED.campaign_name, stats_ad_campaign.campaign_name),
+		   channel = COALESCE(EXCLUDED.channel, stats_ad_campaign.channel),
+		   status = COALESCE(EXCLUDED.status, stats_ad_campaign.status),
 		   last_seen_at = now()"
 	);
 	$mig = $db->query(
-		"INSERT INTO ad_metrics_daily (
+		"INSERT INTO stats_ad_metrics_daily (
 			metric_date, network_code, account_id, grain, campaign_id, adgroup_id, ad_id, keyword_id,
 			spend, clicks, impressions, network_conversions, network_value, currency, extra, pulled_at
 		 )
@@ -228,7 +228,7 @@ if( $doMigrate ) {
 		   extra = EXCLUDED.extra,
 		   pulled_at = EXCLUDED.pulled_at"
 	);
-	$n = $db->getOne( "SELECT COUNT(*) FROM ad_metrics_daily WHERE grain='campaign' AND extra->>'source'='ads_spend_daily'" );
+	$n = $db->getOne( "SELECT COUNT(*) FROM stats_ad_metrics_daily WHERE grain='campaign' AND extra->>'source'='ads_spend_daily'" );
 	fwrite( STDERR, "campaign-day rows from ads_spend_daily: $n\n" );
 }
 
@@ -290,14 +290,14 @@ if( $doEntities ) {
 			continue;
 		}
 		$exists = $db->getOne(
-			'SELECT 1 FROM ad_campaign WHERE network_code=? AND account_id=? AND campaign_id=?',
+			'SELECT 1 FROM stats_ad_campaign WHERE network_code=? AND account_id=? AND campaign_id=?',
 			array( $network, (string)$cid, (string)$campId )
 		);
 		if( !$exists ) {
 			warehouse_upsert_campaign( $network, $cid, array( 'id' => $campId, 'name' => null ) );
 		}
 		ads_upsert_touch(
-			'ad_adgroup',
+			'stats_ad_adgroup',
 			array( 'network_code', 'account_id', 'campaign_id', 'adgroup_id' ),
 			array(
 				'network_code'  => $network,
@@ -330,14 +330,14 @@ if( $doEntities ) {
 				continue;
 			}
 			$exists = $db->getOne(
-				'SELECT 1 FROM ad_campaign WHERE network_code=? AND account_id=? AND campaign_id=?',
+				'SELECT 1 FROM stats_ad_campaign WHERE network_code=? AND account_id=? AND campaign_id=?',
 				array( $network, (string)$cid, (string)$campId )
 			);
 			if( !$exists ) {
 				warehouse_upsert_campaign( $network, $cid, array( 'id' => $campId ) );
 			}
 			ads_upsert_touch(
-				'ad_adgroup',
+				'stats_ad_adgroup',
 				array( 'network_code', 'account_id', 'campaign_id', 'adgroup_id' ),
 				array(
 					'network_code'  => $network,
@@ -375,14 +375,14 @@ if( $doEntities ) {
 			continue;
 		}
 		$exists = $db->getOne(
-			'SELECT 1 FROM ad_campaign WHERE network_code=? AND account_id=? AND campaign_id=?',
+			'SELECT 1 FROM stats_ad_campaign WHERE network_code=? AND account_id=? AND campaign_id=?',
 			array( $network, (string)$cid, (string)$campId )
 		);
 		if( !$exists ) {
 			warehouse_upsert_campaign( $network, $cid, array( 'id' => $campId ) );
 		}
 		ads_upsert_touch(
-			'ad_ad',
+			'stats_ad_ad',
 			array( 'network_code', 'account_id', 'campaign_id', 'adgroup_id', 'ad_id' ),
 			array(
 				'network_code'  => $network,
@@ -422,7 +422,7 @@ if( $doEntities ) {
 			continue;
 		}
 		$agExists = $db->getOne(
-			'SELECT 1 FROM ad_adgroup WHERE network_code=? AND account_id=? AND campaign_id=? AND adgroup_id=?',
+			'SELECT 1 FROM stats_ad_adgroup WHERE network_code=? AND account_id=? AND campaign_id=? AND adgroup_id=?',
 			array( $network, (string)$cid, (string)$campId, (string)$agId )
 		);
 		if( !$agExists ) {
@@ -430,7 +430,7 @@ if( $doEntities ) {
 			continue;
 		}
 		ads_upsert_touch(
-			'ad_keyword',
+			'stats_ad_keyword',
 			array( 'network_code', 'account_id', 'campaign_id', 'adgroup_id', 'keyword_id' ),
 			array(
 				'network_code'  => $network,
@@ -484,15 +484,15 @@ foreach( $metrics as $grain ) {
 }
 
 $summary = $db->getAll(
-	"SELECT 'network' AS k, COUNT(*)::text AS n FROM ad_network
-	 UNION ALL SELECT 'account', COUNT(*)::text FROM ad_account
-	 UNION ALL SELECT 'campaign', COUNT(*)::text FROM ad_campaign
-	 UNION ALL SELECT 'adgroup', COUNT(*)::text FROM ad_adgroup
-	 UNION ALL SELECT 'ad', COUNT(*)::text FROM ad_ad
-	 UNION ALL SELECT 'keyword', COUNT(*)::text FROM ad_keyword
-	 UNION ALL SELECT 'metrics_campaign', COUNT(*)::text FROM ad_metrics_daily WHERE grain='campaign'
-	 UNION ALL SELECT 'metrics_adgroup', COUNT(*)::text FROM ad_metrics_daily WHERE grain='adgroup'
-	 UNION ALL SELECT 'metrics_keyword', COUNT(*)::text FROM ad_metrics_daily WHERE grain='keyword'"
+	"SELECT 'network' AS k, COUNT(*)::text AS n FROM stats_ad_network
+	 UNION ALL SELECT 'account', COUNT(*)::text FROM stats_ad_account
+	 UNION ALL SELECT 'campaign', COUNT(*)::text FROM stats_ad_campaign
+	 UNION ALL SELECT 'adgroup', COUNT(*)::text FROM stats_ad_adgroup
+	 UNION ALL SELECT 'ad', COUNT(*)::text FROM stats_ad_ad
+	 UNION ALL SELECT 'keyword', COUNT(*)::text FROM stats_ad_keyword
+	 UNION ALL SELECT 'metrics_campaign', COUNT(*)::text FROM stats_ad_metrics_daily WHERE grain='campaign'
+	 UNION ALL SELECT 'metrics_adgroup', COUNT(*)::text FROM stats_ad_metrics_daily WHERE grain='adgroup'
+	 UNION ALL SELECT 'metrics_keyword', COUNT(*)::text FROM stats_ad_metrics_daily WHERE grain='keyword'"
 );
 foreach( $summary as $s ) {
 	fwrite( STDERR, $s['k'].'='.$s['n']."\n" );

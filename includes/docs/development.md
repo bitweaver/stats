@@ -23,6 +23,9 @@
 - Reuse registered package paths and URLs instead of hard-coded deployment
   paths.
 - Treat request parameters as untrusted even when a controller is admin-only.
+- Controllers (and CLI entry scripts) read `$_GET` / `$_POST` / `$_REQUEST`.
+  Shared helpers live in `includes/<group>_lib.php` and take `$pParameters`
+  (use `BitBase::getParameter`). Do not read superglobals inside those libs.
 
 ## Schema changes
 

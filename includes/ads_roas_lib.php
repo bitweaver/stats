@@ -2,11 +2,11 @@
 /**
  * First-party ROAS queries.
  *
- * Cost is warehouse spend (any network): SUM(ad_metrics_daily.spend).
+ * Cost is warehouse spend (any network): SUM(stats_ad_metrics_daily.spend).
  * Value is this install's Bitcommerce paid totals: SUM(com_orders.order_total)
- * through ad_order_attribution. That is Commerce ROAS. Network conversions_value
+ * through stats_ad_order_attribution. That is Commerce ROAS. Network conversions_value
  * / spend is {Google,Microsoft,…} ROAS for comparison (partial attribution).
- * Click-through conversion window is stored on ad_network; if unknown, ask.
+ * Click-through conversion window is stored on stats_ad_network; if unknown, ask.
  *
  * Warehouse tables are optional. Bitcommerce is the only revenue source;
  * without it, spend still reports and value is zero. No ad-network writes.
@@ -23,7 +23,7 @@ function ads_roas_tables_ready( $pDb ) {
 	if( empty( $pDb->mType ) || strpos( $pDb->mType, 'postgres' ) === false ) {
 		return false;
 	}
-	$n = $pDb->getOne( "SELECT to_regclass('public.ad_metrics_daily')" );
+	$n = $pDb->getOne( "SELECT to_regclass('public.stats_ad_metrics_daily')" );
 	return !empty( $n );
 }
 
@@ -33,13 +33,13 @@ function ads_roas_commerce_ready() {
 }
 
 function ads_roas_networks( $pDb ) {
-	return $pDb->getAssoc( "SELECT network_code, display_name FROM ad_network ORDER BY network_code" );
+	return $pDb->getAssoc( "SELECT network_code, display_name FROM stats_ad_network ORDER BY network_code" );
 }
 
 function ads_roas_has_window_cols( $pDb ) {
 	return (bool)$pDb->getOne(
 		"SELECT 1 FROM information_schema.columns
-		  WHERE table_schema = 'public' AND table_name = 'ad_network' AND column_name = 'click_window_days'"
+		  WHERE table_schema = 'public' AND table_name = 'stats_ad_network' AND column_name = 'click_window_days'"
 	);
 }
 
@@ -47,12 +47,12 @@ function ads_roas_network_row( $pDb, $pNetwork ) {
 	if( ads_roas_has_window_cols( $pDb ) ) {
 		return $pDb->getRow(
 			"SELECT network_code, display_name, click_window_days, view_window_days, window_source
-			   FROM ad_network WHERE network_code = ?",
+			   FROM stats_ad_network WHERE network_code = ?",
 			array( $pNetwork )
 		);
 	}
 	$row = $pDb->getRow(
-		"SELECT network_code, display_name FROM ad_network WHERE network_code = ?",
+		"SELECT network_code, display_name FROM stats_ad_network WHERE network_code = ?",
 		array( $pNetwork )
 	);
 	if( $row ) {
@@ -69,7 +69,7 @@ function ads_roas_save_click_window( $pDb, $pNetwork, $pDays ) {
 		return false;
 	}
 	$pDb->query(
-		"UPDATE ad_network SET click_window_days = ?, window_source = 'user' WHERE network_code = ?",
+		"UPDATE stats_ad_network SET click_window_days = ?, window_source = 'user' WHERE network_code = ?",
 		array( $pDays, $pNetwork )
 	);
 	return true;
@@ -105,8 +105,8 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		        MAX(c.target_roas) AS target_roas,
 		        SUM(m.spend) AS spend, SUM(m.clicks) AS clicks, SUM(m.impressions) AS impressions,
 		        SUM(m.network_value) AS network_value
-		 FROM ad_metrics_daily m
-		 LEFT JOIN ad_campaign c
+		 FROM stats_ad_metrics_daily m
+		 LEFT JOIN stats_ad_campaign c
 		   ON c.network_code = m.network_code AND c.account_id = m.account_id AND c.campaign_id = m.campaign_id
 		 WHERE m.grain = 'campaign' AND m.network_code = ?
 		   AND m.metric_date >= ?::date AND m.metric_date <= ?::date
@@ -123,7 +123,7 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 			        SUM(o.order_total) AS revenue,
 			        COUNT(*) AS orders,
 			        COUNT(DISTINCT o.customers_id) AS buyers
-			 FROM ad_order_attribution a
+			 FROM stats_ad_order_attribution a
 			 JOIN com_orders o ON o.orders_id = a.orders_id
 			 WHERE o.orders_status_id > 0
 			   AND o.date_purchased >= ?::timestamp
@@ -143,7 +143,7 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 			        SUM(o.order_total) AS revenue,
 			        COUNT(*) AS orders,
 			        COUNT(DISTINCT o.customers_id) AS buyers
-			 FROM ad_order_attribution a
+			 FROM stats_ad_order_attribution a
 			 JOIN com_orders o ON o.orders_id = a.orders_id
 			 WHERE o.orders_status_id > 0
 			   AND o.date_purchased >= ?::timestamp
@@ -167,7 +167,7 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 			        SUM(o.order_total) AS lookback_revenue,
 			        COUNT(*) AS lookback_orders,
 			        COUNT(DISTINCT o.customers_id) AS lookback_buyers
-			 FROM ad_order_attribution a
+			 FROM stats_ad_order_attribution a
 			 JOIN com_orders o ON o.orders_id = a.orders_id
 			 JOIN users_users u ON u.user_id = a.user_id
 			 WHERE o.orders_status_id > 0
@@ -188,7 +188,7 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 			        SUM(o.order_total) AS lookback_revenue,
 			        COUNT(*) AS lookback_orders,
 			        COUNT(DISTINCT o.customers_id) AS lookback_buyers
-			 FROM ad_order_attribution a
+			 FROM stats_ad_order_attribution a
 			 JOIN com_orders o ON o.orders_id = a.orders_id
 			 JOIN users_users u ON u.user_id = a.user_id
 			 WHERE o.orders_status_id > 0
@@ -221,7 +221,7 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 			            SELECT SUM(o.order_total) FROM com_orders o
 			            WHERE o.customers_id = a.user_id AND o.orders_status_id > 0
 			        )), 0) AS ltv
-			 FROM ad_user_attribution a
+			 FROM stats_ad_user_attribution a
 			 JOIN users_users u ON u.user_id = a.user_id
 			 WHERE a.campaign_id IS NOT NULL
 			   AND a.network_code = ?

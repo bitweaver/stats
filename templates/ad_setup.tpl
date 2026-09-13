@@ -41,7 +41,7 @@
 					{/if}
 
 					{if $net.keys}
-						<form method="post" action="{$smarty.const.STATS_PKG_URL}ad_setup.php">
+						<form method="post" action="{$smarty.const.STATS_PKG_URL}admin/ad_setup.php">
 							<input type="hidden" name="tk" value="{$gBitUser->mTicket|escape}" />
 							<table class="table table-condensed">
 								<thead>

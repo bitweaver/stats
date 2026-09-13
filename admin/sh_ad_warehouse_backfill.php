@@ -1,6 +1,6 @@
 <?php
 /**
- * Backfill ad_user_attribution / ad_order_attribution from first-touch landings.
+ * Backfill stats_ad_user_attribution / stats_ad_order_attribution from first-touch landings.
  * Deployed with stats. Secrets from Ad API setup. No conversion upload.
  *
  *   export IS_DEV=1 SITE_NAME=example
@@ -16,10 +16,10 @@ foreach( array( 'IS_DEV', 'IS_LIVE', 'IS_SANDBOX', 'SITE_NAME' ) as $k ) {
 	}
 }
 require_once dirname( __FILE__ ).'/../../config/kernel/cron_setup_inc.php';
-require_once STATS_PKG_INCLUDE_PATH.'ad_ads_api_inc.php';
-require_once STATS_PKG_INCLUDE_PATH.'ad_warehouse_inc.php';
+require_once STATS_PKG_INCLUDE_PATH.'ads_api_lib.php';
+require_once STATS_PKG_INCLUDE_PATH.'ads_warehouse_lib.php';
 ads_refuse_upload( $argv );
-$row = ads_require_warehouse_db();
+$row = ads_require_warehouse_db( $_SERVER );
 fwrite( STDERR, "backfill attribution on {$row['addr']} {$row['db']}\n" );
 ads_apply_warehouse_schema();
 
@@ -48,7 +48,7 @@ foreach( $users as $u ) {
 		$nPaidUntracked++;
 	}
 	ads_upsert_touch(
-		'ad_user_attribution',
+		'stats_ad_user_attribution',
 		array( 'user_id' ),
 		array(
 			'user_id'       => (int)$u['user_id'],
@@ -83,7 +83,7 @@ fwrite( STDERR, "upserted $nUser user attributions (untracked paid $nPaidUntrack
 
 fwrite( STDERR, "copy first-touch onto paid orders\n" );
 $db->query(
-	"INSERT INTO ad_order_attribution (
+	"INSERT INTO stats_ad_order_attribution (
 		orders_id, user_id, network_code, account_id, campaign_id, campaign_name,
 		adgroup_id, adgroup_name, keyword_id, keyword_text, click_id, source, attributed_at, extra
 	)
@@ -91,7 +91,7 @@ $db->query(
 		a.adgroup_id, a.adgroup_name, a.keyword_id, a.keyword_text, a.click_id,
 		'landing_first_touch', now(), jsonb_build_object('date_purchased', o.date_purchased)
 	FROM com_orders o
-	JOIN ad_user_attribution a ON a.user_id = o.customers_id
+	JOIN stats_ad_user_attribution a ON a.user_id = o.customers_id
 	WHERE o.orders_status_id > 0
 	ON CONFLICT (orders_id) DO UPDATE SET
 		user_id = EXCLUDED.user_id,
@@ -108,5 +108,5 @@ $db->query(
 		attributed_at = EXCLUDED.attributed_at,
 		extra = EXCLUDED.extra"
 );
-$nOrd = $db->getOne( 'SELECT COUNT(*) FROM ad_order_attribution' );
+$nOrd = $db->getOne( 'SELECT COUNT(*) FROM stats_ad_order_attribution' );
 fwrite( STDERR, "order attributions: $nOrd\n" );

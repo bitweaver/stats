@@ -12,13 +12,13 @@ function ads_require_db2_test() {
 	return ads_require_warehouse_db();
 }
 
-function ads_require_warehouse_db() {
+function ads_require_warehouse_db( $pServer = array() ) {
 	global $gBitSystem;
 	$row = $gBitSystem->mDb->getRow( 'SELECT inet_server_addr() AS addr, current_database() AS db' );
 	$db = isset( $row['db'] ) ? $row['db'] : '';
 	$addr = isset( $row['addr'] ) ? $row['addr'] : '';
-	$isDev = !empty( $_SERVER['IS_DEV'] ) || getenv( 'IS_DEV' );
-	$isLive = !empty( $_SERVER['IS_LIVE'] ) || getenv( 'IS_LIVE' );
+	$isDev = BitBase::getParameter( $pServer, 'IS_DEV' ) || getenv( 'IS_DEV' );
+	$isLive = BitBase::getParameter( $pServer, 'IS_LIVE' ) || getenv( 'IS_LIVE' );
 	if( $isDev ) {
 		$expect = gethostbyname( 'db2.colo.printmotive.com' );
 		if( $addr !== $expect || !preg_match( '/test$/', $db ) ) {
@@ -46,27 +46,41 @@ function ads_refuse_upload( $argv ) {
 /** FK order for dump/upsert. Natural keys only — no sequences. */
 function ads_warehouse_tables() {
 	return array(
-		'ad_network',
-		'ad_account',
-		'ad_campaign',
-		'ad_adgroup',
-		'ad_ad',
-		'ad_keyword',
-		'ad_metrics_daily',
-		'ad_user_attribution',
-		'ad_order_attribution',
-		'ad_api_secret',
+		'stats_prefs',
+		'stats_ad_network',
+		'stats_ad_account',
+		'stats_ad_campaign',
+		'stats_ad_adgroup',
+		'stats_ad_ad',
+		'stats_ad_keyword',
+		'stats_ad_metrics_daily',
+		'stats_ad_user_attribution',
+		'stats_ad_order_attribution',
 	);
 }
 
-function ads_refuse_db1_load() {
+function ads_warehouse_legacy_rename_map() {
+	return array(
+		'ad_network'            => 'stats_ad_network',
+		'ad_account'            => 'stats_ad_account',
+		'ad_campaign'           => 'stats_ad_campaign',
+		'ad_adgroup'            => 'stats_ad_adgroup',
+		'ad_ad'                 => 'stats_ad_ad',
+		'ad_keyword'            => 'stats_ad_keyword',
+		'ad_metrics_daily'      => 'stats_ad_metrics_daily',
+		'ad_user_attribution'   => 'stats_ad_user_attribution',
+		'ad_order_attribution'  => 'stats_ad_order_attribution',
+	);
+}
+
+function ads_refuse_db1_load( $pServer = array() ) {
 	$host = function_exists( 'gethostname' ) ? gethostname() : php_uname( 'n' );
 	if( preg_match( '/^(dev\d|devthumb|ux|sandbox)/i', $host ) ) {
 		fwrite( STDERR, "Refusing warehouse load on a dev host. db1 is unreachable by design.\n" );
 		fwrite( STDERR, "Dump from db2 here; apply the dump on a prod host after sign-off.\n" );
 		exit( 2 );
 	}
-	if( !empty( $_SERVER['IS_DEV'] ) || !empty( $_SERVER['IS_SANDBOX'] ) ) {
+	if( BitBase::getParameter( $pServer, 'IS_DEV' ) || BitBase::getParameter( $pServer, 'IS_SANDBOX' ) ) {
 		fwrite( STDERR, "Refusing warehouse load with IS_DEV/IS_SANDBOX set.\n" );
 		exit( 2 );
 	}
@@ -94,6 +108,51 @@ function ads_warehouse_schema_path() {
 
 function ads_apply_warehouse_schema() {
 	global $gBitSystem;
+	$db = $gBitSystem->mDb;
+	foreach( ads_warehouse_legacy_rename_map() as $old => $new ) {
+		if( ads_warehouse_table_exists( $old ) && !ads_warehouse_table_exists( $new ) ) {
+			$db->query( 'ALTER TABLE '.$old.' RENAME TO '.$new );
+		}
+	}
+	if( ads_warehouse_table_exists( 'ad_api_secret' ) ) {
+		$db->query(
+			"CREATE TABLE IF NOT EXISTS stats_prefs (
+				pref_name text PRIMARY KEY,
+				pref_value text NOT NULL,
+				updated_at timestamptz NOT NULL DEFAULT now()
+			)"
+		);
+		$db->query(
+			"INSERT INTO stats_prefs (pref_name, pref_value, updated_at)
+			 SELECT secret_name, secret_value, updated_at FROM ad_api_secret
+			 ON CONFLICT (pref_name) DO NOTHING"
+		);
+		$db->query( 'DROP TABLE ad_api_secret' );
+	}
+	$indexMap = array(
+		'ad_campaign_name_idx'              => 'stats_ad_campaign_name_idx',
+		'ad_metrics_daily_campaign_idx'     => 'stats_ad_metrics_daily_campaign_idx',
+		'ad_user_attribution_campaign_idx'  => 'stats_ad_user_attribution_campaign_idx',
+		'ad_user_attribution_name_idx'      => 'stats_ad_user_attribution_name_idx',
+		'ad_order_attribution_campaign_idx' => 'stats_ad_order_attribution_campaign_idx',
+		'ad_order_attribution_user_idx'     => 'stats_ad_order_attribution_user_idx',
+		'ad_order_attribution_name_idx'     => 'stats_ad_order_attribution_name_idx',
+	);
+	foreach( $indexMap as $old => $new ) {
+		$has = $db->getOne(
+			"SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+			  WHERE n.nspname = 'public' AND c.relkind = 'i' AND c.relname = ?",
+			array( $old )
+		);
+		$hasNew = $db->getOne(
+			"SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+			  WHERE n.nspname = 'public' AND c.relkind = 'i' AND c.relname = ?",
+			array( $new )
+		);
+		if( $has && !$hasNew ) {
+			$db->query( 'ALTER INDEX '.$old.' RENAME TO '.$new );
+		}
+	}
 	$path = ads_warehouse_schema_path();
 	if( !is_readable( $path ) ) {
 		throw new Exception( 'Missing warehouse schema file: '.$path );

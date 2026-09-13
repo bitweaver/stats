@@ -68,12 +68,12 @@ if( $import ) {
 		}
 	}
 	require_once dirname( __FILE__ ).'/../../config/kernel/cron_setup_inc.php';
-	require_once STATS_PKG_INCLUDE_PATH.'ad_ads_api_inc.php';
-	require_once STATS_PKG_INCLUDE_PATH.'ad_warehouse_inc.php';
-	ads_require_warehouse_db();
+	require_once STATS_PKG_INCLUDE_PATH.'ads_api_lib.php';
+	require_once STATS_PKG_INCLUDE_PATH.'ads_warehouse_lib.php';
+	ads_require_warehouse_db( $_SERVER );
 	ads_apply_warehouse_schema();
 	$n = ads_import_secrets_file( $import );
-	fwrite( STDERR, "imported $n ad API keys into ad_api_secret (values not printed)\n" );
+	fwrite( STDERR, "imported $n ad API keys into stats_prefs (values not printed)\n" );
 }
 
 $pullArgs = $args;

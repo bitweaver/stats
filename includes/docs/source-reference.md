@@ -20,10 +20,10 @@
 - `admin/upgrades/1.0.2.php` — landing URL table and map column
 - `includes/bit_setup_inc.php`
 - `includes/stats_functions_inc.php` — first-touch cookies and persist helpers
-- `includes/ad_roas_lib.php` — optional warehouse ROAS queries
-- `includes/ad_setup_inc.php` — ad API key catalog and Microsoft OAuth helper
-- `includes/ad_ads_api_inc.php` — Google Ads read-only API (config credentials)
-- `includes/ad_warehouse_inc.php` — warehouse upsert helpers
+- `includes/ads_roas_lib.php` — optional warehouse ROAS queries
+- `includes/ads_setup_lib.php` — ad API key catalog and Microsoft OAuth helper
+- `includes/ads_api_lib.php` — Google Ads read-only API (config credentials)
+- `includes/ads_warehouse_lib.php` — warehouse upsert helpers
 
 ## Declared schema tables
 
@@ -53,7 +53,7 @@
 - `pv_chart.php`
 - `referrers.php`
 - `ad_roas.php`
-- `ad_setup.php`
+- `admin/ad_setup.php`
 - `usage_chart.php`
 - `users.php`
 

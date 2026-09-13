@@ -71,20 +71,18 @@ function stats_ads_all_keys() {
 	return $keys;
 }
 
-function stats_ads_setup_redirect_uri() {
+function stats_ads_setup_redirect_uri( $pServer ) {
 	if( defined( 'STATS_PKG_URI' ) && preg_match( '#^https?://#i', STATS_PKG_URI ) ) {
-		return STATS_PKG_URI.'ad_setup.php';
+		return STATS_PKG_URI.'admin/ad_setup.php';
 	}
-	$https = true;
-	if( isset( $_SERVER['HTTPS'] ) && ( $_SERVER['HTTPS'] === 'off' || $_SERVER['HTTPS'] === '' ) ) {
-		$https = false;
-	}
-	$host = !empty( $_SERVER['HTTP_HOST'] ) ? $_SERVER['HTTP_HOST'] : '';
+	$https = BitBase::getParameter( $pServer, 'HTTPS', '' );
+	$httpsOn = ( $https !== '' && $https !== 'off' );
+	$host = BitBase::getParameter( $pServer, 'HTTP_HOST', '' );
 	$path = defined( 'STATS_PKG_URL' ) ? STATS_PKG_URL : '/stats/';
 	if( preg_match( '#^https?://#i', $path ) ) {
-		return rtrim( $path, '/' ).'/ad_setup.php';
+		return rtrim( $path, '/' ).'/admin/ad_setup.php';
 	}
-	return ( $https ? 'https' : 'http' ).'://'.$host.$path.'ad_setup.php';
+	return ( $httpsOn ? 'https' : 'http' ).'://'.$host.$path.'admin/ad_setup.php';
 }
 
 function stats_ads_mask( $pValue ) {
@@ -103,15 +101,7 @@ function stats_ads_mask( $pValue ) {
 }
 
 function stats_ads_get_secret( $pKey ) {
-	if( function_exists( 'ads_get_secret' ) ) {
-		return ads_get_secret( $pKey );
-	}
-	global $gBitSystem;
-	$v = $gBitSystem->getConfig( $pKey );
-	if( $v !== null && $v !== '' ) {
-		return $v;
-	}
-	return null;
+	return ads_get_secret( $pKey );
 }
 
 function stats_ads_status_rows() {
@@ -133,8 +123,9 @@ function stats_ads_status_rows() {
 	return $rows;
 }
 
-function stats_ads_save_posted_secrets() {
-	if( empty( $_POST['ads_secret'] ) || !is_array( $_POST['ads_secret'] ) ) {
+function stats_ads_save_posted_secrets( $pParameters ) {
+	$secrets = BitBase::getParameter( $pParameters, 'ads_secret' );
+	if( empty( $secrets ) || !is_array( $secrets ) ) {
 		return 0;
 	}
 	if( function_exists( 'ads_apply_warehouse_schema' ) ) {
@@ -142,7 +133,7 @@ function stats_ads_save_posted_secrets() {
 	}
 	$allowed = array_flip( stats_ads_all_keys() );
 	$n = 0;
-	foreach( $_POST['ads_secret'] as $k => $v ) {
+	foreach( $secrets as $k => $v ) {
 		if( !isset( $allowed[$k] ) ) {
 			continue;
 		}
@@ -150,18 +141,13 @@ function stats_ads_save_posted_secrets() {
 		if( $v === '' ) {
 			continue;
 		}
-		if( function_exists( 'ads_store_secret' ) ) {
-			ads_store_secret( $k, $v );
-		} else {
-			global $gBitSystem;
-			$gBitSystem->storeConfig( $k, $v, STATS_PKG_NAME );
-		}
+		ads_store_secret( $k, $v );
 		$n++;
 	}
 	return $n;
 }
 
-function stats_ads_microsoft_authorize_url( $pState ) {
+function stats_ads_microsoft_authorize_url( $pState, $pRedirectUri ) {
 	$clientId = stats_ads_get_secret( 'microsoft_ads_client_id' );
 	if( !$clientId ) {
 		return null;
@@ -169,7 +155,7 @@ function stats_ads_microsoft_authorize_url( $pState ) {
 	$q = http_build_query( array(
 		'client_id'     => $clientId,
 		'response_type' => 'code',
-		'redirect_uri'  => stats_ads_setup_redirect_uri(),
+		'redirect_uri'  => $pRedirectUri,
 		'response_mode' => 'query',
 		'scope'         => 'https://ads.microsoft.com/msads.manage offline_access',
 		'state'         => $pState,
@@ -178,7 +164,8 @@ function stats_ads_microsoft_authorize_url( $pState ) {
 	return 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?'.$q;
 }
 
-function stats_ads_microsoft_exchange_code( $pCode ) {
+function stats_ads_microsoft_exchange_code( $pParameters, $pRedirectUri ) {
+	$pCode = BitBase::getParameter( $pParameters, 'code' );
 	$clientId = stats_ads_get_secret( 'microsoft_ads_client_id' );
 	$secret = stats_ads_get_secret( 'microsoft_ads_client_secret' );
 	if( !$clientId || !$secret ) {
@@ -191,7 +178,7 @@ function stats_ads_microsoft_exchange_code( $pCode ) {
 			'client_id'     => $clientId,
 			'client_secret' => $secret,
 			'code'          => $pCode,
-			'redirect_uri'  => stats_ads_setup_redirect_uri(),
+			'redirect_uri'  => $pRedirectUri,
 			'grant_type'    => 'authorization_code',
 			'scope'         => 'https://ads.microsoft.com/msads.manage offline_access',
 		) ),
@@ -210,11 +197,6 @@ function stats_ads_microsoft_exchange_code( $pCode ) {
 	if( function_exists( 'ads_apply_warehouse_schema' ) ) {
 		ads_apply_warehouse_schema();
 	}
-	if( function_exists( 'ads_store_secret' ) ) {
-		ads_store_secret( 'microsoft_ads_refresh_token', $j['refresh_token'] );
-	} else {
-		global $gBitSystem;
-		$gBitSystem->storeConfig( 'microsoft_ads_refresh_token', $j['refresh_token'], STATS_PKG_NAME );
-	}
+	ads_store_secret( 'microsoft_ads_refresh_token', $j['refresh_token'] );
 	return true;
 }

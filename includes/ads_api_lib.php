@@ -17,18 +17,18 @@ function ads_secret_key_names() {
 function ads_secrets_table_ready() {
 	global $gBitSystem;
 	return is_object( $gBitSystem ) && (bool)$gBitSystem->mDb->getOne(
-		"SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='ad_api_secret'"
+		"SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='stats_prefs'"
 	);
 }
 
 function ads_store_secret( $pKey, $pValue ) {
 	global $gBitSystem;
 	if( !ads_secrets_table_ready() ) {
-		throw new Exception( 'ad_api_secret is missing; apply warehouse schema first' );
+		throw new Exception( 'stats_prefs is missing; apply warehouse schema first' );
 	}
 	$gBitSystem->mDb->query(
-		"INSERT INTO ad_api_secret (secret_name, secret_value, updated_at) VALUES (?, ?, now())
-		 ON CONFLICT (secret_name) DO UPDATE SET secret_value = EXCLUDED.secret_value, updated_at = now()",
+		"INSERT INTO stats_prefs (pref_name, pref_value, updated_at) VALUES (?, ?, now())
+		 ON CONFLICT (pref_name) DO UPDATE SET pref_value = EXCLUDED.pref_value, updated_at = now()",
 		array( $pKey, $pValue )
 	);
 }
@@ -37,17 +37,11 @@ function ads_get_secret( $pKey ) {
 	global $gBitSystem;
 	if( ads_secrets_table_ready() ) {
 		$v = $gBitSystem->mDb->getOne(
-			"SELECT secret_value FROM ad_api_secret WHERE secret_name = ?",
+			"SELECT pref_value FROM stats_prefs WHERE pref_name = ?",
 			array( $pKey )
 		);
 		if( $v !== null && $v !== '' ) {
 			return $v;
-		}
-	}
-	if( is_object( $gBitSystem ) ) {
-		$c = $gBitSystem->getConfig( $pKey );
-		if( $c !== null && $c !== '' ) {
-			return $c;
 		}
 	}
 	return null;

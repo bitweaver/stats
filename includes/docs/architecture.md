@@ -34,28 +34,29 @@ onto the stored referrer URL.
 `ad_roas.php` compares **Commerce ROAS** to **{network} ROAS** so staff can
 set that advertiser's target ROAS:
 
-- **Cost** — `SUM(ad_metrics_daily.spend)` at campaign grain. Any
+- **Cost** — `SUM(stats_ad_metrics_daily.spend)` at campaign grain. Any
   `network_code`.
 - **Commerce value** — paid Bitcommerce `order_total` through
-  `ad_order_attribution` (calendar window). That is this install's books.
+  `stats_ad_order_attribution` (calendar window). That is this install's books.
 - **Commerce value (click window)** — same orders whose purchase is within
-  `ad_network.click_window_days` of first-touch (`users_users.registration_date`).
+  `stats_ad_network.click_window_days` of first-touch (`users_users.registration_date`).
   This is the apples-to-apples comparator for the advertiser's click lookback.
-- **Network value** — `ad_metrics_daily.network_value`. Network ROAS is that
+- **Network value** — `stats_ad_metrics_daily.network_value`. Network ROAS is that
   over the same spend. Partial / last-click; never substitute for Commerce.
 
-Click-through window is stored on `ad_network`. If it is null, the page asks
+Click-through window is stored on `stats_ad_network`. If it is null, the page asks
 and saves it.
 
-`ad_setup.php` (`p_stats_admin`) is the control panel for warehouse API
-credentials. Instructions live on the page. Values are stored with
-`storeConfig` (stats package) and are never assigned raw to templates.
+`admin/ad_setup.php` (`p_stats_admin`) is the control panel for warehouse API
+credentials. Instructions live on the page. Values are stored in
+`stats_prefs` (lazy TEXT; not `kernel_config`) and are never assigned raw
+to templates.
 Microsoft OAuth uses this page as the redirect URI to obtain a refresh
 token. Google unattended auth is the service-account JSON plus developer
 token; access tokens are minted at pull time and not stored.
 
 Warehouse SQL is `admin/ad_warehouse_schema.sql` (idempotent, including
-`ad_api_secret` for credentials that do not fit `kernel_config` C(250)).
+`stats_prefs` for credentials that do not fit `kernel_config` C(250)).
 After deploy, one command applies schema, pulls Google campaign metrics, and
 backfills attribution:
 

@@ -28,13 +28,13 @@ and no named `ctm_campaign` is untracked paid traffic, not organic.
 
 `ad_roas.php` (`p_stats_admin`) compares Commerce ROAS to the selected
 network's ROAS (for setting that network's target). Cost is warehouse
-`ad_metrics_daily.spend`. Commerce value is Bitcommerce paid `order_total`
-through `ad_order_attribution`. When `ad_network.click_window_days` is
+`stats_ad_metrics_daily.spend`. Commerce value is Bitcommerce paid `order_total`
+through `stats_ad_order_attribution`. When `stats_ad_network.click_window_days` is
 set, a second Commerce total counts only orders within that many days of
 first-touch registration — the same click lookback the advertiser uses.
 `network_value / spend` is the advertiser ROAS (partial). If the click
 window is unknown, the page asks and stores it. Queries live in
-`includes/ad_roas_lib.php`.
+`includes/ads_roas_lib.php`.
 
 ## Tables
 

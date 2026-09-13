@@ -24,11 +24,12 @@ Does not own canonical content hit storage when that data belongs to Liberty.
 Does not own advertising-account configuration (final URLs, tracking
 templates). Installs that put campaign keys on landing URLs (for example
 `ctm_*`) persist those keys here as first-touch landing query data.
-Ad-network warehouse tables (`ad_metrics_daily`, `ad_*_attribution`) are
+Ad-network warehouse tables (`stats_ad_metrics_daily`, `stats_ad_*_attribution`) are
 optional. ROAS cost is warehouse `spend` (any network). Commerce ROAS value
 is this install's Bitcommerce paid `order_total`. Network ROAS is
 `network_value / spend` for comparison (partial attribution). Each network's
-click-through conversion window is stored on `ad_network` (asked if unknown).
+click-through conversion window is stored on `stats_ad_network` (asked if unknown).
+Service credentials live in `stats_prefs`, loaded only by ads setup and warehouse CLI.
 
 ## Documentation map
 

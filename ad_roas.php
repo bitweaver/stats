@@ -7,7 +7,7 @@
  */
 
 require_once( '../kernel/includes/setup_inc.php' );
-require_once( STATS_PKG_INCLUDE_PATH.'ad_roas_lib.php' );
+require_once( STATS_PKG_INCLUDE_PATH.'ads_roas_lib.php' );
 
 $gBitSystem->verifyPackage( 'stats' );
 $gBitSystem->verifyPermission( 'p_stats_admin' );
