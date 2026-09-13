@@ -57,22 +57,31 @@ foreach( array_keys( $referers ) as $refSite ) {
 				}
 			} elseif( Statistics::isPaidTracking( $track ) ) {
 				array_push( $subVals, 'untracked paid' );
-				if( !empty( $track['utm_campaign'] ) ) {
+				$page = Statistics::landingPageKey( $referers[$refSite][$r] );
+				if( $page !== '' ) {
+					array_push( $subVals, $page );
+				} elseif( !empty( $track['utm_campaign'] ) ) {
 					array_push( $subVals, $track['utm_campaign'] );
-				} elseif( !empty( $track['gclid'] ) ) {
-					array_push( $subVals, 'gclid' );
+				} else {
+					array_push( $subVals, 'unknown' );
 				}
-			} elseif( !empty( $url['query'] ) ) {
-				$urlParams = array();
-				parse_str( $url['query'], $urlParams );
-				foreach( array( 'pq' => 'Paid', 'q' => 'Organic', 'p' => 'Organic', 'unknown' => 'Unknown' ) as $key=>$title ) {
-					if( $key == 'unknown' || isset( $urlParams[$key] ) ) {
-						array_push( $subVals, $title, BitBase::getParameter( $urlParams, $key, 'unknown' ) );
-						break;
+			} else {
+				$page = Statistics::landingPageKey( $referers[$refSite][$r] );
+				$bucket = 'Organic';
+				if( !empty( $url['query'] ) ) {
+					$urlParams = array();
+					parse_str( $url['query'], $urlParams );
+					if( isset( $urlParams['pq'] ) ) {
+						$bucket = 'Paid';
 					}
 				}
-			} elseif( !empty( $url['path'] ) && $url['path'] != '/' ) {
-				array_push( $subVals, $url['path'] );
+				if( $page !== '' ) {
+					array_push( $subVals, $bucket, $page );
+				} elseif( !empty( $url['path'] ) && $url['path'] != '/' ) {
+					array_push( $subVals, $bucket, $url['path'] );
+				} else {
+					array_push( $subVals, 'Other' );
+				}
 			}
 			computeStats( $aggregateStats, $subVals, $revenue, $referers[$refSite][$r] );
 		}

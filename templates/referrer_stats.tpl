@@ -44,36 +44,42 @@
 					<tr><td colspan="6">
 						<div class="panel-group" id="accordion-{$hostHash}" role="tablist" aria-multiselectable="true">
 						{foreach from=$aggregateStats.$host.values item=paramValues key=paramKey}
+							{assign var=paramId value=$paramKey|regex_replace:'/[^A-Za-z0-9]+/':'-'}
 							<div class="panel panel-default">
-								<div class="panel-heading" role="tab" id="accordion-{$paramKey}">
-									<div class="pull-right">{$paramValues.info.registrations} {booticon iname="fa-user"} {$paramValues.info.orders} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($paramValues.info.revenue)}</div>
+								<div class="panel-heading" role="tab" id="heading-{$hostHash}-{$paramId}">
+									<div class="pull-right">{$paramValues.info.users|@count} {booticon iname="fa-user"} {$paramValues.info.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($paramValues.info.revenue|default:"0")}</div>
 									<h4 class="panel-title">
-										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramKey}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramKey}">{$paramKey}</a>
+										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramId}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramId}">{$paramKey|escape}</a>
 									</h4>
 								</div>
-{if $paramValues.values}
-								<div id="collapse-{$hostHash}-{$paramKey}" class="panel-collapse collapse" role="tabpanel">
+								<div id="collapse-{$hostHash}-{$paramId}" class="panel-collapse collapse" role="tabpanel">
 									<div class="panel-body" style="padding:0">
+{if $paramValues.values}
 <table class="table">
 	{foreach from=$paramValues.values item=subHash}
 		{include file="bitpackage:stats/referrer_stats_ctm_inc.tpl" tableHash=$subHash depth=1}
 	{/foreach}
 </table>
+{elseif $paramValues.info.users}
+<table class="table">
+	{include file="bitpackage:stats/referrer_stats_ctm_inc.tpl" tableHash=$paramValues depth=1}
+</table>
+{/if}
 									</div>
 								</div>
-{/if}
 							</div>
 						{/foreach}
 							{assign var=paramKey value="Everything"}
+							{assign var=paramId value="Everything"}
 							<div class="panel panel-default">
-								<div class="panel-heading" role="tab" id="accordion-{$paramKey}">
+								<div class="panel-heading" role="tab" id="heading-{$hostHash}-{$paramId}">
 								{if $aggregateStats.$host}
 									<div class="pull-right">
-										{$reg|@count} {booticon iname="fa-user"} {$aggregateStats.$host.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($aggregateStats.$host.revenue|default:"0.00")}
+										{$reg|@count} {booticon iname="fa-user"} {$aggregateStats.$host.info.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($aggregateStats.$host.info.revenue|default:"0.00")}
 									</div>
 								{/if}
 									<h4 class="panel-title">
-										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramKey}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramKey}">{$paramKey}</a>
+										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramId}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramId}">{$paramKey}</a>
 									</h4>
 								</div>
 								{if $reg}

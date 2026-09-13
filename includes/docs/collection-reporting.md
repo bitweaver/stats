@@ -24,7 +24,9 @@ and no named `ctm_campaign` is untracked paid traffic, not organic.
 
 `referrers.php` nests named `ctm_campaign` → `ctm_adgroup` → `ctm_term` from
 `Statistics::trackingParamsFromRow()` (landing first, then legacy referrer
-`adurl=`). Revenue is lifetime commerce totals when bitcommerce is active.
+`adurl=`). Unpaid/organic uses the landing **page path** (query stripped,
+including `srsltid`) as a pseudo ad group so all hits on the same site page
+lump together. Revenue is lifetime commerce totals when bitcommerce is active.
 
 `ad_roas.php` (`p_stats_admin`) compares Commerce ROAS to the selected
 network's ROAS (for setting that network's target). Cost is warehouse

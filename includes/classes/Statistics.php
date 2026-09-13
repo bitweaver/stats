@@ -106,18 +106,36 @@ class Statistics extends BitBase {
 	}
 
 	/**
-	 * Tracking keys belong on the landing URI (first-touch). Fall back to a
-	 * legacy referrer `adurl=` query used by historical log imports.
+	 * Site page used as an organic/unpaid ad-group. Query (srsltid, gclid, …)
+	 * is stripped so every hit on the same path lumps together.
 	 */
+	public static function landingPageKey( $pRow ) {
+		$raw = '';
+		if( !empty( $pRow['landing_url'] ) ) {
+			$raw = $pRow['landing_url'];
+		}
+		if( $raw === '' ) {
+			return '';
+		}
+		$qpos = strpos( $raw, '?' );
+		if( $qpos !== false ) {
+			$raw = substr( $raw, 0, $qpos );
+		}
+		$raw = rawurldecode( str_replace( '+', ' ', $raw ) );
+		$raw = trim( $raw, '/' );
+		return $raw === '' ? 'Home' : $raw;
+	}
+
 	public static function trackingParamsFromRow( $pRow ) {
 		$params = array();
-		if( !empty( $pRow['landing_query'] ) ) {
-			parse_str( $pRow['landing_query'], $params );
-		} elseif( !empty( $pRow['landing_url'] ) && strpos( $pRow['landing_url'], '?' ) !== false ) {
-			$q = parse_url( $pRow['landing_url'], PHP_URL_QUERY );
-			if( !empty( $q ) ) {
-				parse_str( $q, $params );
-			}
+		$landingQuery = !empty( $pRow['landing_query'] ) ? $pRow['landing_query'] : '';
+		$landingUrl = !empty( $pRow['landing_url'] ) ? $pRow['landing_url'] : '';
+		if( $landingQuery === '' && strpos( $landingUrl, '?' ) !== false ) {
+			$parts = explode( '?', $landingUrl, 2 );
+			$landingQuery = isset( $parts[1] ) ? $parts[1] : '';
+		}
+		if( $landingQuery !== '' ) {
+			parse_str( $landingQuery, $params );
 		}
 		if( empty( $params ) && !empty( $pRow['referer_url'] ) ) {
 			$parsed = parse_url( $pRow['referer_url'] );
