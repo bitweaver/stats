@@ -1,3 +1,18 @@
+{strip}
+<style type="text/css">
+.ad-setup .ads-trunc { cursor: pointer; color: #333; }
+.ad-setup .ads-trunc:hover { text-decoration: underline; }
+.ad-setup .ads-edit { display: none; }
+.ad-setup .ads-edit.is-open { display: block; }
+.ad-setup td.ads-field { padding-right: 0.5em; vertical-align: middle; }
+.ad-setup .ads-keywrap { margin-left: 0.5em; line-height: 1.4; }
+.ad-setup .ads-key { color: #999; text-decoration: none; }
+.ad-setup .ads-key:hover { color: #555; }
+.ad-setup .ads-keyname { display: none; cursor: pointer; font-size: 12px; }
+.ad-setup .ads-keyname.is-open { display: inline; }
+.ad-setup td.ads-value { min-width: 16em; vertical-align: middle; }
+</style>
+{/strip}
 <div class="admin statistics ad-setup">
 	<div class="header">
 		<h1>{tr}Ad API setup{/tr}</h1>
@@ -6,7 +21,7 @@
 		{formfeedback hash=$feedback}
 
 		<p class="help-block">
-			{tr}These credentials let the warehouse pull spend. They are stored in site config, not in package source. Values already set are masked. Leave a field blank to keep the current value.{/tr}
+			{tr}These credentials let the warehouse pull spend. Click a stored value to edit it. Empty fields are for values not entered yet.{/tr}
 		</p>
 
 		{jstabs}
@@ -16,11 +31,19 @@
 						<p class="text-muted">{tr}Not wired yet.{/tr}</p>
 					{/if}
 
-					<ol>
-						{foreach from=$net.steps item=step}
-							<li>{$step}</li>
-						{/foreach}
-					</ol>
+					<p>
+						<a href="#" onclick="BitBase.toggleElementDisplay('ads-help-{$code}','block');return false;">
+							{booticon iname="fa-circle-question"} {tr}Setup instructions{/tr}
+						</a>
+					</p>
+					<div class="box" id="ads-help-{$code}" style="display:none">
+						<h2>{tr}Setup instructions{/tr}</h2>
+						<ol>
+							{foreach from=$net.steps item=step}
+								<li>{$step}</li>
+							{/foreach}
+						</ol>
+					</div>
 
 					{if $code eq 'microsoft'}
 						<p>
@@ -53,23 +76,35 @@
 								<thead>
 									<tr>
 										<th>{tr}Field{/tr}</th>
-										<th>{tr}Status{/tr}</th>
-										<th>{tr}New value{/tr}</th>
+										<th>{tr}Value{/tr}</th>
 									</tr>
 								</thead>
 								<tbody>
 									{foreach from=$net.keys key=key item=row}
 										<tr>
-											<td>
+											<td class="ads-field">
+												<span class="pull-right ads-keywrap">
+													<a class="ads-key" href="#" title="{$key|escape}" onclick="this.style.display='none'; this.nextSibling.className='ads-keyname is-open'; return false;">{booticon iname="fa-code" iexplain=$key}</a><code class="ads-keyname" title="{tr}Click to copy{/tr}" onclick="var t=this.textContent; if(navigator.clipboard) navigator.clipboard.writeText(t); else { var r=document.createRange(); r.selectNodeContents(this); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); } return false;">{$key|escape}</code>
+												</span>
 												{$row.label|escape}
-												<div class="help-block"><code>{$key|escape}</code> {$row.hint|escape}</div>
+												{if $row.hint}<div class="help-block">{$row.hint|escape}</div>{/if}
 											</td>
-											<td>{if $row.set}<span class="text-success">{$row.mask|escape}</span>{else}<span class="text-muted">{tr}missing{/tr}</span>{/if}</td>
-											<td>
-												{if $row.type eq 'textarea'}
-													<textarea class="form-control" name="ads_secret[{$key|escape}]" rows="6" autocomplete="off" placeholder="{if $row.set}{tr}unchanged{/tr}{else}{tr}paste JSON here{/tr}{/if}"></textarea>
+											<td class="ads-value">
+												{if $row.set}
+													<span class="ads-trunc" onclick="var c=this.parentNode; this.style.display='none'; c.querySelector('.ads-edit').className='ads-edit is-open'; var i=c.querySelector('input,textarea'); if(i){ i.disabled=false; i.focus(); }">{$row.display|escape}</span>
+													<div class="ads-edit">
+														{if $row.type eq 'textarea'}
+															<textarea class="form-control" name="ads_secret[{$key|escape}]" rows="8" autocomplete="off" disabled="disabled">{$row.value|escape}</textarea>
+														{else}
+															<input class="form-control" type="text" name="ads_secret[{$key|escape}]" value="{$row.value|escape}" autocomplete="off" disabled="disabled" />
+														{/if}
+													</div>
 												{else}
-													<input class="form-control" type="password" name="ads_secret[{$key|escape}]" value="" autocomplete="off" placeholder="{if $row.set}{tr}unchanged{/tr}{else}{tr}paste here{/tr}{/if}" />
+													{if $row.type eq 'textarea'}
+														<textarea class="form-control" name="ads_secret[{$key|escape}]" rows="6" autocomplete="off" placeholder="{tr}paste JSON here{/tr}"></textarea>
+													{else}
+														<input class="form-control" type="text" name="ads_secret[{$key|escape}]" value="" autocomplete="off" />
+													{/if}
 												{/if}
 											</td>
 										</tr>

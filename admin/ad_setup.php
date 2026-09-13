@@ -47,7 +47,8 @@ foreach( $catalog as $code => $net ) {
 	foreach( $net['keys'] as $key => $meta ) {
 		$val = stats_ads_get_secret( $key );
 		$catalog[$code]['keys'][$key]['set'] = ( $val !== null && $val !== '' );
-		$catalog[$code]['keys'][$key]['mask'] = stats_ads_mask( $val );
+		$catalog[$code]['keys'][$key]['value'] = ( $val !== null ) ? $val : '';
+		$catalog[$code]['keys'][$key]['display'] = stats_ads_truncate( $val, 48 );
 	}
 }
 

@@ -38,7 +38,8 @@ it proves that the server executed a directly requested implementation file.
 - Identifiers must be validated before use in SQL, paths, redirects, or object
   construction.
 - Ad API tokens on `admin/ad_setup.php` require `p_stats_admin`. Saved values
-  are `stats_prefs`, not templates or `includes/docs/`. Masked status only.
+  are `stats_prefs`, not `includes/docs/`. The table shows a truncated value;
+  click-to-edit loads the stored value in the field (staff-only).
 - Secrets and credentials must remain in protected configuration, never in
   templates, responses, logs, or these documents.
 - File operations must use validated storage helpers and must prevent traversal.

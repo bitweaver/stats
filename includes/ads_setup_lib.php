@@ -95,18 +95,21 @@ function stats_ads_setup_redirect_uri( $pServer ) {
 }
 
 function stats_ads_mask( $pValue ) {
+	return stats_ads_truncate( $pValue, 48 );
+}
+
+function stats_ads_truncate( $pValue, $pLen = 48 ) {
 	if( $pValue === null || $pValue === '' ) {
 		return '';
 	}
-	$len = strlen( $pValue );
-	$trim = ltrim( $pValue );
-	if( $trim !== '' && $trim[0] === '{' ) {
-		return 'set (JSON, '.$len.' chars)';
+	$one = preg_replace( '/\s+/', ' ', $pValue );
+	if( function_exists( 'mb_strlen' ) && mb_strlen( $one ) > $pLen ) {
+		return mb_substr( $one, 0, $pLen ).'…';
 	}
-	if( $len <= 4 ) {
-		return 'set ('.$len.' chars)';
+	if( strlen( $one ) > $pLen ) {
+		return substr( $one, 0, $pLen ).'…';
 	}
-	return 'set, last '.substr( $pValue, -4 );
+	return $one;
 }
 
 function stats_ads_get_secret( $pKey ) {
