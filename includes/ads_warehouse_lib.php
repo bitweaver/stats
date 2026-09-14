@@ -213,6 +213,39 @@ function ads_upsert_touch( $table, $conflictCols, $insert, $updateCols ) {
 	$gBitSystem->mDb->query( $sql, array_values( $insert ) );
 }
 
+function ads_google_campaign_lookup() {
+	global $gBitSystem;
+	static $byId = null;
+	static $byName = null;
+	if( $byId !== null ) {
+		return array( $byId, $byName );
+	}
+	$byId = array();
+	$byName = array();
+	if( empty( $gBitSystem->mDb ) || !ads_warehouse_table_exists( 'stats_ad_campaign' ) ) {
+		return array( $byId, $byName );
+	}
+	$rows = $gBitSystem->mDb->getAll(
+		"SELECT campaign_id, campaign_name FROM stats_ad_campaign WHERE network_code = ?",
+		array( 'google' )
+	);
+	foreach( $rows as $row ) {
+		$id = (string)$row['campaign_id'];
+		$name = $row['campaign_name'];
+		$byId[$id] = $name;
+		if( $name === null || $name === '' ) {
+			continue;
+		}
+		$lk = strtolower( $name );
+		if( isset( $byName[$lk] ) ) {
+			$byName[$lk] = false;
+		} else {
+			$byName[$lk] = $id;
+		}
+	}
+	return array( $byId, $byName );
+}
+
 function ads_parse_landing_keys( $query, $url = null ) {
 	$blob = $query;
 	if( ( $blob === null || $blob === '' ) && $url && strpos( $url, '?' ) !== false ) {
@@ -222,11 +255,30 @@ function ads_parse_landing_keys( $query, $url = null ) {
 	if( $blob ) {
 		parse_str( $blob, $p );
 	}
+	list( $campById, $campByName ) = ads_google_campaign_lookup();
 	$campaignId = null;
-	if( !empty( $p['gad_campaignid'] ) && ctype_digit( (string)$p['gad_campaignid'] ) ) {
-		$campaignId = (string)$p['gad_campaignid'];
-	} elseif( !empty( $p['utm_campaign'] ) && ctype_digit( (string)$p['utm_campaign'] ) ) {
-		$campaignId = (string)$p['utm_campaign'];
+	$campaignName = null;
+	foreach( array( 'utm_campaign', 'gad_campaignid' ) as $k ) {
+		$id = !empty( $p[$k] ) ? (string)$p[$k] : '';
+		if( $id !== '' && ctype_digit( $id ) && isset( $campById[$id] ) ) {
+			$campaignId = $id;
+			$campaignName = $campById[$id];
+			break;
+		}
+	}
+	$ctmName = !empty( $p['ctm_campaign'] ) ? trim( $p['ctm_campaign'] ) : '';
+	if( $campaignId === null && $ctmName !== '' ) {
+		$lk = strtolower( $ctmName );
+		if( !empty( $campByName[$lk] ) ) {
+			$campaignId = $campByName[$lk];
+			$campaignName = $campById[$campaignId];
+		} else {
+			$campaignName = $ctmName;
+		}
+	} elseif( $campaignName === null && $ctmName !== '' ) {
+		$campaignName = $ctmName;
+	} elseif( $campaignName === null && !empty( $p['utm_campaign'] ) && !ctype_digit( (string)$p['utm_campaign'] ) ) {
+		$campaignName = $p['utm_campaign'];
 	}
 	$network = null;
 	$clickId = null;
@@ -264,11 +316,11 @@ function ads_parse_landing_keys( $query, $url = null ) {
 			}
 		}
 	}
-	$untrackedPaid = ( $clickId !== null && ( empty( $p['ctm_campaign'] ) ) && $campaignId === null );
+	$untrackedPaid = ( $clickId !== null && $campaignId === null && $ctmName === '' );
 	return array(
 		'network_code'  => $network,
 		'campaign_id'   => $campaignId,
-		'campaign_name' => !empty( $p['ctm_campaign'] ) ? $p['ctm_campaign'] : ( !empty( $p['utm_campaign'] ) && !ctype_digit( (string)$p['utm_campaign'] ) ? $p['utm_campaign'] : null ),
+		'campaign_name' => $campaignName,
 		'adgroup_id'    => !empty( $p['gad_adgroupid'] ) ? (string)$p['gad_adgroupid'] : null,
 		'adgroup_name'  => !empty( $p['ctm_adgroup'] ) ? $p['ctm_adgroup'] : null,
 		'keyword_id'    => null,

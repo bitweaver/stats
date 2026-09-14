@@ -36,11 +36,12 @@ set that advertiser's target ROAS:
 
 - **Cost** — `SUM(stats_ad_metrics_daily.spend)` at campaign grain. Any
   `network_code`.
-- **Commerce value** — paid Bitcommerce `order_total` through
-  `stats_ad_order_attribution` (calendar window). That is this install's books.
-- **Commerce value (click window)** — same orders whose purchase is within
-  `stats_ad_network.click_window_days` of first-touch (`users_users.registration_date`).
-  This is the apples-to-apples comparator for the advertiser's click lookback.
+- **Commerce value** — paid `order_total` in the date range from users whose
+  first-touch registration is also in that range. Return on **this period's**
+  spend, not old customers buying again.
+- **Commerce value (click window)** — those same new users' orders within
+  `stats_ad_network.click_window_days` of registration (purchases may fall
+  after `until`). Comparator for the advertiser click lookback / tROAS.
 - **Network value** — `stats_ad_metrics_daily.network_value`. Network ROAS is that
   over the same spend. Partial / last-click; never substitute for Commerce.
 

@@ -22,11 +22,21 @@ Do not treat `HTTP_REFERER` as the campaign record. Tracking keys belong on
 the **landing** query. A paid click whose landing has `gclid` / empty `ctm_*`
 and no named `ctm_campaign` is untracked paid traffic, not organic.
 
-`referrers.php` nests named `ctm_campaign` → `ctm_adgroup` → `ctm_term` from
-`Statistics::trackingParamsFromRow()` (landing first, then legacy referrer
-`adurl=`). Unpaid/organic uses the landing **page path** (query stripped,
-including `srsltid`) as a pseudo ad group so all hits on the same site page
-lump together. Revenue is lifetime commerce totals when bitcommerce is active.
+`referrers.php` nests PPC as campaign → ad group → `ctm_term`. Named Search
+uses `ctm_campaign` / `ctm_adgroup`. Paid clicks without CTM that land on
+`/create/{slug}` stay under `untracked` with the slug as ad group (Search
+final URLs). Other paid landings (`/help/…`, home, etc.) are Performance
+Max: Google can promote any site URL. If `gad_campaignid` matches a
+warehouse `PERFORMANCE_MAX` campaign, that campaign name is used.
+Warehouse backfill and ROAS key on `campaign_id` only. Numeric `utm_campaign`
+wins (exact warehouse id), then `gad_campaignid` if it is a campaign id, then
+a unique warehouse match on `ctm_campaign`. ValueTrack names are labels, not
+join keys; unmatched names are not ROAS rows. Commerce ROAS revenue is
+orders in the spend window from users who **registered in that window**.
+Click-window revenue is those new users' orders within N days of
+registration. Unpaid/organic groups by landing path
+with the query stripped (`srsltid`). Revenue is lifetime commerce totals
+when bitcommerce is active.
 
 `ad_roas.php` (`p_stats_admin`) compares Commerce ROAS to the selected
 network's ROAS (for setting that network's target). Cost is warehouse

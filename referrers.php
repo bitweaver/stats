@@ -48,22 +48,16 @@ foreach( array_keys( $referers ) as $refSite ) {
 			$referers[$refSite][$r]['revenue'] = $revenue;
 			$subVals = array( $refSite );
 			$track = Statistics::trackingParamsFromRow( $referers[$refSite][$r] );
-			if( Statistics::namedCtmCampaign( $track ) ) {
+			if( Statistics::isPaidTracking( $track ) ) {
 				array_push( $subVals, 'PPC' );
-				foreach( array( 'ctm_campaign', 'ctm_adgroup', 'ctm_term' ) as $subKey ) {
-					if( isset( $track[$subKey] ) ) {
-						array_push( $subVals, $track[$subKey] !== '' ? $track[$subKey] : 'unknown' );
-					}
+				$campaign = Statistics::inferredPpcCampaign( $referers[$refSite][$r], $track );
+				array_push( $subVals, $campaign );
+				$adgroup = Statistics::inferredAdGroup( $referers[$refSite][$r], $track );
+				if( $adgroup !== '' ) {
+					array_push( $subVals, $adgroup );
 				}
-			} elseif( Statistics::isPaidTracking( $track ) ) {
-				array_push( $subVals, 'untracked paid' );
-				$page = Statistics::landingPageKey( $referers[$refSite][$r] );
-				if( $page !== '' ) {
-					array_push( $subVals, $page );
-				} elseif( !empty( $track['utm_campaign'] ) ) {
-					array_push( $subVals, $track['utm_campaign'] );
-				} else {
-					array_push( $subVals, 'unknown' );
+				if( !empty( $track['ctm_term'] ) ) {
+					array_push( $subVals, $track['ctm_term'] );
 				}
 			} else {
 				$page = Statistics::landingPageKey( $referers[$refSite][$r] );

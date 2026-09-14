@@ -126,6 +126,80 @@ class Statistics extends BitBase {
 		return $raw === '' ? 'Home' : $raw;
 	}
 
+	/**
+	 * Ad group from ctm_adgroup, else the /create/{slug} landing Google Ads uses.
+	 */
+	public static function inferredAdGroup( $pRow, $pTrack = array() ) {
+		if( !empty( $pTrack['ctm_adgroup'] ) ) {
+			return $pTrack['ctm_adgroup'];
+		}
+		$page = static::landingPageKey( $pRow );
+		if( strpos( $page, 'create/' ) === 0 ) {
+			$slug = substr( $page, 7 );
+			$cut = strpos( $slug, '/' );
+			if( $cut !== false ) {
+				$slug = substr( $slug, 0, $cut );
+			}
+			$slug = trim( $slug );
+			if( $slug !== '' ) {
+				return str_replace( '-', ' ', $slug );
+			}
+		}
+		return $page !== '' ? $page : '';
+	}
+
+	public static function isCreateLanding( $pRow ) {
+		$page = static::landingPageKey( $pRow );
+		return ( strpos( $page, 'create/' ) === 0 );
+	}
+
+	/**
+	 * Google campaign_id → name from warehouse, if present.
+	 */
+	public static function googleCampaignMap() {
+		global $gBitSystem;
+		static $map = null;
+		if( $map !== null ) {
+			return $map;
+		}
+		$map = array();
+		if( empty( $gBitSystem->mDb ) ) {
+			return $map;
+		}
+		$has = $gBitSystem->mDb->getOne(
+			"SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ?",
+			array( 'stats_ad_campaign' )
+		);
+		if( !$has ) {
+			return $map;
+		}
+		$rows = $gBitSystem->mDb->getAll(
+			"SELECT campaign_id, campaign_name FROM stats_ad_campaign WHERE network_code = ?",
+			array( 'google' )
+		);
+		foreach( $rows as $row ) {
+			$map[(string)$row['campaign_id']] = $row['campaign_name'];
+		}
+		return $map;
+	}
+
+	public static function inferredPpcCampaign( $pRow, $pTrack = array() ) {
+		if( !empty( $pTrack['ctm_campaign'] ) ) {
+			return $pTrack['ctm_campaign'];
+		}
+		$map = static::googleCampaignMap();
+		foreach( array( 'gad_campaignid', 'utm_campaign' ) as $k ) {
+			$id = !empty( $pTrack[$k] ) ? (string)$pTrack[$k] : '';
+			if( $id !== '' && isset( $map[$id] ) ) {
+				return $map[$id];
+			}
+		}
+		if( static::isCreateLanding( $pRow ) ) {
+			return 'untracked';
+		}
+		return 'Performance Max';
+	}
+
 	public static function trackingParamsFromRow( $pRow ) {
 		$params = array();
 		$landingQuery = !empty( $pRow['landing_query'] ) ? $pRow['landing_query'] : '';

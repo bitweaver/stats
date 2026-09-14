@@ -116,7 +116,6 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 	);
 
 	$rev = array();
-	$revByName = array();
 	if( $wantRev ) {
 		$revRows = $pDb->getAll(
 			"SELECT a.campaign_id,
@@ -125,42 +124,23 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 			        COUNT(DISTINCT o.customers_id) AS buyers
 			 FROM stats_ad_order_attribution a
 			 JOIN com_orders o ON o.orders_id = a.orders_id
+			 JOIN users_users u ON u.user_id = a.user_id
 			 WHERE o.orders_status_id > 0
 			   AND o.date_purchased >= ?::timestamp
 			   AND o.date_purchased < (?::date + 1)
+			   AND to_timestamp(u.registration_date) >= ?::timestamp
+			   AND to_timestamp(u.registration_date) < (?::date + 1)
 			   AND a.campaign_id IS NOT NULL
 			   AND a.network_code = ?
 			 GROUP BY a.campaign_id",
-			array( $pSince, $pUntil, $network )
+			array( $pSince, $pUntil, $pSince, $pUntil, $network )
 		);
 		foreach( $revRows as $r ) {
 			$rev[(string)$r['campaign_id']] = $r;
 		}
-
-		$nameRows = $pDb->getAll(
-			"SELECT lower(a.campaign_name) AS nkey,
-			        MIN(a.campaign_name) AS campaign_name,
-			        SUM(o.order_total) AS revenue,
-			        COUNT(*) AS orders,
-			        COUNT(DISTINCT o.customers_id) AS buyers
-			 FROM stats_ad_order_attribution a
-			 JOIN com_orders o ON o.orders_id = a.orders_id
-			 WHERE o.orders_status_id > 0
-			   AND o.date_purchased >= ?::timestamp
-			   AND o.date_purchased < (?::date + 1)
-			   AND a.campaign_id IS NULL
-			   AND a.campaign_name IS NOT NULL AND a.campaign_name <> ''
-			   AND a.network_code = ?
-			 GROUP BY lower(a.campaign_name)",
-			array( $pSince, $pUntil, $network )
-		);
-		foreach( $nameRows as $r ) {
-			$revByName[$r['nkey']] = $r;
-		}
 	}
 
 	$lookback = array();
-	$lookbackByName = array();
 	if( $wantRev && $clickDays ) {
 		$lbRows = $pDb->getAll(
 			"SELECT a.campaign_id,
@@ -171,39 +151,17 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 			 JOIN com_orders o ON o.orders_id = a.orders_id
 			 JOIN users_users u ON u.user_id = a.user_id
 			 WHERE o.orders_status_id > 0
-			   AND o.date_purchased >= ?::timestamp
-			   AND o.date_purchased < (?::date + 1)
+			   AND to_timestamp(u.registration_date) >= ?::timestamp
+			   AND to_timestamp(u.registration_date) < (?::date + 1)
+			   AND o.date_purchased >= to_timestamp(u.registration_date)
+			   AND o.date_purchased <= to_timestamp(u.registration_date) + (?::int * interval '1 day')
 			   AND a.campaign_id IS NOT NULL
 			   AND a.network_code = ?
-			   AND u.registration_date IS NOT NULL
-			   AND o.date_purchased <= to_timestamp(u.registration_date) + (?::int * interval '1 day')
 			 GROUP BY a.campaign_id",
-			array( $pSince, $pUntil, $network, $clickDays )
+			array( $pSince, $pUntil, $clickDays, $network )
 		);
 		foreach( $lbRows as $r ) {
 			$lookback[(string)$r['campaign_id']] = $r;
-		}
-		$lbName = $pDb->getAll(
-			"SELECT lower(a.campaign_name) AS nkey,
-			        SUM(o.order_total) AS lookback_revenue,
-			        COUNT(*) AS lookback_orders,
-			        COUNT(DISTINCT o.customers_id) AS lookback_buyers
-			 FROM stats_ad_order_attribution a
-			 JOIN com_orders o ON o.orders_id = a.orders_id
-			 JOIN users_users u ON u.user_id = a.user_id
-			 WHERE o.orders_status_id > 0
-			   AND o.date_purchased >= ?::timestamp
-			   AND o.date_purchased < (?::date + 1)
-			   AND a.campaign_id IS NULL
-			   AND a.campaign_name IS NOT NULL AND a.campaign_name <> ''
-			   AND a.network_code = ?
-			   AND u.registration_date IS NOT NULL
-			   AND o.date_purchased <= to_timestamp(u.registration_date) + (?::int * interval '1 day')
-			 GROUP BY lower(a.campaign_name)",
-			array( $pSince, $pUntil, $network, $clickDays )
-		);
-		foreach( $lbName as $r ) {
-			$lookbackByName[$r['nkey']] = $r;
 		}
 	}
 
@@ -234,7 +192,6 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		}
 	}
 
-	$consumedNames = array();
 	$rows = array();
 	foreach( $spendRows as $s ) {
 		$id = (string)$s['campaign_id'];
@@ -243,19 +200,6 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		if( isset( $lookback[$id] ) ) {
 			$r = array_merge( $r, $lookback[$id] );
 			unset( $lookback[$id] );
-		}
-		$nk = strtolower( $s['campaign_name'] );
-		if( isset( $revByName[$nk] ) && !isset( $consumedNames[$nk] ) ) {
-			$r['revenue'] = (float)$r['revenue'] + (float)$revByName[$nk]['revenue'];
-			$r['orders'] = (int)$r['orders'] + (int)$revByName[$nk]['orders'];
-			$r['buyers'] = (int)$r['buyers'] + (int)$revByName[$nk]['buyers'];
-			if( isset( $lookbackByName[$nk] ) ) {
-				$r['lookback_revenue'] = (float)( isset( $r['lookback_revenue'] ) ? $r['lookback_revenue'] : 0 ) + (float)$lookbackByName[$nk]['lookback_revenue'];
-				$r['lookback_orders'] = (int)( isset( $r['lookback_orders'] ) ? $r['lookback_orders'] : 0 ) + (int)$lookbackByName[$nk]['lookback_orders'];
-				$r['lookback_buyers'] = (int)( isset( $r['lookback_buyers'] ) ? $r['lookback_buyers'] : 0 ) + (int)$lookbackByName[$nk]['lookback_buyers'];
-				unset( $lookbackByName[$nk] );
-			}
-			$consumedNames[$nk] = true;
 		}
 		$rows[] = ads_roas_row( $id, $s['campaign_name'], $s, $r, $cohort, $cohortMap );
 	}
@@ -274,17 +218,6 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		}
 		$emptySpend = array( 'spend' => 0, 'clicks' => 0, 'impressions' => 0, 'network_value' => 0, 'target_roas' => null );
 		$rows[] = ads_roas_row( $id, $name, $emptySpend, $r, $cohort, $cohortMap );
-	}
-	foreach( $revByName as $nk => $r ) {
-		if( isset( $consumedNames[$nk] ) ) {
-			continue;
-		}
-		if( isset( $lookbackByName[$nk] ) ) {
-			$r = array_merge( $r, $lookbackByName[$nk] );
-			unset( $lookbackByName[$nk] );
-		}
-		$emptySpend = array( 'spend' => 0, 'clicks' => 0, 'impressions' => 0, 'network_value' => 0, 'target_roas' => null );
-		$rows[] = ads_roas_row( '', $r['campaign_name'], $emptySpend, $r, $cohort, array() );
 	}
 
 	$totals = array(

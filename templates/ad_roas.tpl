@@ -6,7 +6,7 @@
 		{formfeedback hash=$feedback}
 
 		<p class="help-block">
-			{tr}Commerce ROAS is this site's paid Bitcommerce totals over spend (first-touch). Use the click-window Commerce ROAS next to the advertiser ROAS when setting that network's target ROAS — Google (and others) only credit conversions inside their click-through window, which is often shorter and partial.{/tr}
+			{tr}Cost is ad spend in this date range. Commerce revenue is orders from users first-touched in the same range — not later purchases by people acquired years earlier. Click-window Commerce ROAS only counts those new users' orders within the network's click lookback (for setting target ROAS).{/tr}
 		</p>
 
 		<form class="form-inline" method="get" action="{$smarty.const.STATS_PKG_URL}ad_roas.php">
