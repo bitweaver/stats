@@ -3,11 +3,7 @@
  * One-shot warehouse refresh for this site checkout: schema, Google pull, attribution.
  * After deploy + Ad API setup, this is the only command needed post-clone.
  *
- *   export IS_DEV=1 SITE_NAME=example          # db2 test
- *   php stats/admin/sh_ad_warehouse_refresh.php --full
- *
- *   export IS_LIVE=1 SITE_NAME=example         # production
- *   php stats/admin/sh_ad_warehouse_refresh.php --full
+ *   php stats/admin/sh_ad_warehouse_refresh.php --site_name=example --full
  *
  * Nightly (incremental):
  *   php stats/admin/sh_ad_warehouse_pull.php --metrics=campaign --metrics-only
@@ -85,6 +81,12 @@ if( !$skipPull ) {
 	ads_run_child( $php, $here.'/sh_ad_warehouse_pull.php', $pullArgs );
 }
 if( !$skipBackfill ) {
-	ads_run_child( $php, $here.'/sh_ad_warehouse_backfill.php', array() );
+	$bf = array();
+	foreach( $argv as $arg ) {
+		if( strpos( $arg, '--site_name=' ) === 0 ) {
+			$bf[] = $arg;
+		}
+	}
+	ads_run_child( $php, $here.'/sh_ad_warehouse_backfill.php', $bf );
 }
 fwrite( STDERR, "warehouse refresh complete\n" );

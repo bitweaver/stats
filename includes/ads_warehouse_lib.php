@@ -1,7 +1,6 @@
 <?php
 /**
- * Shared warehouse helpers. Dev writes db2 test; live writes the site DB.
- * No Google conversion uploads.
+ * Shared warehouse helpers. No Google conversion uploads.
  */
 
 function ads_bootstrap_bitweaver() {
@@ -16,24 +15,17 @@ function ads_require_warehouse_db( $pServer = array() ) {
 	global $gBitSystem;
 	$row = $gBitSystem->mDb->getRow( 'SELECT inet_server_addr() AS addr, current_database() AS db' );
 	$db = isset( $row['db'] ) ? $row['db'] : '';
-	$addr = isset( $row['addr'] ) ? $row['addr'] : '';
 	$isDev = BitBase::getParameter( $pServer, 'IS_DEV' ) || getenv( 'IS_DEV' );
-	$isLive = BitBase::getParameter( $pServer, 'IS_LIVE' ) || getenv( 'IS_LIVE' );
 	if( $isDev ) {
-		$expect = gethostbyname( 'db2.colo.printmotive.com' );
-		if( $addr !== $expect || !preg_match( '/test$/', $db ) ) {
-			throw new Exception( 'Refusing warehouse write: expected db2 test, got addr='.$addr.' db='.$db );
+		if( !preg_match( '/test$/', $db ) ) {
+			throw new Exception( 'IS_DEV is set but database name does not end in test: '.$db );
 		}
 		return $row;
 	}
-	if( $isLive ) {
-		$expect = gethostbyname( 'db1.colo.printmotive.com' );
-		if( $addr !== $expect || preg_match( '/test$/', $db ) ) {
-			throw new Exception( 'Refusing live warehouse write: expected db1 live, got addr='.$addr.' db='.$db );
-		}
-		return $row;
+	if( preg_match( '/test$/', $db ) ) {
+		throw new Exception( 'Live warehouse CLI against a test database: '.$db );
 	}
-	throw new Exception( 'Set IS_DEV=1 (db2 test) or IS_LIVE=1 (db1) for warehouse pull' );
+	return $row;
 }
 
 function ads_refuse_upload( $argv ) {

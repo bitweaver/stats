@@ -3,8 +3,7 @@
  * Backfill stats_ad_user_attribution / stats_ad_order_attribution from first-touch landings.
  * Deployed with stats. Secrets from Ad API setup. No conversion upload.
  *
- *   export IS_DEV=1 SITE_NAME=example
- *   php stats/admin/sh_ad_warehouse_backfill.php
+ *   php stats/admin/sh_ad_warehouse_backfill.php --site_name=example
  */
 chdir( dirname( __FILE__ ) );
 $gShellScript = true;

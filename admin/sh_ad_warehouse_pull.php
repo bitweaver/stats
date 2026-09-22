@@ -3,13 +3,7 @@
  * Pull Google entity snapshots + daily metrics into the warehouse.
  * READ ONLY vs Google. Lives in stats so it deploys with the site.
  *
- *   # dev
- *   export IS_DEV=1 SITE_NAME=example
- *   php stats/admin/sh_ad_warehouse_pull.php
- *
- *   # prod nightly (site checkout, not a developer workspace)
- *   export IS_LIVE=1 SITE_NAME=example
- *   php /var/www/printmotive/live/stats/admin/sh_ad_warehouse_pull.php --metrics=campaign
+ *   php stats/admin/sh_ad_warehouse_pull.php --site_name=example --metrics=campaign
  *
  * Secrets: Ad API setup page (kernel_config). Refuses --upload.
  */
