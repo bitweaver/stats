@@ -6,7 +6,7 @@
 		{formfeedback hash=$feedback}
 
 		<p class="help-block">
-			{tr}Cost is ad spend in this date range. Commerce revenue is orders from users first-touched in the same range — not later purchases by people acquired years earlier. Click-window Commerce ROAS only counts those new users' orders within the network's click lookback (for setting target ROAS).{/tr}
+			{tr}Cost is ad spend in this date range. Commerce revenue is orders from users first-touched in the same range — not later purchases by people acquired years earlier. Click-window Commerce ROAS only counts those new users' orders within the network's click lookback (for setting target ROAS). Network ROAS is the advertiser's reported conversion value over spend (their attribution; tROAS is a bid target). Registration-cohort LTV is this store's lifetime order totals for those new users over the same spend.{/tr}
 		</p>
 
 		<form class="form-inline" method="get" action="{$smarty.const.STATS_PKG_URL}ad_roas.php">

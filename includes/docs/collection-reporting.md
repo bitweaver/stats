@@ -10,16 +10,23 @@ When active, package setup constructs `Statistics`. Feature flags control:
 
 `stats_capture_first_touch()` (anonymous users only, cookie empty):
 
-- `referer_url` from external `HTTP_REFERER`.
-- `landing_url` from `REQUEST_URI` when the query contains tracking keys
-  (`ctm_*`, `utm_*`, `gclid`, `msclkid`, `gad_*`).
+- `referer_url` from external `HTTP_REFERER` (often origin-only; browsers
+  strip the query).
+- `landing_url` from the first `REQUEST_URI` (path + query). Tracking keys
+  (`ctm_*`, `utm_*`, `gclid`, `msclkid`, `gad_*`) live on that landing query.
+  Paid vs organic is decided later from those keys, not from whether a
+  landing was stored.
 
 Cookies last 180 days, SameSite=Lax, not overwritten. On register,
 `stats_persist_registration_attribution()` inserts URL rows and the user map.
 On expunge the map row is deleted; URL rows are kept.
 
-Do not treat `HTTP_REFERER` as the campaign record. Tracking keys belong on
-the **landing** query. A paid click whose landing has `gclid` / empty `ctm_*`
+This site must **never** be a referer (paradox). `stats_store_user_first_touch`
+and `referrers.php` reject own-host Referers (`kernel_server_name` and the
+request host, including `www`). If that URL has `gclid` / `ctm_*` / `msclkid`,
+it is the **landing** and the bucket is google.com / bing.com. Unpaid
+same-site Referer is dropped (`none`). Tracking keys belong on the landing
+query, not `HTTP_REFERER`. A paid click whose landing has `gclid` / empty `ctm_*`
 and no named `ctm_campaign` is untracked paid traffic, not organic.
 
 `referrers.php` nests PPC as campaign → ad group → `ctm_term`. Named Search
@@ -39,14 +46,21 @@ with the query stripped (`srsltid`). Revenue is lifetime commerce totals
 when bitcommerce is active.
 
 `ad_roas.php` (`p_stats_admin`) compares Commerce ROAS to the selected
-network's ROAS (for setting that network's target). Cost is warehouse
-`stats_ad_metrics_daily.spend`. Commerce value is Bitcommerce paid `order_total`
-through `stats_ad_order_attribution`. When `stats_ad_network.click_window_days` is
-set, a second Commerce total counts only orders within that many days of
-first-touch registration — the same click lookback the advertiser uses.
-`network_value / spend` is the advertiser ROAS (partial). If the click
-window is unknown, the page asks and stores it. Queries live in
-`includes/ads_roas_lib.php`.
+network's ROAS (for setting that network's target — a bid target, not a
+floor). Cost is warehouse `stats_ad_metrics_daily.spend`. Commerce value is
+Bitcommerce paid `order_total` through `stats_ad_order_attribution` for users
+who **registered in the spend window**. Check **Registration-cohort LTV** for
+those users' lifetime `order_total` over the same spend (store LTV ROAS).
+When `stats_ad_network.click_window_days` is set, a second Commerce total
+counts only orders within that many days of first-touch registration — the
+same click lookback the advertiser uses. `network_value / spend` is the
+advertiser ROAS (partial / last-click). If the click window is unknown, the
+page asks and stores it. Queries live in `includes/ads_roas_lib.php`.
+
+Rebuild a spend window (wipe derived warehouse, optional log re-import lives
+in the products log importer): `admin/sh_ad_warehouse_rebuild.php --since=
+--wipe`. Nightly remains pull last 30 days then backfill. Do not copy
+attribution between databases.
 
 ## Tables
 

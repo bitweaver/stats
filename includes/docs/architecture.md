@@ -22,10 +22,9 @@ Registration attribution is **first-touch**:
 
 - `referer_url` cookie — external `HTTP_REFERER` as received. After browsers
   stopped sending referrer query strings, this is typically `scheme://host`.
-- `landing_url` cookie — first request URI that contains tracking query keys
-  (`ctm_*`, `utm_*`, `gclid`, and similar). Set only if empty. This is the
-  first-party stand-in for the campaign/keyword data that used to arrive on
-  the referrer.
+- `landing_url` cookie — first request URI (path + query). Set only if empty.
+  Tracking keys (`ctm_*`, `utm_*`, `gclid`, and similar) on that query are the
+  first-party stand-in for campaign data that used to arrive on the referrer.
 
 Both are written to `stats_referer_urls` / `stats_landing_urls` and
 `stats_referer_users_map` at register. Do not copy landing query parameters
@@ -58,14 +57,19 @@ token; access tokens are minted at pull time and not stored.
 
 Warehouse SQL is `admin/ad_warehouse_schema.sql` (idempotent, including
 `stats_prefs` for credentials that do not fit `kernel_config` C(250)).
-After deploy, one command applies schema, pulls Google campaign metrics, and
-backfills attribution:
+Wipe derived warehouse rows and rebuild Google metrics + attribution for a
+date window:
 
-`php stats/admin/sh_ad_warehouse_refresh.php --full`
+`php stats/admin/sh_ad_warehouse_rebuild.php --site_name=example --since=2026-01-01 --wipe`
+
+That keeps `stats_prefs` and `stats_ad_network`. Log re-import (first-touch
+landings) is a separate products CLI; the OEM wrapper calls both. `--full`
+history pull is `sh_ad_warehouse_refresh.php --full` and is slow.
 
 Nightly: `sh_ad_warehouse_pull.php --metrics=campaign --metrics-only` then
-`sh_ad_warehouse_backfill.php`. Dev: `IS_DEV=1`. Prod: `IS_LIVE=1`. These
-scripts live in this package so they deploy with the site.
+`sh_ad_warehouse_backfill.php`. CLI host class sets `IS_DEV`; live rebuilds
+require `--live`. These scripts live in this package so they deploy with the
+site.
 
 The ROAS page does not create warehouse tables or write to ad networks. Without
 Bitcommerce, spend can still list and value is zero.

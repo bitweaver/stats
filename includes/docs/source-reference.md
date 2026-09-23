@@ -43,6 +43,7 @@
 - `admin/sh_ad_warehouse_pull.php`
 - `admin/sh_ad_warehouse_backfill.php`
 - `admin/sh_ad_warehouse_refresh.php`
+- `admin/sh_ad_warehouse_rebuild.php`
 - `admin/admin_stats_inc.php`
 - `admin/schema_inc.php`
 - `admin/upgrade_inc.php`

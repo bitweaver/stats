@@ -35,6 +35,90 @@ function ads_refuse_upload( $argv ) {
 	}
 }
 
+function ads_cli_run( $script, $extra = array() ) {
+	$php = ( defined( 'PHP_BINARY' ) && PHP_BINARY ) ? PHP_BINARY : 'php';
+	$cmd = escapeshellcmd( $php ).' '.escapeshellarg( $script );
+	foreach( $extra as $a ) {
+		$cmd .= ' '.escapeshellarg( $a );
+	}
+	fwrite( STDERR, "+ $cmd\n" );
+	passthru( $cmd, $code );
+	if( $code !== 0 ) {
+		fwrite( STDERR, "failed $script exit $code\n" );
+		exit( $code );
+	}
+}
+
+/**
+ * Drop derived warehouse rows. Keeps stats_prefs and stats_ad_network
+ * (credentials and click-window). Google entities/metrics are pulled again.
+ */
+function ads_wipe_warehouse_derived() {
+	global $gBitSystem;
+	$db = $gBitSystem->mDb;
+	$db->StartTrans();
+	foreach( array(
+		'stats_ad_order_attribution',
+		'stats_ad_user_attribution',
+		'stats_ad_metrics_daily',
+	) as $t ) {
+		if( ads_warehouse_table_exists( $t ) ) {
+			$db->query( 'TRUNCATE TABLE '.$t );
+		}
+	}
+	foreach( array(
+		'stats_ad_ad',
+		'stats_ad_keyword',
+		'stats_ad_adgroup',
+		'stats_ad_campaign',
+		'stats_ad_account',
+	) as $t ) {
+		if( ads_warehouse_table_exists( $t ) ) {
+			$db->query( 'DELETE FROM '.$t );
+		}
+	}
+	$db->CompleteTrans();
+}
+
+/**
+ * Empty first-touch tables. Keeps warehouse prefs/network. Referer host
+ * counters (stats_referers) and pageviews are left alone.
+ */
+function ads_wipe_first_touch() {
+	global $gBitSystem;
+	$db = $gBitSystem->mDb;
+	$db->StartTrans();
+	foreach( array(
+		'stats_referer_users_map',
+		'stats_landing_urls',
+		'stats_referer_urls',
+	) as $t ) {
+		$db->query( 'TRUNCATE TABLE '.$t.' RESTART IDENTITY CASCADE' );
+	}
+	$db->CompleteTrans();
+}
+
+function ads_clear_first_touch_map( $pSince, $pUntil ) {
+	global $gBitSystem;
+	$db = $gBitSystem->mDb;
+	$n = $db->getOne(
+		"SELECT COUNT(*) FROM stats_referer_users_map m
+		 JOIN users_users u ON u.user_id = m.user_id
+		 WHERE to_timestamp(u.registration_date) >= ?::timestamp
+		   AND to_timestamp(u.registration_date) < (?::date + 1)",
+		array( $pSince, $pUntil )
+	);
+	$db->query(
+		"DELETE FROM stats_referer_users_map m
+		 USING users_users u
+		 WHERE m.user_id = u.user_id
+		   AND to_timestamp(u.registration_date) >= ?::timestamp
+		   AND to_timestamp(u.registration_date) < (?::date + 1)",
+		array( $pSince, $pUntil )
+	);
+	return (int)$n;
+}
+
 /** FK order for dump/upsert. Natural keys only — no sequences. */
 function ads_warehouse_tables() {
 	return array(
@@ -240,8 +324,13 @@ function ads_google_campaign_lookup() {
 
 function ads_parse_landing_keys( $query, $url = null ) {
 	$blob = $query;
-	if( ( $blob === null || $blob === '' ) && $url && strpos( $url, '?' ) !== false ) {
-		$blob = parse_url( $url, PHP_URL_QUERY );
+	if( ( $blob === null || $blob === '' ) && $url ) {
+		$qpos = strpos( $url, '?' );
+		if( $qpos !== false ) {
+			$blob = substr( $url, $qpos + 1 );
+		} elseif( preg_match( '/(?:^|[?&])(gclid|msclkid|gad_|gbraid|wbraid|utm_|ctm_)/i', $url ) ) {
+			$blob = $url;
+		}
 	}
 	$p = array();
 	if( $blob ) {

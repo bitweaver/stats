@@ -78,19 +78,7 @@ class Statistics extends BitBase {
 			while( $row = $rs->fetchRow() ) {
 				$key = $row['hash_key'];
 				if( $hashKey == 'host' ) {
-					$key = 'none';
-					if( !empty( $row['referer_url'] ) ) {
-						$parseUrl = parse_url( $row['referer_url'] );
-						if( !empty( $parseUrl['query'] ) ) {
-							parse_str( $parseUrl['query'], $params );
-							if( !empty( $params['adurl'] ) ) {
-								parse_str( $params['adurl'], $params );
-							}
-						}
-						if( !empty( $parseUrl['host'] ) ) {
-							$key = $parseUrl['host'];
-						}
-					}
+					$key = static::refererHostKey( $row );
 				}
 				$ret[$key][$row['user_id']] = $row;
 			}
@@ -103,6 +91,123 @@ class Statistics extends BitBase {
 		}
 
 		return $ret;
+	}
+
+	public static function ownHosts() {
+		static $hosts = null;
+		if( $hosts !== null ) {
+			return $hosts;
+		}
+		$raw = array();
+		if( !empty( $_SERVER['HTTP_HOST'] ) ) {
+			$raw[] = $_SERVER['HTTP_HOST'];
+		}
+		foreach( array( 'BIT_BASE_URI', 'BIT_ROOT_URI' ) as $c ) {
+			if( defined( $c ) ) {
+				$h = parse_url( constant( $c ), PHP_URL_HOST );
+				if( !empty( $h ) ) {
+					$raw[] = $h;
+				}
+			}
+		}
+		global $gBitSystem;
+		if( is_object( $gBitSystem ) ) {
+			$ks = $gBitSystem->getConfig( 'kernel_server_name' );
+			if( !empty( $ks ) ) {
+				$raw[] = $ks;
+			}
+		}
+		$set = array();
+		foreach( $raw as $h ) {
+			$h = strtolower( preg_replace( '/:\d+$/', '', $h ) );
+			$h = preg_replace( '/^www\./', '', $h );
+			if( $h !== '' ) {
+				$set[$h] = true;
+			}
+		}
+		$hosts = array_keys( $set );
+		return $hosts;
+	}
+
+	public static function isOwnHost( $pHost ) {
+		$h = strtolower( preg_replace( '/:\d+$/', '', (string)$pHost ) );
+		$h = preg_replace( '/^www\./', '', $h );
+		if( $h === '' ) {
+			return false;
+		}
+		foreach( static::ownHosts() as $own ) {
+			if( $own === '' ) {
+				continue;
+			}
+			if( $h === $own || substr( $h, -strlen( '.'.$own ) ) === '.'.$own ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static function networkHostFromTrack( $pParams ) {
+		if( empty( $pParams ) || !is_array( $pParams ) ) {
+			return '';
+		}
+		$src = strtolower(
+			( !empty( $pParams['utm_source'] ) ? $pParams['utm_source'] : '' ).' '.
+			( !empty( $pParams['ctm_source'] ) ? $pParams['ctm_source'] : '' )
+		);
+		if( !empty( $pParams['msclkid'] ) || strpos( $src, 'bing' ) !== false || strpos( $src, 'microsoft' ) !== false ) {
+			return 'www.bing.com';
+		}
+		if( !empty( $pParams['gclid'] ) || !empty( $pParams['gad_campaignid'] ) || strpos( $src, 'google' ) !== false ) {
+			return 'www.google.com';
+		}
+		if( static::isPaidTracking( $pParams ) ) {
+			return 'www.google.com';
+		}
+		return '';
+	}
+
+	/**
+	 * This site must never be stored as a referer (paradox). Same-site URL
+	 * with paid query is the landing; unpaid same-site referer is dropped.
+	 */
+	public static function canonicalizeFirstTouch( $pRefererUrl, $pLandingUri ) {
+		$parsed = parse_url( (string)$pRefererUrl );
+		if( empty( $parsed['host'] ) || !static::isOwnHost( $parsed['host'] ) ) {
+			return array( $pRefererUrl, $pLandingUri );
+		}
+		$query = !empty( $parsed['query'] ) ? $parsed['query'] : '';
+		$params = array();
+		if( $query !== '' ) {
+			parse_str( $query, $params );
+		}
+		$path = !empty( $parsed['path'] ) ? $parsed['path'] : '/';
+		$fromRef = ( $query !== '' ) ? $path.'?'.$query : $path;
+		if( static::isPaidTracking( $params ) ) {
+			$landing = $fromRef;
+			$net = static::networkHostFromTrack( $params );
+			$referer = $net !== '' ? 'https://'.$net.'/' : 'https://www.google.com/';
+			return array( $referer, $landing );
+		}
+		$landing = !empty( $pLandingUri ) ? $pLandingUri : $fromRef;
+		return array( null, $landing );
+	}
+
+	public static function refererHostKey( $pRow ) {
+		$url = !empty( $pRow['referer_url'] ) ? $pRow['referer_url'] : '';
+		$host = 'none';
+		$parsed = parse_url( $url );
+		if( !empty( $parsed['host'] ) ) {
+			$host = $parsed['host'];
+		}
+		if( static::isOwnHost( $host ) ) {
+			$track = static::trackingParamsFromRow( $pRow );
+			if( static::isPaidTracking( $track ) ) {
+				$net = static::networkHostFromTrack( $track );
+				return $net !== '' ? $net : 'www.google.com';
+			}
+			return 'none';
+		}
+		return $host;
 	}
 
 	/**
