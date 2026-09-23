@@ -31,9 +31,9 @@ ALTER TABLE stats_ad_network ADD COLUMN IF NOT EXISTS view_window_days integer;
 ALTER TABLE stats_ad_network ADD COLUMN IF NOT EXISTS window_source text;
 
 UPDATE stats_ad_network
-   SET click_window_days = 30, window_source = 'user'
+   SET click_window_days = 90, window_source = 'user'
  WHERE network_code = 'google'
-   AND click_window_days IS NULL;
+   AND (click_window_days IS NULL OR click_window_days < 90);
 
 CREATE TABLE IF NOT EXISTS stats_ad_account (
 	network_code text NOT NULL REFERENCES stats_ad_network (network_code),

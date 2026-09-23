@@ -59,8 +59,8 @@ page asks and stores it. Queries live in `includes/ads_roas_lib.php`.
 
 Rebuild a spend window (wipe derived warehouse, optional log re-import lives
 in the products log importer): `admin/sh_ad_warehouse_rebuild.php --since=
---wipe`. Nightly remains pull last 30 days then backfill. Do not copy
-attribution between databases.
+--wipe`. Nightly pull defaults to the last 90 days (Google click-through
+window) then backfill. Do not copy attribution between databases.
 
 ## Tables
 

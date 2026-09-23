@@ -45,7 +45,7 @@
 					<strong>{if $roasReport}{$roasReport.network_label|escape}{else}{$roasNetwork|escape}{/if}</strong>
 					{tr}is not stored. Enter the lookback the advertiser uses (days):{/tr}
 				</p>
-				<input class="form-control" type="number" name="click_window_days" min="1" max="90" value="30" />
+				<input class="form-control" type="number" name="click_window_days" min="1" max="90" value="90" />
 				<button type="submit" class="btn btn-default" name="save_window" value="1">{tr}Save window{/tr}</button>
 			</form>
 		{elseif $roasReport && $roasReport.click_window_days}

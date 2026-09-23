@@ -21,7 +21,7 @@ require_once STATS_PKG_INCLUDE_PATH.'ads_api_lib.php';
 require_once STATS_PKG_INCLUDE_PATH.'ads_warehouse_lib.php';
 ads_refuse_upload( $argv );
 
-$since = date( 'Y-m-d', strtotime( '-30 days' ) );
+$since = date( 'Y-m-d', strtotime( '-90 days' ) );
 $until = date( 'Y-m-d' );
 $doEntities = true;
 $doMigrate = false;
