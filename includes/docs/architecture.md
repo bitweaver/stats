@@ -35,14 +35,16 @@ set that advertiser's target ROAS:
 
 - **Cost** — `SUM(stats_ad_metrics_daily.spend)` at campaign grain. Any
   `network_code`.
-- **Commerce value** — paid `order_total` in the date range from users whose
-  first-touch registration is also in that range. Return on **this period's**
-  spend, not old customers buying again.
-- **Commerce value (click window)** — those same new users' orders within
-  `stats_ad_network.click_window_days` of registration (purchases may fall
-  after `until`). Comparator for the advertiser click lookback / tROAS.
-- **Network value** — `stats_ad_metrics_daily.network_value`. Network ROAS is that
-  over the same spend. Partial / last-click; never substitute for Commerce.
+- **Commerce value** — paid `order_total` for the campaign's first-touch
+  customers. Every order whose purchase date is in the spend range counts,
+  including customers who registered before the range. Orders after `until`
+  also count when registration is in the range and the purchase is still
+  within `stats_ad_network.click_window_days` of registration.
+- **LTV** — those customers' paid `order_total` from `since` onward, with no
+  day cap. Orders before the range are not included.
+- **Network value** — `stats_ad_metrics_daily.network_value` (advertiser
+  conversion value credited to the click date). Network ROAS is that over
+  the same spend. Their attribution, not a substitute for Commerce.
 
 Click-through window is stored on `stats_ad_network`. If it is null, the page asks
 and saves it.

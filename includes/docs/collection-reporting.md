@@ -39,23 +39,24 @@ Warehouse backfill and ROAS key on `campaign_id` only. Numeric `utm_campaign`
 wins (exact warehouse id), then `gad_campaignid` if it is a campaign id, then
 a unique warehouse match on `ctm_campaign`. ValueTrack names are labels, not
 join keys; unmatched names are not ROAS rows. Commerce ROAS revenue is
-orders in the spend window from users who **registered in that window**.
-Click-window revenue is those new users' orders within N days of
-registration. Unpaid/organic groups by landing path
+paid orders in the spend window for the campaign's first-touch customers,
+including customers who registered before the window, plus orders after
+`until` that are still within N days of a registration in the window.
+Unpaid/organic groups by landing path
 with the query stripped (`srsltid`). Revenue is lifetime commerce totals
 when bitcommerce is active.
 
 `ad_roas.php` (`p_stats_admin`) compares Commerce ROAS to the selected
 network's ROAS (for setting that network's target — a bid target, not a
-floor). Cost is warehouse `stats_ad_metrics_daily.spend`. Commerce value is
-Bitcommerce paid `order_total` through `stats_ad_order_attribution` for users
-who **registered in the spend window**. Check **Registration-cohort LTV** for
-those users' lifetime `order_total` over the same spend (store LTV ROAS).
-When `stats_ad_network.click_window_days` is set, a second Commerce total
-counts only orders within that many days of first-touch registration — the
-same click lookback the advertiser uses. `network_value / spend` is the
-advertiser ROAS (partial / last-click). If the click window is unknown, the
-page asks and stores it. Queries live in `includes/ads_roas_lib.php`.
+floor). Cost is warehouse `stats_ad_metrics_daily.spend` on the click dates
+in the range. Commerce value is Bitcommerce paid `order_total` in that
+range for the campaign's first-touch customers, including customers who
+registered earlier. Purchases after `until` count when registration is in
+the range and still inside `stats_ad_network.click_window_days`. LTV is
+those customers' paid `order_total` from `since` on, with no day cap.
+`network_value / spend` is the advertiser's click-dated conversion value. If the click
+window is unknown, the page asks and stores it. Queries live in
+`includes/ads_roas_lib.php`.
 
 Rebuild a spend window (wipe derived warehouse, optional log re-import lives
 in the products log importer): `admin/sh_ad_warehouse_rebuild.php --since=

@@ -25,11 +25,13 @@ Does not own advertising-account configuration (final URLs, tracking
 templates). Installs that put campaign keys on landing URLs (for example
 `ctm_*`) persist those keys here as first-touch landing query data.
 Ad-network warehouse tables (`stats_ad_metrics_daily`, `stats_ad_*_attribution`) are
-optional. ROAS cost is warehouse `spend` (any network). Commerce ROAS value
-is this install's Bitcommerce paid `order_total`. Network ROAS is
-`network_value / spend` for comparison (partial attribution). Registration-cohort
-LTV ROAS is lifetime `order_total` for users who registered in the spend
-window. Each network's click-through conversion window is stored on
+optional. ROAS cost is warehouse `spend` (any network). Commerce ROAS value is
+this install's Bitcommerce paid `order_total` in the spend range for the
+campaign's first-touch customers, including customers who registered earlier,
+plus the click-window tail after `until` for registrations in the range.
+Network ROAS is `network_value / spend` for comparison. LTV ROAS is those
+customers' paid `order_total` from the start of the range on, with no day cap.
+Each network's click-through conversion window is stored on
 `stats_ad_network` (asked if unknown). Service credentials live in `stats_prefs`,
 loaded only by ads setup and warehouse CLI. Rebuild a window with
 `admin/sh_ad_warehouse_rebuild.php` (wipe derived rows, pull, attribute).

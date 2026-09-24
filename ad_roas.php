@@ -15,7 +15,6 @@ $gBitSystem->verifyPermission( 'p_stats_admin' );
 $since = BitBase::getParameter( $_REQUEST, 'since', date( 'Y-m-d', strtotime( '-180 days' ) ) );
 $until = BitBase::getParameter( $_REQUEST, 'until', date( 'Y-m-d' ) );
 $network = BitBase::getParameter( $_REQUEST, 'network', 'google' );
-$cohort = !empty( $_REQUEST['cohort'] );
 
 if( !ads_roas_date_ok( $since ) || !ads_roas_date_ok( $until ) ) {
 	$gBitSystem->fatalError( tra( 'Dates must be Y-m-d.' ) );
@@ -47,7 +46,6 @@ if( !ads_roas_tables_ready( $gBitSystem->mDb ) ) {
 	}
 	$report = ads_roas_report( $gBitSystem->mDb, $since, $until, array(
 		'network' => $network,
-		'cohort'  => $cohort,
 	) );
 	$windowAsk = empty( $report['click_window_days'] );
 }
@@ -60,9 +58,9 @@ if( !empty( $_REQUEST['download'] ) && is_array( $report ) ) {
 	header( 'Expires: 0' );
 	$out = fopen( 'php://output', 'w' );
 	$clickDays = $report['click_window_days'];
-	fputcsv( $out, ads_roas_csv_headers( $cohort, $clickDays ) );
+	fputcsv( $out, ads_roas_csv_headers( $clickDays ) );
 	foreach( $report['rows'] as $row ) {
-		fputcsv( $out, ads_roas_csv_line( $row, $cohort, $clickDays ) );
+		fputcsv( $out, ads_roas_csv_line( $row, $clickDays ) );
 	}
 	exit;
 }
@@ -75,7 +73,6 @@ $gBitSmarty->assign( 'feedback', $feedback );
 $gBitSmarty->assign( 'roasSince', $since );
 $gBitSmarty->assign( 'roasUntil', $until );
 $gBitSmarty->assign( 'roasNetwork', $network );
-$gBitSmarty->assign( 'roasCohort', $cohort );
 $gBitSmarty->assign( 'roasNetworks', $networks );
 $gBitSmarty->assign( 'roasReport', $report );
 $gBitSmarty->assign( 'roasWindowAsk', $windowAsk );

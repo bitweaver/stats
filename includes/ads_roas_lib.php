@@ -2,14 +2,18 @@
 /**
  * First-party ROAS queries.
  *
- * Cost is warehouse spend (any network): SUM(stats_ad_metrics_daily.spend).
- * Value is this install's Bitcommerce paid totals: SUM(com_orders.order_total)
- * through stats_ad_order_attribution. That is Commerce ROAS. Network conversions_value
- * / spend is {Google,Microsoft,…} ROAS for comparison (partial attribution).
- * Click-through conversion window is stored on stats_ad_network; if unknown, ask.
- *
- * Warehouse tables are optional. Bitcommerce is the only revenue source;
- * without it, spend still reports and value is zero. No ad-network writes.
+ * Cost is warehouse spend (any network): SUM(stats_ad_metrics_daily.spend)
+ * for metric dates in the report range (the advertiser's click dates).
+ * Commerce revenue counts every paid order in the report range for a
+ * campaign's first-touch customers, including people who registered before
+ * the range. It also counts orders after `until` when the customer
+ * registered in the range and the purchase is still inside
+ * stats_ad_network.click_window_days of that registration. LTV is those
+ * customers' paid orders from the start of the range on, with no day cap.
+ * Network conversions_value / spend is {Google,Microsoft,…} ROAS for comparison.
+ * If the click window is unknown, ask. Warehouse tables are optional.
+ * Bitcommerce is the only revenue source; without it, spend still reports
+ * and value is zero. No ad-network writes.
  */
 
 function ads_roas_date_ok( $pDate ) {
@@ -78,7 +82,7 @@ function ads_roas_save_click_window( $pDb, $pNetwork, $pDays ) {
 function ads_roas_rev_blank() {
 	return array(
 		'revenue' => 0, 'orders' => 0, 'buyers' => 0,
-		'lookback_revenue' => 0, 'lookback_orders' => 0, 'lookback_buyers' => 0,
+		'ltv' => 0,
 	);
 }
 
@@ -86,12 +90,11 @@ function ads_roas_rev_blank() {
  * @param object $pDb BitDb
  * @param string $pSince Y-m-d inclusive
  * @param string $pUntil Y-m-d inclusive
- * @param array  $pOpts  network (default google), cohort (bool)
- * @return array{since,until,network,cohort,rows,totals}
+ * @param array  $pOpts  network (default google)
+ * @return array{since,until,network,rows,totals}
  */
 function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 	$network = !empty( $pOpts['network'] ) ? $pOpts['network'] : 'google';
-	$cohort = !empty( $pOpts['cohort'] );
 	$wantRev = ads_roas_commerce_ready();
 	$netRow = ads_roas_network_row( $pDb, $network );
 	if( !is_array( $netRow ) ) {
@@ -117,78 +120,60 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 
 	$rev = array();
 	if( $wantRev ) {
+		$windowDays = $clickDays ? (int)$clickDays : 0;
 		$revRows = $pDb->getAll(
-			"SELECT a.campaign_id,
-			        SUM(o.order_total) AS revenue,
-			        COUNT(*) AS orders,
-			        COUNT(DISTINCT o.customers_id) AS buyers
-			 FROM stats_ad_order_attribution a
-			 JOIN com_orders o ON o.orders_id = a.orders_id
-			 JOIN users_users u ON u.user_id = a.user_id
-			 WHERE o.orders_status_id > 0
-			   AND o.date_purchased >= ?::timestamp
-			   AND o.date_purchased < (?::date + 1)
-			   AND to_timestamp(u.registration_date) >= ?::timestamp
-			   AND to_timestamp(u.registration_date) < (?::date + 1)
-			   AND a.campaign_id IS NOT NULL
-			   AND a.network_code = ?
-			 GROUP BY a.campaign_id",
-			array( $pSince, $pUntil, $pSince, $pUntil, $network )
+			"SELECT campaign_id,
+			        COALESCE(SUM(order_total) FILTER (WHERE in_commerce), 0) AS revenue,
+			        COUNT(orders_id) FILTER (WHERE in_commerce) AS orders,
+			        COUNT(DISTINCT customers_id) FILTER (WHERE in_commerce) AS buyers,
+			        COALESCE(SUM(order_total) FILTER (WHERE date_purchased >= ?::timestamp), 0) AS ltv
+			 FROM (
+			    SELECT a.campaign_id, o.orders_id, o.order_total, o.date_purchased, a.user_id AS customers_id,
+			           (
+			             o.orders_id IS NOT NULL AND (
+			               (o.date_purchased >= ?::timestamp AND o.date_purchased < (?::date + 1))
+			               OR (
+			                 ?::int > 0
+			                 AND to_timestamp(u.registration_date) >= ?::timestamp
+			                 AND to_timestamp(u.registration_date) < (?::date + 1)
+			                 AND o.date_purchased >= to_timestamp(u.registration_date)
+			                 AND o.date_purchased <= to_timestamp(u.registration_date) + (?::int * interval '1 day')
+			               )
+			             )
+			           ) AS in_commerce
+			    FROM stats_ad_user_attribution a
+			    JOIN users_users u ON u.user_id = a.user_id
+			    LEFT JOIN com_orders o
+			      ON o.customers_id = a.user_id AND o.orders_status_id > 0
+			    WHERE a.campaign_id IS NOT NULL
+			      AND a.network_code = ?
+			      AND (
+			        (to_timestamp(u.registration_date) >= ?::timestamp
+			         AND to_timestamp(u.registration_date) < (?::date + 1))
+			        OR EXISTS (
+			          SELECT 1 FROM com_orders ox
+			          WHERE ox.customers_id = a.user_id
+			            AND ox.orders_status_id > 0
+			            AND ox.date_purchased >= ?::timestamp
+			            AND ox.date_purchased < (?::date + 1)
+			        )
+			      )
+			 ) s
+			 GROUP BY campaign_id",
+			array(
+				$pSince,
+				$pSince, $pUntil,
+				$windowDays, $pSince, $pUntil, $windowDays,
+				$network,
+				$pSince, $pUntil,
+				$pSince, $pUntil,
+			)
 		);
 		foreach( $revRows as $r ) {
+			if( (float)$r['revenue'] == 0 && (float)$r['ltv'] == 0 && (int)$r['orders'] == 0 ) {
+				continue;
+			}
 			$rev[(string)$r['campaign_id']] = $r;
-		}
-	}
-
-	$lookback = array();
-	if( $wantRev && $clickDays ) {
-		$lbRows = $pDb->getAll(
-			"SELECT a.campaign_id,
-			        SUM(o.order_total) AS lookback_revenue,
-			        COUNT(*) AS lookback_orders,
-			        COUNT(DISTINCT o.customers_id) AS lookback_buyers
-			 FROM stats_ad_order_attribution a
-			 JOIN com_orders o ON o.orders_id = a.orders_id
-			 JOIN users_users u ON u.user_id = a.user_id
-			 WHERE o.orders_status_id > 0
-			   AND to_timestamp(u.registration_date) >= ?::timestamp
-			   AND to_timestamp(u.registration_date) < (?::date + 1)
-			   AND o.date_purchased >= to_timestamp(u.registration_date)
-			   AND o.date_purchased <= to_timestamp(u.registration_date) + (?::int * interval '1 day')
-			   AND a.campaign_id IS NOT NULL
-			   AND a.network_code = ?
-			 GROUP BY a.campaign_id",
-			array( $pSince, $pUntil, $clickDays, $network )
-		);
-		foreach( $lbRows as $r ) {
-			$lookback[(string)$r['campaign_id']] = $r;
-		}
-	}
-
-	$cohortMap = array();
-	if( $cohort && $wantRev ) {
-		$sinceTs = strtotime( $pSince.' UTC' );
-		$untilTs = strtotime( $pUntil.' 23:59:59 UTC' );
-		$cRows = $pDb->getAll(
-			"SELECT a.campaign_id,
-			        COUNT(*) AS regs,
-			        COUNT(*) FILTER (WHERE EXISTS (
-			            SELECT 1 FROM com_orders o WHERE o.customers_id = a.user_id AND o.orders_status_id > 0
-			        )) AS buyers,
-			        COALESCE(SUM((
-			            SELECT SUM(o.order_total) FROM com_orders o
-			            WHERE o.customers_id = a.user_id AND o.orders_status_id > 0
-			        )), 0) AS ltv
-			 FROM stats_ad_user_attribution a
-			 JOIN users_users u ON u.user_id = a.user_id
-			 WHERE a.campaign_id IS NOT NULL
-			   AND a.network_code = ?
-			   AND u.registration_date >= ? AND u.registration_date <= ?
-			 GROUP BY a.campaign_id",
-			array( $network, $sinceTs, $untilTs )
-		);
-		foreach( $cRows as $r ) {
-			$cohortMap[(string)$r['campaign_id']] = $r;
 		}
 	}
 
@@ -197,34 +182,18 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		$id = (string)$s['campaign_id'];
 		$r = isset( $rev[$id] ) ? $rev[$id] : ads_roas_rev_blank();
 		unset( $rev[$id] );
-		if( isset( $lookback[$id] ) ) {
-			$r = array_merge( $r, $lookback[$id] );
-			unset( $lookback[$id] );
-		}
-		$rows[] = ads_roas_row( $id, $s['campaign_name'], $s, $r, $cohort, $cohortMap );
+		$rows[] = ads_roas_row( $id, $s['campaign_name'], $s, $r );
 	}
 
 	foreach( $rev as $id => $r ) {
-		$name = $id;
-		foreach( $spendRows as $s ) {
-			if( (string)$s['campaign_id'] === (string)$id ) {
-				$name = $s['campaign_name'];
-				break;
-			}
-		}
-		if( isset( $lookback[$id] ) ) {
-			$r = array_merge( $r, $lookback[$id] );
-			unset( $lookback[$id] );
-		}
 		$emptySpend = array( 'spend' => 0, 'clicks' => 0, 'impressions' => 0, 'network_value' => 0, 'target_roas' => null );
-		$rows[] = ads_roas_row( $id, $name, $emptySpend, $r, $cohort, $cohortMap );
+		$rows[] = ads_roas_row( $id, $id, $emptySpend, $r );
 	}
 
 	$totals = array(
 		'spend' => 0, 'revenue' => 0, 'orders' => 0, 'buyers' => 0,
 		'clicks' => 0, 'impressions' => 0, 'network_value' => 0,
-		'lookback_revenue' => 0, 'lookback_orders' => 0, 'lookback_buyers' => 0,
-		'cohort_regs' => 0, 'cohort_buyers' => 0, 'cohort_ltv' => 0,
+		'ltv' => 0,
 	);
 	foreach( $rows as $row ) {
 		$totals['spend'] += $row['spend'];
@@ -234,19 +203,11 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		$totals['clicks'] += $row['clicks'];
 		$totals['impressions'] += $row['impressions'];
 		$totals['network_value'] += $row['network_value'];
-		$totals['lookback_revenue'] += $row['lookback_revenue'];
-		$totals['lookback_orders'] += $row['lookback_orders'];
-		$totals['lookback_buyers'] += $row['lookback_buyers'];
-		$totals['cohort_regs'] += $row['cohort_regs'];
-		$totals['cohort_buyers'] += $row['cohort_buyers'];
-		$totals['cohort_ltv'] += $row['cohort_ltv'];
+		$totals['ltv'] += $row['ltv'];
 	}
-	$totals['window_roas'] = $totals['spend'] > 0 ? $totals['revenue'] / $totals['spend'] : null;
-	$totals['commerce_roas'] = $totals['window_roas'];
-	$totals['lookback_roas'] = $totals['spend'] > 0 ? $totals['lookback_revenue'] / $totals['spend'] : null;
-	$totals['remote_roas'] = $totals['spend'] > 0 ? $totals['network_value'] / $totals['spend'] : null;
-	$totals['network_roas'] = $totals['remote_roas'];
-	$totals['cohort_ltv_roas'] = $totals['spend'] > 0 ? $totals['cohort_ltv'] / $totals['spend'] : null;
+	$totals['commerce_roas'] = $totals['spend'] > 0 ? $totals['revenue'] / $totals['spend'] : null;
+	$totals['network_roas'] = $totals['spend'] > 0 ? $totals['network_value'] / $totals['spend'] : null;
+	$totals['ltv_roas'] = $totals['spend'] > 0 ? $totals['ltv'] / $totals['spend'] : null;
 
 	return array(
 		'since'             => $pSince,
@@ -255,67 +216,51 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		'network_label'     => $netLabel,
 		'click_window_days' => $clickDays,
 		'window_source'     => isset( $netRow['window_source'] ) ? $netRow['window_source'] : null,
-		'cohort'            => $cohort,
 		'rows'              => $rows,
 		'totals'            => $totals,
 	);
 }
 
-function ads_roas_row( $pId, $pName, $pSpend, $pRev, $pCohort, $pCohortMap ) {
+function ads_roas_row( $pId, $pName, $pSpend, $pRev ) {
 	$spend = (float)$pSpend['spend'];
 	$revenue = (float)$pRev['revenue'];
-	$lookbackRev = isset( $pRev['lookback_revenue'] ) ? (float)$pRev['lookback_revenue'] : 0;
+	$ltv = isset( $pRev['ltv'] ) ? (float)$pRev['ltv'] : 0;
 	$target = isset( $pSpend['target_roas'] ) && $pSpend['target_roas'] !== null && $pSpend['target_roas'] !== ''
 		? (float)$pSpend['target_roas'] : null;
-	$c = ( $pCohort && isset( $pCohortMap[(string)$pId] ) )
-		? $pCohortMap[(string)$pId]
-		: array( 'regs' => 0, 'buyers' => 0, 'ltv' => 0 );
-	$ltv = (float)$c['ltv'];
 	$commerceRoas = $spend > 0 ? $revenue / $spend : null;
 	$remoteRoas = $spend > 0 ? (float)$pSpend['network_value'] / $spend : null;
 	return array(
-		'campaign_id'      => $pId,
-		'campaign_name'    => $pName,
-		'spend'            => $spend,
-		'revenue'          => $revenue,
-		'orders'           => (int)$pRev['orders'],
-		'buyers'           => (int)$pRev['buyers'],
-		'clicks'           => (int)$pSpend['clicks'],
-		'impressions'      => (int)$pSpend['impressions'],
-		'network_value'    => (float)$pSpend['network_value'],
-		'target_roas'      => $target,
-		'lookback_revenue' => $lookbackRev,
-		'lookback_orders'  => isset( $pRev['lookback_orders'] ) ? (int)$pRev['lookback_orders'] : 0,
-		'lookback_buyers'  => isset( $pRev['lookback_buyers'] ) ? (int)$pRev['lookback_buyers'] : 0,
-		'window_roas'      => $commerceRoas,
-		'commerce_roas'    => $commerceRoas,
-		'lookback_roas'    => $spend > 0 ? $lookbackRev / $spend : null,
-		'remote_roas'      => $remoteRoas,
-		'network_roas'     => $remoteRoas,
-		'cohort_regs'      => (int)$c['regs'],
-		'cohort_buyers'    => (int)$c['buyers'],
-		'cohort_ltv'       => $ltv,
-		'cohort_ltv_roas'  => $spend > 0 ? $ltv / $spend : null,
+		'campaign_id'   => $pId,
+		'campaign_name' => $pName,
+		'spend'         => $spend,
+		'revenue'       => $revenue,
+		'orders'        => (int)$pRev['orders'],
+		'buyers'        => (int)$pRev['buyers'],
+		'clicks'        => (int)$pSpend['clicks'],
+		'impressions'   => (int)$pSpend['impressions'],
+		'network_value' => (float)$pSpend['network_value'],
+		'target_roas'   => $target,
+		'ltv'           => $ltv,
+		'commerce_roas' => $commerceRoas,
+		'network_roas'  => $remoteRoas,
+		'ltv_roas'      => $spend > 0 ? $ltv / $spend : null,
 	);
 }
 
-function ads_roas_csv_headers( $pCohort, $pClickDays = null ) {
-	$headers = array(
-		'campaign_id', 'campaign_name', 'window_spend', 'commerce_revenue', 'commerce_orders',
-		'commerce_buyers', 'commerce_roas', 'target_roas', 'network_value', 'network_roas',
-		'click_window_days', 'commerce_lookback_revenue', 'commerce_lookback_roas', 'network_roas_is_partial',
+function ads_roas_csv_headers( $pClickDays = null ) {
+	return array(
+		'campaign_id', 'campaign_name', 'window_spend',
+		'commerce_revenue', 'commerce_orders', 'commerce_buyers', 'commerce_roas',
+		'click_window_days', 'commerce_ltv', 'commerce_ltv_roas',
+		'target_roas', 'network_value', 'network_roas', 'network_roas_is_partial',
 	);
-	if( $pCohort ) {
-		$headers = array_merge( $headers, array( 'cohort_regs', 'cohort_buyers', 'cohort_ltv', 'cohort_ltv_roas' ) );
-	}
-	return $headers;
 }
 
-function ads_roas_csv_line( $pRow, $pCohort, $pClickDays = null ) {
+function ads_roas_csv_line( $pRow, $pClickDays = null ) {
 	$roas = $pRow['commerce_roas'];
 	$remote = $pRow['network_roas'];
-	$lb = $pRow['lookback_roas'];
-	$line = array(
+	$ltvRoas = $pRow['ltv_roas'];
+	return array(
 		$pRow['campaign_id'],
 		$pRow['campaign_name'],
 		sprintf( '%.2f', $pRow['spend'] ),
@@ -323,20 +268,12 @@ function ads_roas_csv_line( $pRow, $pCohort, $pClickDays = null ) {
 		(int)$pRow['orders'],
 		(int)$pRow['buyers'],
 		is_numeric( $roas ) ? sprintf( '%.3f', $roas ) : '',
+		$pClickDays !== null ? (int)$pClickDays : '',
+		sprintf( '%.2f', $pRow['ltv'] ),
+		is_numeric( $ltvRoas ) ? sprintf( '%.3f', $ltvRoas ) : '',
 		$pRow['target_roas'] !== null ? sprintf( '%.3f', $pRow['target_roas'] ) : '',
 		sprintf( '%.2f', $pRow['network_value'] ),
 		is_numeric( $remote ) ? sprintf( '%.3f', $remote ) : '',
-		$pClickDays !== null ? (int)$pClickDays : '',
-		sprintf( '%.2f', $pRow['lookback_revenue'] ),
-		is_numeric( $lb ) ? sprintf( '%.3f', $lb ) : '',
-		'partial_attribution',
+		'click_window',
 	);
-	if( $pCohort ) {
-		$cRoas = $pRow['cohort_ltv_roas'];
-		$line[] = (int)$pRow['cohort_regs'];
-		$line[] = (int)$pRow['cohort_buyers'];
-		$line[] = sprintf( '%.2f', $pRow['cohort_ltv'] );
-		$line[] = is_numeric( $cRoas ) ? sprintf( '%.3f', $cRoas ) : '';
-	}
-	return $line;
 }
