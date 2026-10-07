@@ -18,7 +18,10 @@
 	<header class="page-header">
 		
 		<div class="pull-right">{minifind period_format="`$smarty.request.period_format`" timeframe="`$smarty.request.timeframe`"}</div>
-		<h1><a class="btn btn-xs btn-default" href="{$smarty.const.STATS_PKG_URL}users.php">{booticon iname="fa-arrow-left"}</a> {tr}User Registration Statistics{/tr} {$smarty.request.timeframe|escape}</h1>
+		<h1><a class="btn btn-xs btn-default" href="{$smarty.const.STATS_PKG_URL}users.php">{booticon iname="fa-arrow-left"}</a> {tr}User Registration Statistics{/tr} {$smarty.request.timeframe|escape}
+			{if $roasPeriodUrl}<a class="btn btn-xs btn-default" href="{$roasPeriodUrl|escape}">{tr}Ad ROAS for this period{/tr}</a>{/if}
+		</h1>
+		{if $refCommerce}<p class="help-block">{tr}Revenue is each registrant's lifetime paid orders; "in period" is their paid orders dated{/tr} {$refSince|escape} – {$refUntil|escape}. {tr}PPC campaigns are keyed by the network campaign id when the landing or a stored click names one.{/tr}</p>{/if}
 	</header>
 
 	<div class="body">
@@ -37,17 +40,18 @@
 					<th class="text-right">{$reg|@count} {booticon iname="fa-user"}</th>
 					<th class="text-right">{$aggregateStats.$host.info.orders|default:"0"} {booticon iname="fa-cart-shopping"}</th>
 					<th class="text-right">{$gCommerceCurrencies->format($aggregateStats.$host.info.revenue|default:"0.00")}</th>
+					<th class="text-right ref-period" title="{tr}In period{/tr}">{$aggregateStats.$host.info.period_orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($aggregateStats.$host.info.period_revenue|default:"0.00")}</th>
 				{/if}
 				</tr>
 
 				<tbody id="{$hostHash}" style="display:none">
-					<tr><td colspan="6">
+					<tr><td colspan="7">
 						<div class="panel-group" id="accordion-{$hostHash}" role="tablist" aria-multiselectable="true">
 						{foreach from=$aggregateStats.$host.values item=paramValues key=paramKey}
 							{assign var=paramId value=$paramKey|regex_replace:'/[^A-Za-z0-9]+/':'-'}
 							<div class="panel panel-default">
 								<div class="panel-heading" role="tab" id="heading-{$hostHash}-{$paramId}">
-									<div class="pull-right">{$paramValues.info.users|@count} {booticon iname="fa-user"} {$paramValues.info.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($paramValues.info.revenue|default:"0")}</div>
+									<div class="pull-right">{$paramValues.info.users|@count} {booticon iname="fa-user"} {$paramValues.info.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($paramValues.info.revenue|default:"0")} <span class="ref-period" title="{tr}In period{/tr}">({$paramValues.info.period_orders|default:"0"} / {$gCommerceCurrencies->format($paramValues.info.period_revenue|default:"0")})</span></div>
 									<h4 class="panel-title">
 										<a class="collapsed" data-toggle="collapse" data-parent="#accordion-{$hostHash}" href="#collapse-{$hostHash}-{$paramId}" aria-expanded="false" aria-controls="collapse-{$hostHash}-{$paramId}">{$paramKey|escape}</a>
 									</h4>
@@ -75,7 +79,7 @@
 								<div class="panel-heading" role="tab" id="heading-{$hostHash}-{$paramId}">
 								{if $aggregateStats.$host}
 									<div class="pull-right">
-										{$reg|@count} {booticon iname="fa-user"} {$aggregateStats.$host.info.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($aggregateStats.$host.info.revenue|default:"0.00")}
+										{$reg|@count} {booticon iname="fa-user"} {$aggregateStats.$host.info.orders|default:"0"} {booticon iname="fa-cart-shopping"} {$gCommerceCurrencies->format($aggregateStats.$host.info.revenue|default:"0.00")} <span class="ref-period" title="{tr}In period{/tr}">({$aggregateStats.$host.info.period_orders|default:"0"} / {$gCommerceCurrencies->format($aggregateStats.$host.info.period_revenue|default:"0.00")})</span>
 									</div>
 								{/if}
 									<h4 class="panel-title">
@@ -93,6 +97,7 @@
 												<th data-field="name" data-sortable="true">User</th>
 												<th class="text-center" data-field="order_count" data-sortable="true">{booticon iname="fa-cart-shopping"}</th>
 												<th class="text-center" data-field="revenue" data-sortable="true" data-sorter="priceSorter">Revenue</th>
+												<th class="text-center" data-field="period_revenue" data-sortable="true" data-sorter="priceSorter">{tr}In period{/tr}</th>
 											</tr>
 											</thead>
 											<tbody>
@@ -102,6 +107,7 @@
 												<td><strong style="font-size:larger">{displayname hash=$user}</strong>{if $user.referer_url}<br/><a href="{$user.referer_url|escape}">{$user.referer_url|stats_referer_display_short}</a>{/if}</td>
 												<td class="text-right">{if $user.revenue.total_orders}<a target="_new" href="{$smarty.const.BITCOMMERCE_PKG_URL}admin/list_orders.php?user_id={$user.user_id}">{$user.revenue.total_orders}</a>{/if}</td>
 												<td class="text-right">{if $user.revenue.total_revenue}{$gCommerceCurrencies->format($user.revenue.total_revenue)}{/if}</td>
+												<td class="text-right">{if $user.revenue.period_revenue}{$gCommerceCurrencies->format($user.revenue.period_revenue)}{/if}</td>
 											</tr>
 											{/foreach}
 											</tbody>

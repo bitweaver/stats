@@ -288,21 +288,44 @@ class Statistics extends BitBase {
 		return $map;
 	}
 
-	public static function inferredPpcCampaign( $pRow, $pTrack = array() ) {
-		if( !empty( $pTrack['ctm_campaign'] ) ) {
-			return $pTrack['ctm_campaign'];
+	/**
+	 * PPC campaign node for the registration report, keyed the way the
+	 * warehouse keys attribution (ads_parse_landing_keys): campaign id first,
+	 * else the tracking label, else untracked / Performance Max.
+	 * @return array{key,title,campaign_id,untracked}
+	 */
+	public static function ppcCampaignNode( $pRow, $pTrack = array() ) {
+		require_once( STATS_PKG_INCLUDE_PATH.'ads_warehouse_lib.php' );
+		$query = ( is_array( $pTrack ) && $pTrack ) ? http_build_query( $pTrack ) : '';
+		$landing = !empty( $pRow['landing_url'] ) ? $pRow['landing_url'] : null;
+		$keys = ads_parse_landing_keys( $query, $query === '' ? $landing : null );
+		if( !empty( $keys['campaign_id'] ) ) {
+			$id = (string)$keys['campaign_id'];
+			return array(
+				'key'         => $id,
+				'title'       => !empty( $keys['campaign_name'] ) ? $keys['campaign_name'] : $id,
+				'campaign_id' => $id,
+				'untracked'   => false,
+			);
 		}
-		$map = static::googleCampaignMap();
-		foreach( array( 'gad_campaignid', 'utm_campaign' ) as $k ) {
-			$id = !empty( $pTrack[$k] ) ? (string)$pTrack[$k] : '';
-			if( $id !== '' && isset( $map[$id] ) ) {
-				return $map[$id];
-			}
+		if( !empty( $keys['campaign_name'] ) ) {
+			return array(
+				'key'         => 'name:'.strtolower( $keys['campaign_name'] ),
+				'title'       => $keys['campaign_name'],
+				'campaign_id' => null,
+				'untracked'   => false,
+			);
 		}
 		if( static::isCreateLanding( $pRow ) ) {
-			return 'untracked';
+			return array( 'key' => 'untracked', 'title' => 'untracked', 'campaign_id' => null, 'untracked' => true );
 		}
-		return 'Performance Max';
+		return array( 'key' => 'pmax', 'title' => 'Performance Max', 'campaign_id' => null, 'untracked' => true );
+	}
+
+	/** Display name of the PPC campaign node (see ppcCampaignNode). */
+	public static function inferredPpcCampaign( $pRow, $pTrack = array() ) {
+		$node = static::ppcCampaignNode( $pRow, $pTrack );
+		return $node['title'];
 	}
 
 	public static function trackingParamsFromRow( $pRow ) {
@@ -360,7 +383,7 @@ class Statistics extends BitBase {
 	}
 
 	function sortRefererHash( $a, $b ) {
-		return count( $a ) < count( $b );
+		return count( $b ) <=> count( $a );
 	}
 
 	/**

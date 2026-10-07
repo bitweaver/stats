@@ -11,6 +11,7 @@
  */
 require_once( '../kernel/includes/setup_inc.php' );
 include_once ( STATS_PKG_CLASS_PATH.'Statistics.php');
+require_once( STATS_PKG_INCLUDE_PATH.'ads_roas_lib.php' );
 
 $gBitSystem->verifyPackage( 'stats' );
 $gBitSystem->verifyFeature( 'stats_referers' );
@@ -30,6 +31,32 @@ $referers = $gStats->getRefererList( $_REQUEST );
 $totalRegistrations = 0;
 $maxRegistrations = 0;
 
+// The period's date range, for in-period revenue and the ROAS link.
+$period = BitBase::getParameter( $_REQUEST, 'period', 'month' );
+$timeframe = BitBase::getParameter( $_REQUEST, 'timeframe', '' );
+$range = ads_roas_period_range( $period, $timeframe );
+$since = $range ? $range['since'] : null;
+$until = $range ? $range['until'] : null;
+
+// Lifetime and in-period revenue per registered user in a few grouped
+// queries, not one query per user.
+$commerce = false;
+$revMap = array();
+if( $gBitSystem->isPackageActive( 'bitcommerce' ) ) {
+	require_once( BITCOMMERCE_PKG_INCLUDE_PATH.'bitcommerce_start_inc.php' );
+	$commerce = ads_roas_commerce_ready();
+	if( $commerce ) {
+		$ids = array();
+		foreach( $referers as $rows ) {
+			foreach( $rows as $row ) {
+				$ids[] = (int)$row['user_id'];
+			}
+		}
+		$revMap = ads_roas_user_revenue_map( $gBitSystem->mDb, $ids, $since ? $since : '1970-01-01', $until ? $until : date( 'Y-m-d' ) );
+	}
+}
+$blankRevenue = array( 'total_revenue' => 0, 'total_orders' => 0, 'period_revenue' => 0, 'period_orders' => 0 );
+
 $aggregateStats = array();
 foreach( array_keys( $referers ) as $refSite ) {
 	$refSiteCount = count( $referers[$refSite] );
@@ -40,18 +67,16 @@ foreach( array_keys( $referers ) as $refSite ) {
 
 	foreach( array_keys( $referers[$refSite] ) as $r ) {
 		$url = parse_url( $referers[$refSite][$r]['referer_url'] );
-		$revenue = array();
-		if( $gBitSystem->isPackageActive( 'bitcommerce' ) ) {
-			require_once( BITCOMMERCE_PKG_INCLUDE_PATH.'bitcommerce_start_inc.php' );
-			require_once( BITCOMMERCE_PKG_CLASS_PATH.'CommerceStatistics.php' );
-			$revenue = $gCommerceStatistics->getCustomerRevenue( array( 'customers_id' => $referers[$refSite][$r]['user_id'] ) );
+		if( $commerce ) {
+			$uid = (int)$referers[$refSite][$r]['user_id'];
+			$revenue = isset( $revMap[$uid] ) ? $revMap[$uid] : $blankRevenue;
 			$referers[$refSite][$r]['revenue'] = $revenue;
 			$subVals = array( $refSite );
 			$track = Statistics::trackingParamsFromRow( $referers[$refSite][$r] );
 			if( Statistics::isPaidTracking( $track ) ) {
 				array_push( $subVals, 'PPC' );
-				$campaign = Statistics::inferredPpcCampaign( $referers[$refSite][$r], $track );
-				array_push( $subVals, $campaign );
+				// Keyed by campaign id (same resolver as the warehouse), titled by name.
+				array_push( $subVals, Statistics::ppcCampaignNode( $referers[$refSite][$r], $track ) );
 				$adgroup = Statistics::inferredAdGroup( $referers[$refSite][$r], $track );
 				if( $adgroup !== '' ) {
 					array_push( $subVals, $adgroup );
@@ -82,60 +107,41 @@ foreach( array_keys( $referers ) as $refSite ) {
 	}
 }
 
+/**
+ * Accumulate one user down a path of nodes. A node is a string (key and
+ * title) or array( key, title, campaign_id ) from Statistics::ppcCampaignNode().
+ */
 function computeStats( &$pAggregateStats, &$subStats, $revenue, &$userHash ) {
-				do {
-					$subStatKey = array_shift( $subStats );
-					@$pAggregateStats[$subStatKey]['info']['title'] = $subStatKey;
-					@$pAggregateStats[$subStatKey]['info']['revenue'] += $revenue['total_revenue'];
-					@$pAggregateStats[$subStatKey]['info']['orders'] += $revenue['total_orders'];
-					@$pAggregateStats[$subStatKey]['info']['users'][] = $userHash;
-					if( empty( $pAggregateStats[$subStatKey]['values'] ) ) {
-						$pAggregateStats[$subStatKey]['values'] = array();
-					}
-					if( $subStats ) {
-						computeStats( $pAggregateStats[$subStatKey]['values'], $subStats, $revenue, $userHash );
-					}
-				} while( !empty( $subStats ) );
-//global $aggregateStats; eb( $subStatKey, $pTitle, $subStats, $revenue, $userHash, $aggregateStats );
-/*
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['values'][$adParams['ctm_term']]['info']['title'] = $adParams['ctm_term'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['values'][$adParams['ctm_term']]['info']['revenue'] += $revenue['total_revenue'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['values'][$adParams['ctm_term']]['info']['orders'] += $revenue['total_orders'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['values'][$adParams['ctm_term']]['info']['users'][] = $userHash;
-
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['info']['title'] = $adParams['ctm_adgroup'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['info']['revenue'] += $revenue['total_revenue'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['info']['orders'] += $revenue['total_orders'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['values'][$adParams['ctm_adgroup']]['info']['users'][] = $userHash;
-
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['info']['title'] = $adParams['ctm_campaign'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['info']['revenue'] += $revenue['total_revenue'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['info']['orders'] += $revenue['total_orders'];
-			@$pAggregateStats[$k]['values'][$key]['values'][$adParams['ctm_campaign']]['info']['users'][] = $userHash;
-
-	} else {
-		foreach( $adParams as $key => $value ) {
-			computeStats( $pAggregateStats, $k, $key, $value, $revenue, $userHash );
+	do {
+		$item = array_shift( $subStats );
+		if( is_array( $item ) ) {
+			$key = $item['key'];
+			$title = $item['title'];
+		} else {
+			$key = $title = $item;
 		}
-	}
-*/
+		if( !isset( $pAggregateStats[$key] ) ) {
+			$pAggregateStats[$key] = array(
+				'info' => array(
+					'title' => $title, 'revenue' => 0, 'orders' => 0,
+					'period_revenue' => 0, 'period_orders' => 0, 'users' => array(),
+				),
+				'values' => array(),
+			);
+		}
+		if( is_array( $item ) && !empty( $item['campaign_id'] ) ) {
+			$pAggregateStats[$key]['info']['campaign_id'] = $item['campaign_id'];
+		}
+		$pAggregateStats[$key]['info']['revenue'] += $revenue['total_revenue'];
+		$pAggregateStats[$key]['info']['orders'] += $revenue['total_orders'];
+		$pAggregateStats[$key]['info']['period_revenue'] += $revenue['period_revenue'];
+		$pAggregateStats[$key]['info']['period_orders'] += $revenue['period_orders'];
+		$pAggregateStats[$key]['info']['users'][] = $userHash;
+		if( $subStats ) {
+			computeStats( $pAggregateStats[$key]['values'], $subStats, $revenue, $userHash );
+		}
+	} while( !empty( $subStats ) );
 }
-/*
-function computeStats( &$pAggregateStats, $k, $key, $value, $revenue, &$userHash, $subKey = NULL ) {
-	@$pAggregateStats[$k]['values'][$key]['info']['title'] = $key;
-	@$pAggregateStats[$k]['values'][$key]['info']['revenue'] += $revenue['total_revenue'];
-	@$pAggregateStats[$k]['values'][$key]['info']['orders'] += $revenue['total_orders'];
-	@$pAggregateStats[$k]['values'][$key]['info']['users'][] = $userHash;
-
-	if( $subKey ) {
-		@$pAggregateStats[$k]['values'][$key]['values'][$subKey]['info']['title'] = $subKey;
-		@$pAggregateStats[$k]['values'][$key]['values'][$subKey]['info']['revenue'] += $revenue['total_revenue'];
-		@$pAggregateStats[$k]['values'][$key]['values'][$subKey]['info']['orders'] += $revenue['total_orders'];
-		@$pAggregateStats[$k]['values'][$key]['values'][$subKey]['info']['users'][] = $userHash;
-	}
-
-}
-*/
 
 $gBitThemes->loadCss(STATS_PKG_PATH.'css/stats.css', TRUE, 300, TRUE, FALSE, FALSE);
 $gBitThemes->loadCss(CONFIG_PKG_PATH.'themes/bootstrap/bootstrap-table/bootstrap-table.css', TRUE, 300, TRUE, FALSE, FALSE);
@@ -145,6 +151,14 @@ $gBitSmarty->assignByRef( 'aggregateStats', $aggregateStats );
 $gBitSmarty->assignByRef( 'referers', $referers );
 $gBitSmarty->assign( 'totalRegistrations', $totalRegistrations );
 $gBitSmarty->assign( 'maxRegistrations', $maxRegistrations );
-$gBitSmarty->assign( 'listInfo', $_REQUEST['listInfo'] );
+$gBitSmarty->assign( 'listInfo', isset( $_REQUEST['listInfo'] ) ? $_REQUEST['listInfo'] : array() );
+$roasPeriodUrl = null;
+if( $range && $gBitUser->hasPermission( 'p_stats_admin' ) ) {
+	$roasPeriodUrl = STATS_PKG_URL.'ad_roas.php?'.http_build_query( array( 'period' => $range['period'], 'timeframe' => $range['timeframe'] ) );
+}
+$gBitSmarty->assign( 'roasPeriodUrl', $roasPeriodUrl );
+$gBitSmarty->assign( 'refSince', $since );
+$gBitSmarty->assign( 'refUntil', $until );
+$gBitSmarty->assign( 'refCommerce', $commerce );
 $gBitSystem->display( 'bitpackage:stats/referrer_stats.tpl', tra( 'Referer Statistics' ), array( 'display_mode' => 'display' ));
 
