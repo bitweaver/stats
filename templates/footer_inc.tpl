@@ -1,5 +1,5 @@
 {* **** GOOGLE TAG MANAGER **** *}
-{if $gBitSystem->getConfig('google_tagmanager_id')}
+{if $gBitSystem->isTracking() && $gBitSystem->getConfig('google_tagmanager_id')}
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={$gBitSystem->getConfig('google_tagmanager_id')}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
