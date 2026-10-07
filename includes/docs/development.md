@@ -27,6 +27,27 @@
   Shared helpers live in `includes/<group>_lib.php` and take `$pParameters`
   (use `BitBase::getParameter`). Do not read superglobals inside those libs.
 
+## Extension points
+
+- **Revenue source for ROAS.** Another package can supply the value side
+  without editing this package. In its `bit_setup_inc.php`:
+
+  ```php
+  $gLibertySystem->registerService( 'mypkg', 'mypkg', array(
+      'stats_revenue_source_function' => 'mypkg_stats_revenue_source',
+  ) );
+  ```
+
+  The function takes `$pDb` and returns `array( 'label', 'ready', 'orders_sql',
+  'bind' )`. `orders_sql` must yield `order_id, user_id, purchased_at
+  (timestamp), revenue (numeric), currency`; `bind` holds its placeholders.
+  The default is Bitcommerce paid `order_total` (`orders_status_id > 0`).
+  Use it for install rules such as excluding test or staff orders.
+- **Page settings** live in `stats_prefs` through `stats_pref_get()` /
+  `stats_pref_set()`: `roas_gross_margin_pct`, `roas_desired_commerce_roas`.
+- **Campaign aliases** (`stats_ad_campaign_alias`) map legacy tracking labels
+  to campaign ids; edited on the Ad API setup page.
+
 ## Schema changes
 
 Update both installation and upgrade paths. Define portable schema through the

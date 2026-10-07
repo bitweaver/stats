@@ -29,39 +29,56 @@ same-site Referer is dropped (`none`). Tracking keys belong on the landing
 query, not `HTTP_REFERER`. A paid click whose landing has `gclid` / empty `ctm_*`
 and no named `ctm_campaign` is untracked paid traffic, not organic.
 
-`referrers.php` nests PPC as campaign → ad group → `ctm_term`. Named Search
-uses `ctm_campaign` / `ctm_adgroup`. Paid clicks without CTM that land on
-`/create/{slug}` stay under `untracked` with the slug as ad group (Search
-final URLs). Other paid landings (`/help/…`, home, etc.) are Performance
-Max: Google can promote any site URL. If `gad_campaignid` matches a
-warehouse `PERFORMANCE_MAX` campaign, that campaign name is used.
-Warehouse backfill and ROAS key on `campaign_id` only. Numeric `utm_campaign`
-wins (exact warehouse id), then `gad_campaignid` if it is a campaign id, then
-a unique warehouse match on `ctm_campaign`. ValueTrack names are labels, not
-join keys; unmatched names are not ROAS rows. Commerce ROAS revenue is
-paid orders in the spend window for the campaign's first-touch customers,
-including customers who registered before the window, plus orders after
-`until` that are still within N days of a registration in the window.
-Unpaid/organic groups by landing path
-with the query stripped (`srsltid`). Revenue is lifetime commerce totals
-when bitcommerce is active.
+`referrers.php` nests PPC as campaign → ad group → `ctm_term`. Campaign
+nodes come from `Statistics::ppcCampaignNode()`, which runs the same
+resolver as the warehouse (`ads_parse_landing_keys()`): keyed by campaign id
+when a numeric `utm_campaign` / `gad_campaignid` or a unique (or aliased)
+`ctm_campaign` names one, else by the tracking label, else `untracked`
+(paid click on `/create/{slug}`) or `Performance Max` (other paid landings
+without keys). Id-keyed nodes link to `ad_roas.php` for the same period.
+Revenue per registrant is lifetime paid orders plus an "in period" column
+for the period's dates, fetched by `ads_roas_user_revenue_map()` in one
+grouped query per 1,000 users.
 
-`ad_roas.php` (`p_stats_admin`) compares Commerce ROAS to the selected
-network's ROAS (for setting that network's target — a bid target, not a
-floor). Cost is warehouse `stats_ad_metrics_daily.spend` on the click dates
-in the range. Commerce value is Bitcommerce paid `order_total` in that
-range for the campaign's first-touch customers, including customers who
-registered earlier. Purchases after `until` count when registration is in
-the range and still inside `stats_ad_network.click_window_days`. LTV is
-those customers' paid `order_total` from `since` on, with no day cap.
-`network_value / spend` is the advertiser's click-dated conversion value. If the click
-window is unknown, the page asks and stores it. Queries live in
-`includes/ads_roas_lib.php`.
+`ad_roas.php` (`p_stats_admin`) is described in
+[architecture.md](architecture.md): period revenue ↔ conversion-date value,
+cohort revenue ↔ click-dated value, spend-weighted target from the settings
+history, reconciliation of all paid orders, inline SVG trend, campaign
+drill-down and CSV. The revenue source defaults to Bitcommerce paid
+`order_total` and can be replaced by another package (development.md).
 
-Rebuild a spend window (wipe derived warehouse, optional log re-import lives
-in the products log importer): `admin/sh_ad_warehouse_rebuild.php --since=
---wipe`. Nightly pull defaults to the last 90 days (Google click-through
-window) then backfill. Do not copy attribution between databases.
+Rebuild a spend window (wipe derived warehouse; log re-import is a separate
+importer): `admin/sh_ad_warehouse_rebuild.php --since= --wipe`. Nightly pull
+defaults to the last 90 days (the network's click-through window) then
+backfill. Do not copy attribution between databases.
+
+## Warehouse pulls (Google Ads API, read only)
+
+`admin/sh_ad_warehouse_pull.php` flags and what they fill:
+
+| Flag | Tables | Notes |
+|---|---|---|
+| (entities, default) | `stats_ad_account`, `stats_ad_campaign`, `stats_ad_campaign_settings_daily`, `stats_ad_conversion_action`, ad groups, asset groups, ads, keywords | Settings snapshot is stamped with the account-local day; a rerun the same day overwrites. Portfolio bid strategies come from `accessible_bidding_strategy`; `bidding_scope` says which. |
+| `--metrics=campaign,adgroup,keyword` | `stats_ad_metrics_daily` | Click-dated `network_conversions` / `network_value` plus `all_conversions*` and `*_by_conv_date` (the network's conversion-date view). Campaign grain also gets `search_is`, `search_budget_lost_is`, `search_rank_lost_is` in a second query; those are null for PMax/Display and clamped by the network to 0.0999 / 0.9001. |
+| `--conversions` | `stats_ad_conversion_daily` | One row per campaign, day and conversion action. Never holds cost, clicks or impressions (the API refuses those with conversion segments). The window is deleted and re-inserted. |
+| `--clicks` | `stats_ad_click` | `click_view` accepts one day per query and keeps 90 days; the pull clamps the window. Rows are one per click id. PMax click ids can outnumber billed clicks several times (engagement interactions), so this table is a lookup, not a click count. gbraid/wbraid clicks are not resolvable. Never purged. |
+| `--fields-check` | — | Prints whether each GAQL field exists on the configured API version and which segments it can be selected with. Run it before changing the version pref. |
+
+`stats_ad_network.click_window_days` is set from the catalog: the longest
+click-through lookback among enabled PURCHASE actions that count in
+conversions (`window_source = 'network'`). A value saved on the ROAS page
+(`'user'`) is not overwritten. The schema seeds 90 (`'default'`) only when
+nothing is stored.
+
+Backfill (`admin/sh_ad_warehouse_backfill.php`) resolves landings with
+`ads_parse_landing_keys()`, then matches `click_id` against `stats_ad_click`:
+a user whose landing had no campaign gets the click's campaign and
+`source = 'click_view'`; a user already resolved from the landing keeps that
+source and gains `click_date`. Order rows copy `click_date`, `source` and
+the user's `extra` (so `untracked_paid` survives at order level).
+Staff map legacy tracking labels to ids in `stats_ad_campaign_alias`
+(Ad API setup, Campaign aliases tab); `ads_google_campaign_lookup()` consults
+aliases after exact names and they also break name ties.
 
 ## Tables
 
@@ -71,6 +88,30 @@ window) then backfill. Do not copy attribution between databases.
 - `stats_landing_urls` — first-touch landing path + query (`landing_query`
   holds `ctm_*` / `utm_*` / `gclid` when split correctly).
 - `stats_referer_users_map` — `user_id` → referrer and optional landing.
+
+Warehouse tables are declared in `admin/ad_warehouse_schema.sql`
+(idempotent; applied by every warehouse CLI):
+
+- `stats_ad_network` — network code, click/view windows, `window_source`.
+- `stats_ad_account`, `stats_ad_campaign` (current settings snapshot incl.
+  `target_roas`, `target_cpa`, `budget_amount`, `primary_status`),
+  `stats_ad_adgroup`, `stats_ad_ad`, `stats_ad_keyword`.
+- `stats_ad_campaign_settings_daily` — one row per campaign per account-local
+  day: bidding type and scope, targets, budget, statuses. The target in force
+  on a metric day is the latest snapshot on or before it.
+- `stats_ad_metrics_daily` — date × grain × campaign/adgroup/keyword: spend,
+  clicks, impressions, click-dated and conversion-dated conversions and
+  value, search impression share (campaign grain).
+- `stats_ad_conversion_action` — the network's conversion-action catalog with
+  each action's lookback windows and whether it counts in conversions.
+- `stats_ad_conversion_daily` — conversions and value per campaign, day and
+  conversion action. No cost.
+- `stats_ad_click` — click id → campaign/ad group/keyword/date (90-day
+  retention at the network; kept here for good).
+- `stats_ad_user_attribution` (PK `user_id`), `stats_ad_order_attribution`
+  (PK `orders_id`) — first touch, with `click_date` when a click was matched.
+- `stats_ad_campaign_alias` — staff label → campaign id.
+- `stats_prefs` — API credentials and non-secret page settings.
 
 Review exact columns and upgrade state before reporting queries. Deployed
 databases may have `stats_landing_urls` before `schema_inc.php` declared it.

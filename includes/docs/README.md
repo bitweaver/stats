@@ -33,10 +33,14 @@ Network ROAS is `network_value / spend` for comparison. LTV ROAS is those
 customers' paid `order_total` from the start of the range on, with no day cap.
 Each network's click-through conversion window is stored on
 `stats_ad_network` (asked if unknown). Service credentials live in `stats_prefs`,
-loaded only by ads setup and warehouse CLI. Rebuild a window with
+loaded only by ads setup and warehouse CLI. ROAS revenue defaults to
+Bitcommerce paid orders; another package may register
+`stats_revenue_source_function` to supply it instead. Rebuild a window with
 `admin/sh_ad_warehouse_rebuild.php` (wipe derived rows, pull, attribute).
 
 ## Documentation map
+
+One line per document is in [toc.md](toc.md).
 
 - [Architecture](architecture.md) — initialization, components, and request flow.
   Includes first-touch **referrer** vs **landing** cookies.

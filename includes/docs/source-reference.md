@@ -8,7 +8,7 @@
 | Artifact | Count |
 |---|---:|
 | PHP files | 20 |
-| Smarty templates | 11 |
+| Smarty templates | 12 |
 | JavaScript files | 0 |
 | CSS files | 1 |
 
@@ -20,10 +20,10 @@
 - `admin/upgrades/1.0.2.php` — landing URL table and map column
 - `includes/bit_setup_inc.php`
 - `includes/stats_functions_inc.php` — first-touch cookies and persist helpers
-- `includes/ads_roas_lib.php` — optional warehouse ROAS queries
+- `includes/ads_roas_lib.php` — ROAS report: period/preset helpers, revenue source seam, spend/target/revenue/reconciliation queries, series + inline SVG, campaign drill-down, per-user revenue map, CSV spec
 - `includes/ads_setup_lib.php` — ad API key catalog and Microsoft OAuth helper
 - `includes/ads_api_lib.php` — Google Ads read-only API (config credentials)
-- `includes/ads_warehouse_lib.php` — warehouse upsert helpers
+- `includes/ads_warehouse_lib.php` — warehouse upsert helpers, schema apply, landing-key parser, campaign aliases, `stats_pref_get/set`
 
 ## Declared schema tables
 
@@ -32,6 +32,14 @@
 - `stats_landing_urls`
 - `stats_referer_users_map`
 - `stats_referers`
+
+Warehouse tables (`admin/ad_warehouse_schema.sql`, raw PostgreSQL DDL, no
+`BIT_DB_PREFIX`): `stats_prefs`, `stats_ad_network`, `stats_ad_account`,
+`stats_ad_campaign`, `stats_ad_campaign_settings_daily`, `stats_ad_adgroup`,
+`stats_ad_ad`, `stats_ad_keyword`, `stats_ad_metrics_daily`,
+`stats_ad_conversion_action`, `stats_ad_conversion_daily`, `stats_ad_click`,
+`stats_ad_user_attribution`, `stats_ad_order_attribution`,
+`stats_ad_campaign_alias`.
 
 ## First-party classes and interfaces
 
@@ -64,6 +72,7 @@
 ## Templates
 
 - `templates/ad_roas.tpl`
+- `templates/ad_roas_campaign_inc.tpl` — campaign drill-down included by `ad_roas.tpl`
 - `templates/ad_setup.tpl`
 - `templates/admin_stats.tpl`
 - `templates/footer_inc.tpl`
