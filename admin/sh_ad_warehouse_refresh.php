@@ -5,8 +5,8 @@
  *
  *   php stats/admin/sh_ad_warehouse_refresh.php --site_name=example --full
  *
- * Nightly (incremental):
- *   php stats/admin/sh_ad_warehouse_pull.php --metrics=campaign --metrics-only
+ * Nightly (incremental, last 90 days; entities refresh the settings history):
+ *   php stats/admin/sh_ad_warehouse_pull.php --metrics=campaign,adgroup --conversions --clicks
  *   php stats/admin/sh_ad_warehouse_backfill.php
  *
  * Optional: --import-file=/path/to/secrets  (key: value lines; SA JSON path is inlined)
@@ -75,7 +75,9 @@ if( $import ) {
 $pullArgs = $args;
 if( $full ) {
 	$pullArgs[] = '--full';
-	$pullArgs[] = '--metrics=campaign';
+	$pullArgs[] = '--metrics=campaign,adgroup';
+	$pullArgs[] = '--conversions';
+	$pullArgs[] = '--clicks';
 }
 if( !$skipPull ) {
 	ads_run_child( $php, $here.'/sh_ad_warehouse_pull.php', $pullArgs );

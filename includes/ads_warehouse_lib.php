@@ -50,8 +50,11 @@ function ads_cli_run( $script, $extra = array() ) {
 }
 
 /**
- * Drop derived warehouse rows. Keeps stats_prefs and stats_ad_network
- * (credentials and click-window). Google entities/metrics are pulled again.
+ * Drop derived warehouse rows. Keeps stats_prefs, stats_ad_network
+ * (credentials and click-window), stats_ad_campaign_settings_daily (history
+ * cannot be pulled again), stats_ad_conversion_action, stats_ad_click (the
+ * network forgets clicks after 90 days) and stats_ad_campaign_alias.
+ * Entities and metrics are pulled again.
  */
 function ads_wipe_warehouse_derived() {
 	global $gBitSystem;
@@ -61,6 +64,7 @@ function ads_wipe_warehouse_derived() {
 		'stats_ad_order_attribution',
 		'stats_ad_user_attribution',
 		'stats_ad_metrics_daily',
+		'stats_ad_conversion_daily',
 	) as $t ) {
 		if( ads_warehouse_table_exists( $t ) ) {
 			$db->query( 'TRUNCATE TABLE '.$t );
@@ -132,6 +136,11 @@ function ads_warehouse_tables() {
 		'stats_ad_metrics_daily',
 		'stats_ad_user_attribution',
 		'stats_ad_order_attribution',
+		'stats_ad_campaign_settings_daily',
+		'stats_ad_conversion_action',
+		'stats_ad_conversion_daily',
+		'stats_ad_click',
+		'stats_ad_campaign_alias',
 	);
 }
 
@@ -149,17 +158,114 @@ function ads_warehouse_legacy_rename_map() {
 	);
 }
 
+/**
+ * A warehouse dump is loaded on production only. The CLI bootstrap sets
+ * IS_DEV / IS_SANDBOX from the host class; refuse when either is set.
+ */
 function ads_refuse_db1_load( $pServer = array() ) {
-	$host = function_exists( 'gethostname' ) ? gethostname() : php_uname( 'n' );
-	if( preg_match( '/^(dev\d|devthumb|ux|sandbox)/i', $host ) ) {
-		fwrite( STDERR, "Refusing warehouse load on a dev host. db1 is unreachable by design.\n" );
-		fwrite( STDERR, "Dump from db2 here; apply the dump on a prod host after sign-off.\n" );
+	if( BitBase::getParameter( $pServer, 'IS_DEV' ) || BitBase::getParameter( $pServer, 'IS_SANDBOX' )
+		|| getenv( 'IS_DEV' ) || getenv( 'IS_SANDBOX' ) ) {
+		fwrite( STDERR, "Refusing warehouse load on a development database (IS_DEV/IS_SANDBOX set).\n" );
+		fwrite( STDERR, "Dump here; apply the dump on a production host after sign-off.\n" );
 		exit( 2 );
 	}
-	if( BitBase::getParameter( $pServer, 'IS_DEV' ) || BitBase::getParameter( $pServer, 'IS_SANDBOX' ) ) {
-		fwrite( STDERR, "Refusing warehouse load with IS_DEV/IS_SANDBOX set.\n" );
-		exit( 2 );
+}
+
+/** Account currency as pulled from the network; falls back to USD. */
+function ads_warehouse_account_currency( $pNetwork, $pAccountId ) {
+	global $gBitSystem;
+	$c = $gBitSystem->mDb->getOne(
+		"SELECT currency FROM stats_ad_account WHERE network_code = ? AND account_id = ?",
+		array( $pNetwork, (string)$pAccountId )
+	);
+	return ( $c !== null && $c !== '' ) ? $c : 'USD';
+}
+
+/** Account timezone as pulled from the network; null when unknown. */
+function ads_warehouse_account_timezone( $pNetwork, $pAccountId ) {
+	global $gBitSystem;
+	$tz = $gBitSystem->mDb->getOne(
+		"SELECT timezone FROM stats_ad_account WHERE network_code = ? AND account_id = ?",
+		array( $pNetwork, (string)$pAccountId )
+	);
+	return ( $tz !== null && $tz !== '' ) ? $tz : null;
+}
+
+/**
+ * Non-secret package preferences share stats_prefs with the API credentials.
+ * Keys used by the ROAS page: roas_gross_margin_pct, roas_desired_commerce_roas.
+ */
+function stats_pref_get( $pName, $pDefault = null ) {
+	global $gBitSystem;
+	if( !ads_warehouse_table_exists( 'stats_prefs' ) ) {
+		return $pDefault;
 	}
+	$v = $gBitSystem->mDb->getOne( "SELECT pref_value FROM stats_prefs WHERE pref_name = ?", array( $pName ) );
+	return ( $v === null || $v === '' ) ? $pDefault : $v;
+}
+
+function stats_pref_set( $pName, $pValue ) {
+	global $gBitSystem;
+	if( !ads_warehouse_table_exists( 'stats_prefs' ) ) {
+		return false;
+	}
+	if( $pValue === null || $pValue === '' ) {
+		$gBitSystem->mDb->query( "DELETE FROM stats_prefs WHERE pref_name = ?", array( $pName ) );
+		return true;
+	}
+	$gBitSystem->mDb->query(
+		"INSERT INTO stats_prefs (pref_name, pref_value, updated_at) VALUES (?, ?, now())
+		 ON CONFLICT (pref_name) DO UPDATE SET pref_value = EXCLUDED.pref_value, updated_at = now()",
+		array( $pName, (string)$pValue )
+	);
+	return true;
+}
+
+/** alias_name => campaign_id for one network. */
+function ads_campaign_alias_rows( $pNetwork ) {
+	global $gBitSystem;
+	if( !ads_warehouse_table_exists( 'stats_ad_campaign_alias' ) ) {
+		return array();
+	}
+	return $gBitSystem->mDb->getAssoc(
+		"SELECT alias_name, campaign_id FROM stats_ad_campaign_alias WHERE network_code = ? ORDER BY alias_name",
+		array( $pNetwork )
+	);
+}
+
+/**
+ * Replace the alias list for a network from "alias = campaign_id" lines.
+ * Returns the number of aliases stored, or false when the table is missing.
+ */
+function ads_save_campaign_aliases( $pNetwork, $pText ) {
+	global $gBitSystem;
+	if( !ads_warehouse_table_exists( 'stats_ad_campaign_alias' ) ) {
+		return false;
+	}
+	$db = $gBitSystem->mDb;
+	$rows = array();
+	foreach( preg_split( '/\r?\n/', (string)$pText ) as $line ) {
+		$line = trim( $line );
+		if( $line === '' || $line[0] === '#' || strpos( $line, '=' ) === false ) {
+			continue;
+		}
+		list( $alias, $id ) = array_map( 'trim', explode( '=', $line, 2 ) );
+		$id = preg_replace( '/\D/', '', $id );
+		if( $alias === '' || $id === '' ) {
+			continue;
+		}
+		$rows[strtolower( $alias )] = $id;
+	}
+	$db->StartTrans();
+	$db->query( "DELETE FROM stats_ad_campaign_alias WHERE network_code = ?", array( $pNetwork ) );
+	foreach( $rows as $alias => $id ) {
+		$db->query(
+			"INSERT INTO stats_ad_campaign_alias (network_code, alias_name, campaign_id, updated_at) VALUES (?, ?, ?, now())",
+			array( $pNetwork, $alias, $id )
+		);
+	}
+	$db->CompleteTrans();
+	return count( $rows );
 }
 
 function ads_field( $arr, $camel, $snake = null ) {
@@ -316,6 +422,14 @@ function ads_google_campaign_lookup() {
 		if( isset( $byName[$lk] ) ) {
 			$byName[$lk] = false;
 		} else {
+			$byName[$lk] = $id;
+		}
+	}
+	// Staff aliases resolve legacy labels and ambiguous names to one id.
+	foreach( ads_campaign_alias_rows( 'google' ) as $alias => $id ) {
+		$lk = strtolower( trim( $alias ) );
+		$id = (string)$id;
+		if( $lk !== '' && isset( $byId[$id] ) && empty( $byName[$lk] ) ) {
 			$byName[$lk] = $id;
 		}
 	}

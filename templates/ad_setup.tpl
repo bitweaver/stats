@@ -118,6 +118,42 @@
 					{/if}
 				{/jstab}
 			{/foreach}
+			{jstab title="Campaign aliases"}
+				<p class="help-block">
+					{tr}Tracking labels on landing URLs that are not a current campaign name are matched to a campaign id here, one per line as{/tr}
+					<code>label = campaign_id</code>.
+					{tr}Matching ignores case. The attribution backfill applies aliases on its next run.{/tr}
+				</p>
+				<form method="post" action="{$smarty.const.STATS_PKG_URL}admin/ad_setup.php">
+					<input type="hidden" name="tk" value="{$gBitUser->mTicket|escape}" />
+					<input type="hidden" name="alias_network" value="google" />
+					<div class="form-group">
+						<textarea class="form-control" name="campaign_aliases" rows="10" spellcheck="false">{$adsAliasText|escape}</textarea>
+					</div>
+					<div class="form-group submit">
+						<button type="submit" class="btn btn-default" name="save_campaign_aliases" value="1">{tr}Save aliases{/tr}</button>
+					</div>
+				</form>
+				{if $adsUnmatchedNames}
+					<h3>{tr}Labels without a campaign id{/tr}</h3>
+					<table class="table table-condensed">
+						<thead>
+							<tr>
+								<th>{tr}Label{/tr}</th>
+								<th class="text-right">{tr}Users{/tr}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{foreach from=$adsUnmatchedNames item=row}
+								<tr>
+									<td>{$row.campaign_name|escape}</td>
+									<td class="text-right">{$row.users|escape}</td>
+								</tr>
+							{/foreach}
+						</tbody>
+					</table>
+				{/if}
+			{/jstab}
 		{/jstabs}
 	</div>
 </div>

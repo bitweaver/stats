@@ -3,8 +3,9 @@
  * Wipe derived ad warehouse rows, pull Google campaign metrics for a date
  * window, then attribute from first-touch landings already on this database.
  *
- * Does not read httpd logs (see the products log importer) and never uploads
- * conversions. Keeps stats_prefs and stats_ad_network.
+ * Does not read httpd logs (a separate log importer) and never uploads
+ * conversions. Keeps stats_prefs, stats_ad_network, settings history,
+ * the conversion-action catalog, stored clicks and campaign aliases.
  *
  *   php stats/admin/sh_ad_warehouse_rebuild.php --site_name=example --since=2026-01-01 --wipe
  *
@@ -99,12 +100,19 @@ if( !$skipPull ) {
 		if( $chunkUntil > $end ) {
 			$chunkUntil = clone $end;
 		}
-		ads_cli_run( $pull, array_merge( $common, array(
+		$chunk = array(
 			'--metrics-only',
-			'--metrics=campaign',
+			'--no-apply',
+			'--metrics=campaign,adgroup',
+			'--conversions',
 			'--since='.$cursor->format( 'Y-m-d' ),
 			'--until='.$chunkUntil->format( 'Y-m-d' ),
-		) ) );
+		);
+		// click_view only reaches back 90 days; the pull clamps the window.
+		if( $chunkUntil >= new DateTime( '-89 days UTC' ) ) {
+			$chunk[] = '--clicks';
+		}
+		ads_cli_run( $pull, array_merge( $common, $chunk ) );
 		$cursor->modify( 'first day of next month' );
 	}
 }
@@ -118,4 +126,4 @@ if( !$skipBackfill ) {
 }
 
 fwrite( STDERR, "warehouse rebuild complete $since..$until\n" );
-fwrite( STDERR, "Compare network ROAS to cohort LTV on ad_roas.php?cohort=1&since=$since&until=$until\n" );
+fwrite( STDERR, "Compare Commerce ROAS to network ROAS on ad_roas.php?since=$since&until=$until\n" );

@@ -268,3 +268,70 @@ function ads_customer_id() {
 	}
 	return null;
 }
+
+/**
+ * GAQL field metadata for the API version in use (googleAdsFields:search).
+ * Returns name => array( selectable, filterable, category, data_type,
+ * is_repeated, selectable_with[] ). Fields the version does not know are
+ * absent from the result.
+ */
+function ads_fields_check( $token, $pFieldNames ) {
+	$ver = ads_api_version();
+	$url = 'https://googleads.googleapis.com/'.$ver.'/googleAdsFields:search';
+	$quoted = array();
+	foreach( $pFieldNames as $f ) {
+		$f = preg_replace( '/[^a-z0-9_.]/i', '', $f );
+		if( $f !== '' ) {
+			$quoted[] = "'".$f."'";
+		}
+	}
+	$out = array();
+	if( !$quoted ) {
+		return $out;
+	}
+	$query = 'SELECT name, category, selectable, filterable, data_type, is_repeated, selectable_with WHERE name IN ('.implode( ',', $quoted ).')';
+	$pageToken = null;
+	do {
+		$payload = array( 'query' => $query, 'pageSize' => 1000 );
+		if( $pageToken ) {
+			$payload['pageToken'] = $pageToken;
+		}
+		$ch = curl_init( $url );
+		curl_setopt_array( $ch, array(
+			CURLOPT_POST           => true,
+			CURLOPT_POSTFIELDS     => json_encode( $payload ),
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_HTTPHEADER     => ads_headers( $token ),
+			CURLOPT_TIMEOUT        => 120,
+		) );
+		$body = curl_exec( $ch );
+		$code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+		curl_close( $ch );
+		if( $code >= 300 ) {
+			throw new Exception( 'googleAdsFields HTTP '.$code.' '.substr( $body, 0, 800 ) );
+		}
+		$j = json_decode( $body, true );
+		if( !is_array( $j ) ) {
+			throw new Exception( 'googleAdsFields not JSON' );
+		}
+		if( !empty( $j['results'] ) && is_array( $j['results'] ) ) {
+			foreach( $j['results'] as $r ) {
+				$name = ads_field( $r, 'name' );
+				if( $name === null ) {
+					continue;
+				}
+				$with = ads_field( $r, 'selectableWith', 'selectable_with' );
+				$out[$name] = array(
+					'selectable'      => !empty( $r['selectable'] ),
+					'filterable'      => !empty( $r['filterable'] ),
+					'category'        => ads_field( $r, 'category' ),
+					'data_type'       => ads_field( $r, 'dataType', 'data_type' ),
+					'is_repeated'     => !empty( $r['isRepeated'] ) || !empty( $r['is_repeated'] ),
+					'selectable_with' => is_array( $with ) ? $with : array(),
+				);
+			}
+		}
+		$pageToken = !empty( $j['nextPageToken'] ) ? $j['nextPageToken'] : null;
+	} while( $pageToken );
+	return $out;
+}

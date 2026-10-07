@@ -40,7 +40,34 @@ if( BitBase::getParameter( $_POST, 'save_ads_secrets' ) ) {
 	$feedback['success'] = tra( 'Saved '.$n.' value(s). Empty fields were left unchanged.' );
 }
 
+if( BitBase::getParameter( $_POST, 'save_campaign_aliases' ) ) {
+	$gBitUser->verifyTicket();
+	$aliasNetwork = BitBase::getParameter( $_POST, 'alias_network', 'google' );
+	$nAlias = ads_save_campaign_aliases( $aliasNetwork, BitBase::getParameter( $_POST, 'campaign_aliases', '' ) );
+	if( $nAlias === false ) {
+		$feedback['error'] = tra( 'Apply the warehouse schema first (run the pull once).' );
+	} else {
+		$feedback['success'] = tra( 'Saved '.$nAlias.' campaign alias(es). Run the attribution backfill to apply them.' );
+	}
+}
+
 $msAuth = stats_ads_microsoft_authorize_url( $gBitUser->mTicket, $redirectUri );
+
+// Legacy tracking labels -> campaign id, one network at a time (google only today).
+$aliasLines = array();
+foreach( ads_campaign_alias_rows( 'google' ) as $alias => $id ) {
+	$aliasLines[] = $alias.' = '.$id;
+}
+$unmatchedNames = array();
+if( ads_warehouse_table_exists( 'stats_ad_user_attribution' ) ) {
+	$unmatchedNames = $gBitSystem->mDb->getAll(
+		"SELECT campaign_name, COUNT(*) AS users
+		   FROM stats_ad_user_attribution
+		  WHERE network_code = ? AND campaign_id IS NULL AND campaign_name IS NOT NULL
+		  GROUP BY campaign_name ORDER BY COUNT(*) DESC LIMIT 25",
+		array( 'google' )
+	);
+}
 
 $catalog = stats_ads_setup_catalog();
 foreach( $catalog as $code => $net ) {
@@ -56,5 +83,7 @@ $gBitSmarty->assign( 'feedback', $feedback );
 $gBitSmarty->assign( 'adsCatalog', $catalog );
 $gBitSmarty->assign( 'adsRedirectUri', $redirectUri );
 $gBitSmarty->assign( 'adsMsAuthorize', $msAuth );
+$gBitSmarty->assign( 'adsAliasText', implode( "\n", $aliasLines ) );
+$gBitSmarty->assign( 'adsUnmatchedNames', $unmatchedNames );
 
 $gBitSystem->display( 'bitpackage:stats/ad_setup.tpl', tra( 'Ad API setup' ), array( 'display_mode' => 'admin' ) );
