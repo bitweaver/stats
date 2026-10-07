@@ -1,114 +1,404 @@
-<div class="display statistics ad-roas">
+{function name=roas_money v=0}{if $gCommerceCurrencies}{$gCommerceCurrencies->format($v)}{else}{$v|string_format:"%.2f"}{/if}{/function}
+{function name=roas_x v=null}{if $v === null || $v === ''}<span class="text-muted">—</span>{else}{$v|string_format:"%.2f"}x{/if}{/function}
+{function name=roas_pct v=null}{if $v === null || $v === ''}<span class="text-muted">—</span>{else}{math equation="v*100" v=$v format="%.0f"}%{/if}{/function}
+{function name=roas_num v=null}{if $v === null || $v === ''}<span class="text-muted">—</span>{else}{$v|string_format:"%.2f"}{/if}{/function}
+<script>
+(function(){
+	function num(td){
+		var v = td.getAttribute('data-sort');
+		if (v !== null) { v = parseFloat(v); return isNaN(v) ? -Infinity : v; }
+		var t = td.textContent.replace(/[^\d.\-]/g, '');
+		return t === '' ? -Infinity : parseFloat(t);
+	}
+	document.addEventListener('click', function(e){
+		var th = e.target.closest ? e.target.closest('table.roas-sortable th[data-sortable]') : null;
+		if (!th) { return; }
+		var table = th.closest('table'), tbody = table.tBodies[0], idx = th.cellIndex;
+		var dir = th.getAttribute('data-dir') === 'desc' ? 'asc' : 'desc';
+		Array.prototype.forEach.call(table.querySelectorAll('th[data-sortable]'), function(h){ h.removeAttribute('data-dir'); });
+		th.setAttribute('data-dir', dir);
+		var numeric = th.getAttribute('data-sortable') === 'num';
+		var rows = Array.prototype.slice.call(tbody.rows);
+		rows.sort(function(a, b){
+			if (numeric) { var x = num(a.cells[idx]), y = num(b.cells[idx]); return dir === 'asc' ? x - y : y - x; }
+			var s = a.cells[idx].textContent.trim().toLowerCase(), t = b.cells[idx].textContent.trim().toLowerCase();
+			return dir === 'asc' ? s.localeCompare(t) : t.localeCompare(s);
+		});
+		rows.forEach(function(r){ tbody.appendChild(r); });
+	});
+})();
+</script>
+<div class="display statistics ad-roas{if $roasCohort} roas-cohort-hl{/if}">
 	<div class="header">
-		<h1>{tr}Commerce ROAS vs advertiser ROAS{/tr}</h1>
+		<h1>{tr}Ad ROAS{/tr}
+			{if $roasReport}<small>{$roasReport.network_label|escape} · {$roasSince|escape} – {$roasUntil|escape}</small>{/if}
+		</h1>
 	</div>
 	<div class="body">
 		{formfeedback hash=$feedback}
 
-		<p class="help-block">
-			{tr}Cost is ad spend for clicks in this date range. Commerce revenue includes every paid order in this range from customers first-touched by the campaign, including people who registered earlier, plus orders after the end date that are still inside the click-through window of a registration in this range. Commerce ROAS is that revenue over this spend. LTV is those customers' paid orders from the start of the range on, with no day cap. Network value is the advertiser's reported conversion value for the same clicks.{/tr}
-		</p>
-
-		<form class="form-inline" method="get" action="{$smarty.const.STATS_PKG_URL}ad_roas.php">
-			<label class="sr-only" for="roas-since">{tr}Since{/tr}</label>
-			<input id="roas-since" class="form-control" type="date" name="since" value="{$roasSince|escape}" />
-			<span>{tr}to{/tr}</span>
-			<label class="sr-only" for="roas-until">{tr}Until{/tr}</label>
-			<input id="roas-until" class="form-control" type="date" name="until" value="{$roasUntil|escape}" />
-			{if $roasNetworks}
-				<label class="sr-only" for="roas-network">{tr}Network{/tr}</label>
-				<select id="roas-network" class="form-control" name="network">
-					{foreach from=$roasNetworks key=code item=label}
-						<option value="{$code|escape}" {if $roasNetwork eq $code}selected="selected"{/if}>{$label|escape}</option>
+		<form class="roas-toolbar" method="get" action="{$smarty.const.STATS_PKG_URL}ad_roas.php">
+			<div class="form-group">
+				<div class="btn-group btn-group-sm" role="group" aria-label="{tr}Preset ranges{/tr}">
+					{foreach from=$roasPresets key=code item=label}
+						<a class="btn btn-default{if $roasRange.preset eq $code} active{/if}" href="{$smarty.const.STATS_PKG_URL}ad_roas.php?preset={$code|escape}&amp;network={$roasNetwork|escape}">{tr}{$label}{/tr}</a>
+					{/foreach}
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="sr-only" for="roas-period">{tr}Period{/tr}</label>
+				<select id="roas-period" class="form-control input-sm" name="period">
+					{foreach from=$roasPeriods item=p}
+						<option value="{$p|escape}" {if $roasRange.period eq $p}selected="selected"{/if}>{tr}{$p|capitalize}{/tr}</option>
 					{/foreach}
 				</select>
+			</div>
+			<div class="form-group">
+				<label class="sr-only" for="roas-timeframe">{tr}Timeframe{/tr}</label>
+				<input id="roas-timeframe" class="form-control input-sm" type="text" name="timeframe" value="{$roasRange.timeframe|escape}" placeholder="2026-09 · 2026 Week 37 · 2026-Q3" size="14" />
+			</div>
+			<div class="form-group">
+				<label class="sr-only" for="roas-since">{tr}Since{/tr}</label>
+				<input id="roas-since" class="form-control input-sm" type="date" name="since" value="{$roasSince|escape}" />
+			</div>
+			<div class="form-group">
+				<label class="sr-only" for="roas-until">{tr}Until{/tr}</label>
+				<input id="roas-until" class="form-control input-sm" type="date" name="until" value="{$roasUntil|escape}" />
+			</div>
+			{if $roasNetworks}
+				<div class="form-group">
+					<label class="sr-only" for="roas-network">{tr}Network{/tr}</label>
+					<select id="roas-network" class="form-control input-sm" name="network">
+						{foreach from=$roasNetworks key=code item=label}
+							<option value="{$code|escape}" {if $roasNetwork eq $code}selected="selected"{/if}>{$label|escape}</option>
+						{/foreach}
+					</select>
+				</div>
 			{/if}
-			<button type="submit" class="btn btn-default">{tr}Update{/tr}</button>
-			{if $roasReport}
-				<button type="submit" class="btn btn-default" name="download" value="1">{tr}CSV{/tr}</button>
+			<div class="form-group">
+				<button type="submit" class="btn btn-primary btn-sm">{tr}Update{/tr}</button>
+				{if $roasReport}
+					<a class="btn btn-default btn-sm" href="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasBaseQuery}&amp;download=1">{tr}CSV{/tr}</a>
+				{/if}
+			</div>
+			{if $roasPrevUrl || $roasNextUrl}
+				<div class="form-group roas-pager">
+					{if $roasPrevUrl}<a class="btn btn-default btn-sm" href="{$roasPrevUrl|escape}" title="{tr}Previous{/tr}">{booticon iname="fa-chevron-left"}</a>{/if}
+					<span class="roas-sub">{$roasRange.timeframe|escape}</span>
+					{if $roasNextUrl}<a class="btn btn-default btn-sm" href="{$roasNextUrl|escape}" title="{tr}Next{/tr}">{booticon iname="fa-chevron-right"}</a>{/if}
+				</div>
 			{/if}
 		</form>
 
-		{if $roasWindowAsk}
-			<form class="form-inline" method="post" action="{$smarty.const.STATS_PKG_URL}ad_roas.php" style="margin-top:1em">
-				<input type="hidden" name="tk" value="{$gBitUser->mTicket|escape}" />
-				<input type="hidden" name="since" value="{$roasSince|escape}" />
-				<input type="hidden" name="until" value="{$roasUntil|escape}" />
-				<input type="hidden" name="network" value="{$roasNetwork|escape}" />
-				<p>
-					{tr}Click-through conversion window for{/tr}
-					<strong>{if $roasReport}{$roasReport.network_label|escape}{else}{$roasNetwork|escape}{/if}</strong>
-					{tr}is not stored. Enter the lookback the advertiser uses (days):{/tr}
-				</p>
-				<input class="form-control" type="number" name="click_window_days" min="1" max="90" value="90" />
-				<button type="submit" class="btn btn-default" name="save_window" value="1">{tr}Save window{/tr}</button>
-			</form>
-		{elseif $roasReport && $roasReport.click_window_days}
-			<p>
-				{$roasReport.network_label|escape} {tr}click-through window:{/tr}
-				<strong>{$roasReport.click_window_days|escape} {tr}days{/tr}</strong>
-			</p>
-		{/if}
-
 		{if $roasReport}
-			<table class="table table-condensed table-striped">
-				<caption>
-					{$roasReport.network_label|escape}
-					{$roasReport.since|escape} – {$roasReport.until|escape}
-					({$roasReport.rows|@count} {tr}campaigns{/tr})
-				</caption>
-				<thead>
-					<tr>
-						<th>{tr}Campaign{/tr}</th>
-						<th class="text-right">{tr}Spend{/tr}</th>
-						<th class="text-right">{tr}Commerce revenue{/tr}{if $roasReport.click_window_days} ({$roasReport.click_window_days|escape}d){/if}</th>
-						<th class="text-right">{tr}Commerce ROAS{/tr}{if $roasReport.click_window_days} ({$roasReport.click_window_days|escape}d){/if}</th>
-						<th class="text-right">{$roasReport.network_label|escape} {tr}value{/tr}</th>
-						<th class="text-right">{$roasReport.network_label|escape} {tr}ROAS{/tr}</th>
-						<th class="text-right">{$roasReport.network_label|escape} {tr}target{/tr}</th>
-						<th class="text-right">{tr}Orders{/tr}</th>
-						<th class="text-right">{tr}LTV{/tr}</th>
-						<th class="text-right">{tr}LTV ROAS{/tr}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{foreach from=$roasReport.rows item=row}
+			<p class="roas-help">
+				{tr}Period revenue pairs with the network's conversion-date value; cohort revenue pairs with its click-dated value. The target is a bid target the network now delivers toward on budget-limited campaigns, not a floor it beats.{/tr}
+				<a href="#" onclick="BitBase.toggleElementDisplay('roas-method','block');return false;">{tr}Definitions{/tr}</a>
+				·
+				<a href="#" onclick="BitBase.toggleElementDisplay('roas-assumptions','block');return false;">{tr}Assumptions{/tr}</a>
+				{if $roasReferrersUrl}· <a href="{$roasReferrersUrl|escape}">{tr}Registrations for this period{/tr}</a>{/if}
+			</p>
+
+			<div class="box roas-method" id="roas-method" style="display:none">
+				<dl class="dl-horizontal">
+					<dt>{tr}Spend{/tr}</dt><dd>{tr}The network's cost for clicks dated inside the range.{/tr}</dd>
+					<dt>{tr}Period revenue{/tr}</dt><dd>{tr}Paid orders purchased inside the range by customers whose first touch was this campaign, whenever they registered. Compare with the network's conversion-date value.{/tr}</dd>
+					<dt>{tr}Cohort revenue{/tr}</dt><dd>{tr}Customers whose first touch (matched click, else registration) is inside the range; their paid orders within the click window of that first touch, even after the range ends. Compare with the network's click-dated value.{/tr}</dd>
+					<dt>{tr}LTV{/tr}</dt><dd>{tr}The same cohort's paid orders to date, no cap.{/tr}</dd>
+					<dt>{tr}Target{/tr}</dt><dd>{tr}The network's target ROAS, spend-weighted over the daily settings history. Days before the first stored snapshot use the current target.{/tr}</dd>
+					<dt>{tr}Value ratio{/tr}</dt><dd>{tr}Network click-dated value divided by cohort revenue: how much the network's value exceeds our books.{/tr}</dd>
+					<dt>{tr}Suggested target{/tr}</dt><dd>{tr}Desired commerce ROAS multiplied by the value ratio: the network target that should land on the desired commerce ROAS.{/tr}</dd>
+					<dt>{tr}Budget-limited{/tr}</dt><dd>{tr}Search budget-lost impression share of 10% or more, or the network reports the campaign as budget-constrained. These are the campaigns whose delivery now tracks the stated target.{/tr}</dd>
+				</dl>
+			</div>
+
+			<div class="box roas-assumptions" id="roas-assumptions" style="display:none">
+				<form class="form-inline" method="post" action="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasBaseQuery}">
+					<input type="hidden" name="tk" value="{$gBitUser->mTicket|escape}" />
+					<input type="hidden" name="since" value="{$roasSince|escape}" />
+					<input type="hidden" name="until" value="{$roasUntil|escape}" />
+					<input type="hidden" name="network" value="{$roasNetwork|escape}" />
+					<div class="form-group">
+						<label for="roas-margin">{tr}Gross margin %{/tr}</label>
+						<input id="roas-margin" class="form-control input-sm" type="number" step="0.1" min="0.1" max="100" name="gross_margin_pct" value="{$roasReport.assumptions.gross_margin_pct|escape}" size="6" />
+					</div>
+					<div class="form-group">
+						<label for="roas-desired">{tr}Desired commerce ROAS{/tr}</label>
+						<input id="roas-desired" class="form-control input-sm" type="number" step="0.1" min="0.1" name="desired_commerce_roas" value="{$roasReport.assumptions.desired_commerce_roas|escape}" size="6" />
+					</div>
+					<button type="submit" class="btn btn-default btn-sm" name="save_assumptions" value="1">{tr}Save{/tr}</button>
+					{if $roasReport.assumptions.break_even_roas}
+						<span class="roas-sub">{tr}Break-even{/tr} {call roas_x v=$roasReport.assumptions.break_even_roas}</span>
+					{/if}
+				</form>
+				<p class="roas-sub">
+					{if $roasReport.click_window_days}
+						{$roasReport.network_label|escape} {tr}click-through window{/tr}: <strong>{$roasReport.click_window_days|escape} {tr}days{/tr}</strong>
+						({if $roasReport.window_source eq 'network'}{tr}from the network's purchase action{/tr}{elseif $roasReport.window_source eq 'user'}{tr}set here{/tr}{else}{tr}default{/tr}{/if})
+						· <a href="#" onclick="BitBase.toggleElementDisplay('roas-window','block');return false;">{tr}change{/tr}</a>
+					{/if}
+					{if $roasReport.tz_warning}
+						· <span class="text-warning">{tr}Database session timezone{/tr} {$roasReport.tz_warning.session|escape} {tr}differs from the account timezone{/tr} {$roasReport.tz_warning.account|escape}; {tr}day totals may shift.{/tr}</span>
+					{/if}
+				</p>
+				<form class="form-inline" id="roas-window" method="post" action="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasBaseQuery}" {if !$roasWindowAsk}style="display:none"{/if}>
+					<input type="hidden" name="tk" value="{$gBitUser->mTicket|escape}" />
+					<input type="hidden" name="since" value="{$roasSince|escape}" />
+					<input type="hidden" name="until" value="{$roasUntil|escape}" />
+					<input type="hidden" name="network" value="{$roasNetwork|escape}" />
+					<label for="roas-window-days">{tr}Click-through window (days){/tr}</label>
+					<input id="roas-window-days" class="form-control input-sm" type="number" name="click_window_days" min="1" max="90" value="{if $roasReport.click_window_days}{$roasReport.click_window_days|escape}{else}90{/if}" />
+					<button type="submit" class="btn btn-default btn-sm" name="save_window" value="1">{tr}Save window{/tr}</button>
+				</form>
+			</div>
+
+			{if $roasWindowAsk}
+				<div class="alert alert-info">
+					{tr}The click-through window for{/tr} <strong>{$roasReport.network_label|escape}</strong> {tr}is not stored. Run the warehouse pull (it reads the purchase action's lookback) or save one under Assumptions.{/tr}
+				</div>
+			{/if}
+
+			{assign var=tot value=$roasReport.totals}
+			<div class="roas-tiles">
+				<div class="roas-tile is-network">
+					<div class="lbl">{tr}Spend{/tr}</div>
+					<div class="val">{call roas_money v=$tot.spend}</div>
+					<div class="sub">{$tot.clicks} {tr}clicks{/tr} · {tr}CPC{/tr} {call roas_money v=$tot.cpc}</div>
+				</div>
+				<div class="roas-tile is-network">
+					<div class="lbl">{$roasReport.network_label|escape} {tr}ROAS{/tr}</div>
+					<div class="val">{call roas_x v=$tot.network_roas}</div>
+					<div class="sub">{tr}click-dated{/tr} {call roas_money v=$tot.network_value} · {tr}conversion-dated{/tr} {call roas_x v=$tot.network_roas_conv_date}</div>
+				</div>
+				<div class="roas-tile is-commerce">
+					<div class="lbl">{tr}Commerce ROAS{/tr}</div>
+					<div class="val">{call roas_x v=$tot.commerce_roas}</div>
+					<div class="sub">{call roas_money v=$tot.period_revenue} · {$tot.period_orders} {tr}orders{/tr} · {tr}AOV{/tr} {call roas_money v=$tot.aov}</div>
+				</div>
+				<div class="roas-tile is-commerce">
+					<div class="lbl">{tr}Cohort ROAS{/tr}{if $roasReport.click_window_days} ({$roasReport.click_window_days}d){/if}</div>
+					<div class="val">{call roas_x v=$tot.cohort_roas}</div>
+					<div class="sub">{$tot.cohort_users} {tr}new customers{/tr} · {$tot.cohort_buyers} {tr}buyers{/tr} · {tr}CAC{/tr} {call roas_money v=$tot.cac}</div>
+				</div>
+				<div class="roas-tile is-target">
+					<div class="lbl">{tr}Target (spend-weighted){/tr}</div>
+					<div class="val">{call roas_x v=$tot.target_roas}</div>
+					<div class="sub">
+						{if $tot.vs_target eq 'above'}<span class="roas-above">{tr}commerce above target{/tr}</span>{elseif $tot.vs_target eq 'below'}<span class="roas-below">{tr}commerce below target{/tr}</span>{/if}
+						{if $tot.budget_limited_campaigns} · {$tot.budget_limited_campaigns} {tr}budget-limited{/tr}{/if}
+					</div>
+				</div>
+				<div class="roas-tile is-target">
+					<div class="lbl">{tr}Value ratio{/tr}</div>
+					<div class="val">{call roas_num v=$tot.value_ratio}</div>
+					<div class="sub">
+						{if $tot.suggested_target}{tr}suggested target{/tr} {call roas_x v=$tot.suggested_target}{elseif $roasReport.assumptions.break_even_roas}{tr}break-even{/tr} {call roas_x v=$roasReport.assumptions.break_even_roas}{else}{tr}network value ÷ cohort revenue{/tr}{/if}
+					</div>
+				</div>
+				{if $roasReport.reconciliation}
+					{assign var=recon value=$roasReport.reconciliation}
+					<div class="roas-tile">
+						<div class="lbl">{tr}Attributed share{/tr}</div>
+						<div class="val">{call roas_pct v=$recon.rows.0.revenue_share}</div>
+						<div class="sub">{tr}of{/tr} {call roas_money v=$recon.total.revenue} {tr}paid in range{/tr} ({$recon.total.orders} {tr}orders{/tr})</div>
+					</div>
+				{/if}
+				<div class="roas-tile">
+					<div class="lbl">{tr}Data through{/tr}</div>
+					<div class="val roas-val-sm">{if $roasReport.last_metric_date}{$roasReport.last_metric_date|escape|truncate:10:""}{else}—{/if}</div>
+					<div class="sub">{tr}pulled{/tr} {if $roasReport.pulled_at}{$roasReport.pulled_at|escape|truncate:16:""}{else}—{/if}{if $roasReport.immature_from} · {tr}maturing since{/tr} {$roasReport.immature_from|escape}{/if}</div>
+				</div>
+			</div>
+
+			{if $roasReport.reconciliation}
+				<h2>{tr}Where paid orders in this range come from{/tr}</h2>
+				<table class="table table-condensed roas-recon">
+					<thead>
 						<tr>
-							<td>
-								{if $row.campaign_id}
-									<code>{$row.campaign_id|escape}</code>
-								{else}
-									<span class="text-muted">{tr}name only{/tr}</span>
-								{/if}
-								{$row.campaign_name|escape}
-							</td>
-							<td class="text-right">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($row.spend)}{else}{$row.spend|string_format:"%.2f"}{/if}</td>
-							<td class="text-right">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($row.revenue)}{else}{$row.revenue|string_format:"%.2f"}{/if}</td>
-							<td class="text-right">{if $row.spend > 0}{$row.commerce_roas|string_format:"%.2f"}x{else}—{/if}</td>
-							<td class="text-right text-muted">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($row.network_value)}{else}{$row.network_value|string_format:"%.2f"}{/if}</td>
-							<td class="text-right text-muted">{if $row.spend > 0}{$row.network_roas|string_format:"%.2f"}x{else}—{/if}</td>
-							<td class="text-right">{if $row.target_roas !== null}{$row.target_roas|string_format:"%.2f"}x{else}—{/if}</td>
-							<td class="text-right">{$row.orders}</td>
-							<td class="text-right">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($row.ltv)}{else}{$row.ltv|string_format:"%.2f"}{/if}</td>
-							<td class="text-right">{if $row.spend > 0}{$row.ltv_roas|string_format:"%.2f"}x{else}—{/if}</td>
+							<th>{tr}First touch{/tr}</th>
+							<th class="text-right">{tr}Orders{/tr}</th>
+							<th class="text-right">{tr}Buyers{/tr}</th>
+							<th class="text-right">{tr}Revenue{/tr}</th>
+							<th class="text-right">{tr}Share{/tr}</th>
+							<th class="roas-barcell"></th>
 						</tr>
-					{/foreach}
-				</tbody>
-				<tfoot>
-					<tr>
-						<th>{tr}Total{/tr}</th>
-						<th class="text-right">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($roasReport.totals.spend)}{else}{$roasReport.totals.spend|string_format:"%.2f"}{/if}</th>
-						<th class="text-right">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($roasReport.totals.revenue)}{else}{$roasReport.totals.revenue|string_format:"%.2f"}{/if}</th>
-						<th class="text-right">{if $roasReport.totals.spend > 0}{$roasReport.totals.commerce_roas|string_format:"%.2f"}x{else}—{/if}</th>
-						<th class="text-right text-muted">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($roasReport.totals.network_value)}{else}{$roasReport.totals.network_value|string_format:"%.2f"}{/if}</th>
-						<th class="text-right text-muted">{if $roasReport.totals.spend > 0}{$roasReport.totals.network_roas|string_format:"%.2f"}x{else}—{/if}</th>
-						<th class="text-right">—</th>
-						<th class="text-right">{$roasReport.totals.orders}</th>
-						<th class="text-right">{if $gCommerceCurrencies}{$gCommerceCurrencies->format($roasReport.totals.ltv)}{else}{$roasReport.totals.ltv|string_format:"%.2f"}{/if}</th>
-						<th class="text-right">{if $roasReport.totals.spend > 0}{$roasReport.totals.ltv_roas|string_format:"%.2f"}x{else}—{/if}</th>
-					</tr>
-				</tfoot>
-			</table>
+					</thead>
+					<tbody>
+						{foreach from=$recon.rows item=b}
+							<tr class="{if $b.is_network}roas-recon-net{/if}">
+								<td>{if $b.is_network}<strong>{$roasReport.network_label|escape}:</strong> {/if}{tr}{$b.label}{/tr}</td>
+								<td class="text-right">{$b.orders}</td>
+								<td class="text-right">{$b.buyers}</td>
+								<td class="text-right">{call roas_money v=$b.revenue}</td>
+								<td class="text-right">{call roas_pct v=$b.revenue_share}</td>
+								<td class="roas-barcell"><div class="roas-bar" style="width:{math equation="v*100" v=$b.revenue_share format="%.1f"}%"></div></td>
+							</tr>
+						{/foreach}
+					</tbody>
+					<tfoot>
+						<tr>
+							<th>{tr}All paid orders{/tr}</th>
+							<th class="text-right">{$recon.total.orders}</th>
+							<th class="text-right">{$recon.total.buyers}</th>
+							<th class="text-right">{call roas_money v=$recon.total.revenue}</th>
+							<th class="text-right">100%</th>
+							<th></th>
+						</tr>
+					</tfoot>
+				</table>
+			{/if}
+
+			{if $roasSvg}
+				<h2>{tr}ROAS by{/tr} {tr}{$roasReport.series.bucket}{/tr}</h2>
+				<div class="roas-legend">
+					<span><span class="roas-swatch sw-commerce"></span>{tr}Commerce ROAS{/tr}</span>
+					<span><span class="roas-swatch sw-network"></span>{$roasReport.network_label|escape} {tr}ROAS (click-dated){/tr}</span>
+					<span><span class="roas-swatch sw-target"></span>{tr}Target{/tr}</span>
+					{if $roasReport.assumptions.break_even_roas}<span><span class="roas-swatch sw-ref"></span>{tr}Break-even{/tr}</span>{/if}
+					{if $roasReport.immature_from}<span><span class="roas-swatch sw-band"></span>{tr}Conversions still maturing{/tr}</span>{/if}
+					<a href="#" onclick="BitBase.toggleElementDisplay('roas-series-table','block');return false;">{tr}Table{/tr}</a>
+				</div>
+				{$roasSvg}
+				<div id="roas-series-table" style="display:none">
+					<table class="table table-condensed roas-table">
+						<thead>
+							<tr>
+								<th>{tr}Bucket{/tr}</th>
+								<th class="text-right">{tr}Spend{/tr}</th>
+								<th class="text-right">{tr}Clicks{/tr}</th>
+								<th class="text-right">{$roasReport.network_label|escape} {tr}value{/tr}</th>
+								<th class="text-right">{$roasReport.network_label|escape} {tr}ROAS{/tr}</th>
+								<th class="text-right">{tr}Revenue{/tr}</th>
+								<th class="text-right">{tr}Orders{/tr}</th>
+								<th class="text-right">{tr}Commerce ROAS{/tr}</th>
+								<th class="text-right">{tr}Target{/tr}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{foreach from=$roasReport.series.rows item=b}
+								<tr>
+									<td>{$b.bucket|escape|truncate:10:""}</td>
+									<td class="text-right">{call roas_money v=$b.spend}</td>
+									<td class="text-right">{$b.clicks}</td>
+									<td class="text-right">{call roas_money v=$b.network_value}</td>
+									<td class="text-right">{call roas_x v=$b.network_roas}</td>
+									<td class="text-right">{call roas_money v=$b.revenue}</td>
+									<td class="text-right">{$b.orders}</td>
+									<td class="text-right">{call roas_x v=$b.commerce_roas}</td>
+									<td class="text-right">{call roas_x v=$b.target_roas}</td>
+								</tr>
+							{/foreach}
+						</tbody>
+					</table>
+				</div>
+			{/if}
+
+			<h2>{tr}Campaigns{/tr} <small>({$roasReport.rows|@count})</small></h2>
+			<div class="roas-legend">
+				<span><span class="roas-swatch sw-network"></span>{$roasReport.network_label|escape} {tr}reports{/tr}</span>
+				<span><span class="roas-swatch sw-commerce"></span>{tr}Our books{/tr}</span>
+				<span><span class="roas-swatch sw-target"></span>{tr}Gap and target{/tr}</span>
+				<span class="roas-sub">{tr}Click a heading to sort.{/tr}</span>
+			</div>
+			<div class="table-responsive">
+				<table class="table table-condensed table-striped table-hover roas-table roas-sortable">
+					<thead>
+						<tr>
+							<th data-sortable="text">{tr}Campaign{/tr}</th>
+							<th data-sortable="text">{tr}Bidding{/tr}</th>
+							<th class="text-right grp-net" data-sortable="num">{tr}Spend{/tr}</th>
+							<th class="text-right grp-net" data-sortable="num">{tr}Clicks{/tr}</th>
+							<th class="text-right grp-net" data-sortable="num">{tr}CPC{/tr}</th>
+							<th class="text-right grp-net" data-sortable="num" title="{tr}Conversion value credited to the click date{/tr}">{tr}Value (click){/tr}</th>
+							<th class="text-right grp-net" data-sortable="num">{tr}ROAS{/tr}</th>
+							<th class="text-right grp-net" data-sortable="num" title="{tr}Conversion value credited to the conversion date{/tr}">{tr}Value (conv.){/tr}</th>
+							<th class="text-right grp-net" data-sortable="num" title="{tr}Search impression share lost to budget{/tr}">{tr}Budget lost{/tr}</th>
+							<th class="text-right grp-books" data-sortable="num">{tr}Orders{/tr}</th>
+							<th class="text-right grp-books" data-sortable="num">{tr}Revenue{/tr}</th>
+							<th class="text-right grp-books" data-sortable="num">{tr}Commerce ROAS{/tr}</th>
+							<th class="text-right grp-books grp-cohort" data-sortable="num">{tr}New cust.{/tr}</th>
+							<th class="text-right grp-books grp-cohort" data-sortable="num">{tr}Cohort rev.{/tr}{if $roasReport.click_window_days} ({$roasReport.click_window_days}d){/if}</th>
+							<th class="text-right grp-books grp-cohort" data-sortable="num">{tr}Cohort ROAS{/tr}</th>
+							<th class="text-right grp-books" data-sortable="num">{tr}LTV ROAS{/tr}</th>
+							<th class="text-right grp-books" data-sortable="num">{tr}CAC{/tr}</th>
+							<th class="text-right grp-gap" data-sortable="num">{tr}Target{/tr}</th>
+							<th class="text-right grp-gap" data-sortable="num" title="{tr}Network click-dated value ÷ cohort revenue{/tr}">{tr}Value ratio{/tr}</th>
+							<th class="text-right grp-gap" data-sortable="num">{tr}Suggested{/tr}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{foreach from=$roasReport.rows item=row}
+							<tr{if $row.campaign_id eq $roasCampaignId} class="info"{/if}>
+								<td>
+									<a href="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasBaseQuery}&amp;campaign_id={$row.campaign_id|escape}#roas-campaign">{$row.campaign_name|escape}</a>
+									<div class="roas-sub"><code>{$row.campaign_id|escape}</code>
+										{if $row.channel} {$row.channel|escape|replace:'_':' '|lower}{/if}
+										{if $row.status && $row.status ne 'ENABLED'} · {$row.status|escape|lower}{/if}
+										{if $row.budget_limited}<span class="label label-warning roas-flag">{tr}budget-limited{/tr}</span>{/if}
+										{if $row.spend == 0}<span class="label label-default roas-flag">{tr}no spend in range{/tr}</span>{/if}
+									</div>
+								</td>
+								<td>
+									{if $row.bidding_strategy_type}{$row.bidding_strategy_type|escape|replace:'_':' '|lower}{/if}
+									{if $row.bidding_scope eq 'portfolio'}<span class="roas-sub">({tr}portfolio{/tr})</span>{/if}
+									<div class="roas-sub">{if $row.budget_amount}{call roas_money v=$row.budget_amount}/{tr}day{/tr}{/if}{if $row.target_cpa} · {tr}tCPA{/tr} {call roas_money v=$row.target_cpa}{/if}</div>
+								</td>
+								<td class="text-right" data-sort="{$row.spend}">{call roas_money v=$row.spend}</td>
+								<td class="text-right" data-sort="{$row.clicks}">{$row.clicks}</td>
+								<td class="text-right" data-sort="{$row.cpc}">{call roas_money v=$row.cpc}</td>
+								<td class="text-right" data-sort="{$row.network_value}">{call roas_money v=$row.network_value}<div class="roas-sub">{call roas_num v=$row.network_conversions} {tr}conv.{/tr}</div></td>
+								<td class="text-right" data-sort="{$row.network_roas}">{call roas_x v=$row.network_roas}</td>
+								<td class="text-right" data-sort="{$row.value_by_conv_date}">{call roas_money v=$row.value_by_conv_date}<div class="roas-sub">{call roas_x v=$row.network_roas_conv_date}</div></td>
+								<td class="text-right" data-sort="{$row.budget_lost_is}">{call roas_pct v=$row.budget_lost_is}{if $row.search_is !== null}<div class="roas-sub">{tr}IS{/tr} {call roas_pct v=$row.search_is}</div>{/if}</td>
+								<td class="text-right" data-sort="{$row.period_orders}">{$row.period_orders}</td>
+								<td class="text-right" data-sort="{$row.period_revenue}">{call roas_money v=$row.period_revenue}<div class="roas-sub">{tr}AOV{/tr} {call roas_money v=$row.aov}</div></td>
+								<td class="text-right" data-sort="{$row.commerce_roas}">
+									<strong class="{if $row.vs_target eq 'above'}roas-above{elseif $row.vs_target eq 'below'}roas-below{/if}">{call roas_x v=$row.commerce_roas}</strong>
+								</td>
+								<td class="text-right grp-cohort" data-sort="{$row.cohort_users}">{$row.cohort_users}<div class="roas-sub">{$row.cohort_buyers} {tr}buyers{/tr}</div></td>
+								<td class="text-right grp-cohort" data-sort="{$row.cohort_revenue}">{call roas_money v=$row.cohort_revenue}<div class="roas-sub">{$row.cohort_orders} {tr}orders{/tr}</div></td>
+								<td class="text-right grp-cohort" data-sort="{$row.cohort_roas}">{call roas_x v=$row.cohort_roas}</td>
+								<td class="text-right" data-sort="{$row.ltv_roas}">{call roas_x v=$row.ltv_roas}<div class="roas-sub">{call roas_money v=$row.cohort_ltv}</div></td>
+								<td class="text-right" data-sort="{$row.cac}">{call roas_money v=$row.cac}</td>
+								<td class="text-right" data-sort="{$row.target_roas}">
+									{call roas_x v=$row.target_roas}
+									{if $row.target_roas !== null}<div class="roas-sub">{if $row.target_source eq 'history'}{tr}history{/tr}{elseif $row.target_source eq 'mixed'}{tr}partly current{/tr}{else}{tr}current{/tr}{/if}{if $row.target_variants > 1} · {call roas_x v=$row.target_min}–{call roas_x v=$row.target_max}{/if}</div>{/if}
+								</td>
+								<td class="text-right" data-sort="{$row.value_ratio}">{call roas_num v=$row.value_ratio}{if $row.value_ratio_period !== null}<div class="roas-sub">{tr}conv.{/tr} {call roas_num v=$row.value_ratio_period}</div>{/if}</td>
+								<td class="text-right" data-sort="{$row.suggested_target}">{call roas_x v=$row.suggested_target}</td>
+							</tr>
+						{/foreach}
+					</tbody>
+					<tfoot>
+						<tr>
+							<th>{tr}Total{/tr}</th>
+							<th></th>
+							<th class="text-right">{call roas_money v=$tot.spend}</th>
+							<th class="text-right">{$tot.clicks}</th>
+							<th class="text-right">{call roas_money v=$tot.cpc}</th>
+							<th class="text-right">{call roas_money v=$tot.network_value}</th>
+							<th class="text-right">{call roas_x v=$tot.network_roas}</th>
+							<th class="text-right">{call roas_money v=$tot.value_by_conv_date}</th>
+							<th></th>
+							<th class="text-right">{$tot.period_orders}</th>
+							<th class="text-right">{call roas_money v=$tot.period_revenue}</th>
+							<th class="text-right">{call roas_x v=$tot.commerce_roas}</th>
+							<th class="text-right">{$tot.cohort_users}</th>
+							<th class="text-right">{call roas_money v=$tot.cohort_revenue}</th>
+							<th class="text-right">{call roas_x v=$tot.cohort_roas}</th>
+							<th class="text-right">{call roas_x v=$tot.ltv_roas}</th>
+							<th class="text-right">{call roas_money v=$tot.cac}</th>
+							<th class="text-right">{call roas_x v=$tot.target_roas}</th>
+							<th class="text-right">{call roas_num v=$tot.value_ratio}</th>
+							<th class="text-right">{call roas_x v=$tot.suggested_target}</th>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+
+			{if $roasDetail}
+				{include file="bitpackage:stats/ad_roas_campaign_inc.tpl"}
+			{/if}
 		{/if}
 	</div>
 </div>

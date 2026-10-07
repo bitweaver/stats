@@ -1,7 +1,8 @@
 <?php
 /**
- * First-party ROAS: Commerce (Bitcommerce) vs network ROAS for this install.
- * Optional ad warehouse tables; no ad-network conversion upload.
+ * First-party ROAS: this install's books vs the ad network's reported value
+ * per campaign, beside the bid target the network delivers toward.
+ * Optional ad warehouse tables; no ad-network writes.
  *
  * @package stats
  */
@@ -12,56 +13,92 @@ require_once( STATS_PKG_INCLUDE_PATH.'ads_roas_lib.php' );
 $gBitSystem->verifyPackage( 'stats' );
 $gBitSystem->verifyPermission( 'p_stats_admin' );
 
-$since = BitBase::getParameter( $_REQUEST, 'since', date( 'Y-m-d', strtotime( '-180 days' ) ) );
-$until = BitBase::getParameter( $_REQUEST, 'until', date( 'Y-m-d' ) );
-$network = BitBase::getParameter( $_REQUEST, 'network', 'google' );
-
-if( !ads_roas_date_ok( $since ) || !ads_roas_date_ok( $until ) ) {
-	$gBitSystem->fatalError( tra( 'Dates must be Y-m-d.' ) );
+$range = ads_roas_range_from_request( $_REQUEST );
+if( !empty( $range['error'] ) ) {
+	$gBitSystem->fatalError( tra( $range['error'] ) );
 }
+$since = $range['since'];
+$until = $range['until'];
+$network = BitBase::getParameter( $_REQUEST, 'network', 'google' );
+if( $network === '' ) {
+	$network = 'google';
+}
+$campaignId = ads_roas_id_clean( BitBase::getParameter( $_REQUEST, 'campaign_id', '' ) );
+$cohort = !empty( $_REQUEST['cohort'] );
 
 $feedback = array();
 $report = null;
 $networks = array();
 $windowAsk = false;
+$detail = null;
+$svg = '';
+$db = $gBitSystem->mDb;
 
-if( !ads_roas_tables_ready( $gBitSystem->mDb ) ) {
-	$feedback['warning'] = tra( 'Ad warehouse tables are not installed on this database.' );
+if( !ads_roas_tables_ready( $db ) ) {
+	$feedback['warning'] = tra( 'Ad warehouse tables are not installed on this database. Run the warehouse pull once.' );
 } else {
 	if( !empty( $_REQUEST['save_window'] ) ) {
 		$gBitUser->verifyTicket();
 		$days = (int)BitBase::getParameter( $_REQUEST, 'click_window_days', 0 );
-		if( ads_roas_save_click_window( $gBitSystem->mDb, $network, $days ) ) {
+		if( ads_roas_save_click_window( $db, $network, $days ) ) {
 			$feedback['success'] = tra( 'Saved click-through conversion window.' );
 		} else {
 			$feedback['error'] = tra( 'Click window must be 1–90 days.' );
 		}
 	}
-	if( !ads_roas_commerce_ready() ) {
-		$feedback['warning'] = tra( 'Bitcommerce is not active. Spend is shown; revenue and ROAS need this install\'s orders.' );
+	if( !empty( $_REQUEST['save_assumptions'] ) ) {
+		$gBitUser->verifyTicket();
+		$ok = ads_roas_save_assumptions( $db, $_REQUEST );
+		if( $ok === true ) {
+			$feedback['success'] = tra( 'Saved assumptions.' );
+		} else {
+			$feedback['error'] = tra( $ok );
+		}
 	}
-	$networks = ads_roas_networks( $gBitSystem->mDb );
-	if( $network !== '' && !isset( $networks[$network] ) ) {
+	$networks = ads_roas_networks( $db );
+	if( !isset( $networks[$network] ) ) {
 		$gBitSystem->fatalError( tra( 'Unknown ad network.' ) );
 	}
-	$report = ads_roas_report( $gBitSystem->mDb, $since, $until, array(
-		'network' => $network,
-	) );
+	if( !ads_roas_commerce_ready() ) {
+		$feedback['warning'] = tra( 'No revenue source is active. Spend is shown; revenue and ROAS need this install\'s orders.' );
+	}
+	$report = ads_roas_report( $db, $since, $until, array( 'network' => $network ) );
 	$windowAsk = empty( $report['click_window_days'] );
+	if( $campaignId !== '' ) {
+		$detail = ads_roas_campaign_detail(
+			$db, $network, $campaignId, $since, $until,
+			$report['revenue_ready'] ? ads_roas_revenue_source( $db ) : null,
+			$report['click_window_days']
+		);
+	}
+	if( !empty( $report['series']['rows'] ) ) {
+		$svg = ads_roas_svg_series( $report['series'], array(
+			'break_even'     => $report['assumptions']['break_even_roas'],
+			'immature_from'  => $report['immature_from'],
+			'label_commerce' => tra( 'Commerce' ),
+			'label_network'  => $report['network_label'],
+			'label_target'   => tra( 'Target' ),
+		) );
+	}
 }
 
 if( !empty( $_REQUEST['download'] ) && is_array( $report ) ) {
 	$filename = 'ad-roas-'.$network.'-'.$since.'-'.$until.'.csv';
-	header( 'Content-Type: text/csv' );
+	header( 'Content-Type: text/csv; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename='.$filename );
 	header( 'Pragma: no-cache' );
 	header( 'Expires: 0' );
 	$out = fopen( 'php://output', 'w' );
-	$clickDays = $report['click_window_days'];
-	fputcsv( $out, ads_roas_csv_headers( $clickDays ) );
+	fputcsv( $out, ads_roas_csv_headers() );
 	foreach( $report['rows'] as $row ) {
-		fputcsv( $out, ads_roas_csv_line( $row, $clickDays ) );
+		fputcsv( $out, ads_roas_csv_line( $row ) );
 	}
+	$totals = $report['totals'];
+	$totals['campaign_id'] = 'TOTAL';
+	$totals['campaign_name'] = tra( 'Total' );
+	$totals['flags'] = array();
+	fputcsv( $out, ads_roas_csv_line( $totals ) );
+	fclose( $out );
 	exit;
 }
 
@@ -69,12 +106,40 @@ if( $gBitSystem->isPackageActive( 'bitcommerce' ) ) {
 	require_once( BITCOMMERCE_PKG_INCLUDE_PATH.'bitcommerce_start_inc.php' );
 }
 
+$gBitThemes->loadCss( STATS_PKG_PATH.'css/stats.css', TRUE, 300, TRUE, FALSE, FALSE );
+
+$referrersUrl = null;
+$prevUrl = null;
+$nextUrl = null;
+if( !empty( $range['period'] ) && !empty( $range['timeframe'] ) ) {
+	$referrersUrl = STATS_PKG_URL.'referrers.php?'.http_build_query( array( 'period' => $range['period'], 'timeframe' => $range['timeframe'] ) );
+	// Previous / next period of the same length.
+	$prevTf = ads_roas_timeframe_for( $range['period'], date( 'Y-m-d', strtotime( $since.' 12:00:00' ) - 86400 ) );
+	$nextSince = date( 'Y-m-d', strtotime( $until.' 12:00:00' ) + 86400 );
+	$nextTf = ads_roas_timeframe_for( $range['period'], $nextSince );
+	$prevUrl = STATS_PKG_URL.'ad_roas.php?'.http_build_query( array( 'period' => $range['period'], 'timeframe' => $prevTf, 'network' => $network ) );
+	if( $nextSince <= date( 'Y-m-d' ) ) {
+		$nextUrl = STATS_PKG_URL.'ad_roas.php?'.http_build_query( array( 'period' => $range['period'], 'timeframe' => $nextTf, 'network' => $network ) );
+	}
+}
+
 $gBitSmarty->assign( 'feedback', $feedback );
+$gBitSmarty->assign( 'roasRange', $range );
 $gBitSmarty->assign( 'roasSince', $since );
 $gBitSmarty->assign( 'roasUntil', $until );
 $gBitSmarty->assign( 'roasNetwork', $network );
 $gBitSmarty->assign( 'roasNetworks', $networks );
+$gBitSmarty->assign( 'roasPresets', ads_roas_presets() );
+$gBitSmarty->assign( 'roasPeriods', ads_roas_periods() );
 $gBitSmarty->assign( 'roasReport', $report );
 $gBitSmarty->assign( 'roasWindowAsk', $windowAsk );
+$gBitSmarty->assign( 'roasDetail', $detail );
+$gBitSmarty->assign( 'roasSvg', $svg );
+$gBitSmarty->assign( 'roasCampaignId', $campaignId );
+$gBitSmarty->assign( 'roasCohort', $cohort );
+$gBitSmarty->assign( 'roasBaseQuery', http_build_query( array( 'network' => $network, 'since' => $since, 'until' => $until ) ) );
+$gBitSmarty->assign( 'roasReferrersUrl', $referrersUrl );
+$gBitSmarty->assign( 'roasPrevUrl', $prevUrl );
+$gBitSmarty->assign( 'roasNextUrl', $nextUrl );
 
 $gBitSystem->display( 'bitpackage:stats/ad_roas.tpl', tra( 'Ad ROAS' ), array( 'display_mode' => 'display' ) );
