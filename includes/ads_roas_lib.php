@@ -175,6 +175,10 @@ function ads_roas_range_from_request( $pParameters, $pToday = null ) {
 	$until = BitBase::getParameter( $pParameters, 'until', '' );
 	$ret = array( 'since' => null, 'until' => null, 'period' => null, 'timeframe' => null, 'preset' => null, 'source' => 'default', 'error' => null );
 
+	if( $period !== '' && $timeframe === '' && in_array( $period, ads_roas_periods(), true ) ) {
+		// Period alone: the period containing `since` (else today).
+		$timeframe = ads_roas_timeframe_for( $period, ads_roas_date_ok( $since ) ? $since : $today );
+	}
 	if( $period !== '' && $timeframe !== '' && in_array( $period, ads_roas_periods(), true ) ) {
 		$r = ads_roas_period_range( $period, $timeframe );
 		if( $r ) {
@@ -228,7 +232,42 @@ function ads_roas_range_from_request( $pParameters, $pToday = null ) {
 		}
 	}
 	$ret['days'] = (int)round( ( strtotime( $ret['until'].' 12:00:00' ) - strtotime( $ret['since'].' 12:00:00' ) ) / 86400 ) + 1;
+	$ret['display'] = ads_roas_range_display( $ret );
 	return $ret;
+}
+
+/** Human label for a range: "September 2026", "Q3 2026", "Week 37: Sep 7 – 13, 2026", "Sep 1 – Sep 30, 2026". */
+function ads_roas_range_display( $pRange ) {
+	$s = strtotime( $pRange['since'].' 12:00:00' );
+	$u = strtotime( $pRange['until'].' 12:00:00' );
+	$span = ( date( 'Y', $s ) === date( 'Y', $u ) )
+		? ( date( 'n', $s ) === date( 'n', $u ) ? date( 'M j', $s ).' – '.date( 'j, Y', $u ) : date( 'M j', $s ).' – '.date( 'M j, Y', $u ) )
+		: date( 'M j, Y', $s ).' – '.date( 'M j, Y', $u );
+	switch( isset( $pRange['period'] ) ? $pRange['period'] : null ) {
+		case 'day':
+			return date( 'D M j, Y', $s );
+		case 'week':
+			return 'Week '.(int)substr( $pRange['timeframe'], -2 ).': '.$span;
+		case 'month':
+			return date( 'F Y', $s );
+		case 'quarter':
+			return 'Q'.( intdiv( (int)date( 'n', $s ) - 1, 3 ) + 1 ).' '.date( 'Y', $s );
+		case 'year':
+			return date( 'Y', $s );
+	}
+	return $span;
+}
+
+/** SQL list literal for cleaned campaign ids, or '' when no filter. */
+function ads_roas_id_list_sql( $pIds ) {
+	$out = array();
+	foreach( (array)$pIds as $id ) {
+		$id = ads_roas_id_clean( $id );
+		if( $id !== '' ) {
+			$out[$id] = "'".$id."'";
+		}
+	}
+	return $out ? '('.implode( ',', $out ).')' : '';
 }
 
 // -------------------------------------------------------------- tables
@@ -402,7 +441,9 @@ function ads_roas_div( $a, $b ) {
 }
 
 /** Spend, network metrics and the spend-weighted target per campaign. */
-function ads_roas_spend_rows( $pDb, $pNetwork, $pSince, $pUntil ) {
+function ads_roas_spend_rows( $pDb, $pNetwork, $pSince, $pUntil, $pCampaignIds = array() ) {
+	$list = ads_roas_id_list_sql( $pCampaignIds );
+	$campFilter = $list ? "AND m.campaign_id IN $list" : '';
 	$hasSettings = ads_roas_table_exists( $pDb, 'stats_ad_campaign_settings_daily' );
 	$settingsJoin = '';
 	$targetExpr = 'c.target_roas';
@@ -447,6 +488,7 @@ function ads_roas_spend_rows( $pDb, $pNetwork, $pSince, $pUntil ) {
 		   $settingsJoin
 		  WHERE m.grain = 'campaign' AND m.network_code = ?
 		    AND m.metric_date >= ?::date AND m.metric_date <= ?::date
+		    $campFilter
 		  GROUP BY m.campaign_id, c.campaign_name, c.channel, c.status, c.primary_status,
 		           c.bidding_strategy, c.target_roas, c.target_cpa, c.budget_amount
 		  ORDER BY SUM(m.spend) DESC",
@@ -476,8 +518,11 @@ function ads_roas_latest_settings( $pDb, $pNetwork ) {
 }
 
 /** Period / cohort / LTV revenue per campaign from order attribution. */
-function ads_roas_revenue_rows( $pDb, $pNetwork, $pSince, $pUntil, $pSource, $pClickDays ) {
+function ads_roas_revenue_rows( $pDb, $pNetwork, $pSince, $pUntil, $pSource, $pClickDays, $pCampaignIds = array() ) {
 	$days = $pClickDays ? (int)$pClickDays : 0;
+	$list = ads_roas_id_list_sql( $pCampaignIds );
+	$oaFilter = $list ? "AND oa.campaign_id IN $list" : '';
+	$aFilter = $list ? "AND a.campaign_id IN $list" : '';
 	$bind = array_merge(
 		$pSource['bind'],
 		array( $pNetwork, $pNetwork, $pSince, $pUntil, $pSince, $pUntil, $days, $days, $days )
@@ -487,14 +532,14 @@ function ads_roas_revenue_rows( $pDb, $pNetwork, $pSince, $pUntil, $pSource, $pC
 		att AS (
 		   SELECT oa.orders_id, oa.campaign_id
 		     FROM stats_ad_order_attribution oa
-		    WHERE oa.network_code = ? AND oa.campaign_id IS NOT NULL
+		    WHERE oa.network_code = ? AND oa.campaign_id IS NOT NULL $oaFilter
 		),
 		ft AS (
 		   SELECT a.user_id, a.campaign_id,
 		          COALESCE(a.click_date::timestamp, to_timestamp(u.registration_date)::timestamp) AS first_touch_at
 		     FROM stats_ad_user_attribution a
 		     JOIN ".BIT_DB_PREFIX."users_users u ON u.user_id = a.user_id
-		    WHERE a.network_code = ? AND a.campaign_id IS NOT NULL
+		    WHERE a.network_code = ? AND a.campaign_id IS NOT NULL $aFilter
 		),
 		rev AS (
 		   SELECT att.campaign_id, o.order_id, o.user_id, o.revenue, o.purchased_at, ft.first_touch_at,
@@ -528,7 +573,7 @@ function ads_roas_revenue_rows( $pDb, $pNetwork, $pSince, $pUntil, $pSource, $pC
 		"SELECT a.campaign_id, COUNT(*) AS cohort_users
 		   FROM stats_ad_user_attribution a
 		   JOIN ".BIT_DB_PREFIX."users_users u ON u.user_id = a.user_id
-		  WHERE a.network_code = ? AND a.campaign_id IS NOT NULL
+		  WHERE a.network_code = ? AND a.campaign_id IS NOT NULL $aFilter
 		    AND COALESCE(a.click_date::timestamp, to_timestamp(u.registration_date)::timestamp) >= ?::timestamp
 		    AND COALESCE(a.click_date::timestamp, to_timestamp(u.registration_date)::timestamp) < (?::date + 1)
 		  GROUP BY a.campaign_id",
@@ -809,10 +854,12 @@ function ads_roas_tz_warning( $pDb, $pNetwork ) {
  * @param object $pDb BitDb
  * @param string $pSince Y-m-d inclusive
  * @param string $pUntil Y-m-d inclusive
- * @param array  $pOpts  network (default google), series (bool, default true)
+ * @param array  $pOpts  network (default google), series (bool, default true),
+ *                       campaign_ids (list; empty = all campaigns)
  */
 function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 	$network = !empty( $pOpts['network'] ) ? $pOpts['network'] : 'google';
+	$campaignIds = !empty( $pOpts['campaign_ids'] ) ? (array)$pOpts['campaign_ids'] : array();
 	$source = ads_roas_revenue_source( $pDb );
 	$wantRev = !empty( $source['ready'] ) && ads_roas_table_exists( $pDb, 'stats_ad_order_attribution' );
 	$netRow = ads_roas_network_row( $pDb, $network );
@@ -823,9 +870,9 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 	$netLabel = !empty( $netRow['display_name'] ) ? $netRow['display_name'] : $network;
 	$assumptions = ads_roas_assumptions( $pDb );
 
-	$spendRows = ads_roas_spend_rows( $pDb, $network, $pSince, $pUntil );
+	$spendRows = ads_roas_spend_rows( $pDb, $network, $pSince, $pUntil, $campaignIds );
 	$latest = ads_roas_latest_settings( $pDb, $network );
-	$rev = $wantRev ? ads_roas_revenue_rows( $pDb, $network, $pSince, $pUntil, $source, $clickDays ) : array();
+	$rev = $wantRev ? ads_roas_revenue_rows( $pDb, $network, $pSince, $pUntil, $source, $clickDays, $campaignIds ) : array();
 	$names = array();
 
 	$rows = array();
@@ -880,7 +927,7 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 	}
 	$series = null;
 	if( !isset( $pOpts['series'] ) || $pOpts['series'] ) {
-		$series = ads_roas_series( $pDb, $network, $pSince, $pUntil, $wantRev ? $source : null );
+		$series = ads_roas_series( $pDb, $network, $pSince, $pUntil, $wantRev ? $source : null, null, $campaignIds );
 	}
 
 	return array(
@@ -888,6 +935,7 @@ function ads_roas_report( $pDb, $pSince, $pUntil, $pOpts = array() ) {
 		'until'             => $pUntil,
 		'network'           => $network,
 		'network_label'     => $netLabel,
+		'campaign_ids'      => $campaignIds,
 		'currency'          => !empty( $netRow['currency'] ) ? $netRow['currency'] : null,
 		'click_window_days' => $clickDays,
 		'window_source'     => isset( $netRow['window_source'] ) ? $netRow['window_source'] : null,
@@ -922,8 +970,11 @@ function ads_roas_series_bucket( $pSince, $pUntil ) {
  * Spend, network value and attributed period revenue per bucket, with the
  * spend-weighted target. Rows carry commerce_roas / network_roas / target_roas.
  */
-function ads_roas_series( $pDb, $pNetwork, $pSince, $pUntil, $pSource = null, $pBucket = null ) {
+function ads_roas_series( $pDb, $pNetwork, $pSince, $pUntil, $pSource = null, $pBucket = null, $pCampaignIds = array() ) {
 	$bucket = $pBucket ? $pBucket : ads_roas_series_bucket( $pSince, $pUntil );
+	$list = ads_roas_id_list_sql( $pCampaignIds );
+	$mFilter = $list ? "AND m.campaign_id IN $list" : '';
+	$oaFilter = $list ? "AND oa.campaign_id IN $list" : '';
 	$hasSettings = ads_roas_table_exists( $pDb, 'stats_ad_campaign_settings_daily' );
 	$settingsJoin = '';
 	$targetExpr = 'c.target_roas';
@@ -947,6 +998,7 @@ function ads_roas_series( $pDb, $pNetwork, $pSince, $pUntil, $pSource = null, $p
 		   $settingsJoin
 		  WHERE m.grain = 'campaign' AND m.network_code = ?
 		    AND m.metric_date >= ?::date AND m.metric_date <= ?::date
+		    $mFilter
 		  GROUP BY 1 ORDER BY 1",
 		array( $bucket, $pNetwork, $pSince, $pUntil )
 	);
@@ -970,7 +1022,7 @@ function ads_roas_series( $pDb, $pNetwork, $pSince, $pUntil, $pSource = null, $p
 			SELECT date_trunc(?, o.purchased_at)::date AS b, SUM(o.revenue) AS revenue, COUNT(*) AS orders
 			  FROM orders o
 			  JOIN stats_ad_order_attribution oa ON oa.orders_id = o.order_id
-			 WHERE oa.network_code = ? AND oa.campaign_id IS NOT NULL
+			 WHERE oa.network_code = ? AND oa.campaign_id IS NOT NULL $oaFilter
 			   AND o.purchased_at >= ?::timestamp AND o.purchased_at < (?::date + 1)
 			 GROUP BY 1 ORDER BY 1",
 			$bind

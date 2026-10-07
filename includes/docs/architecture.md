@@ -60,9 +60,15 @@ The page also reconciles every paid order in the range (attributed by id,
 label only, paid click without a campaign, other networks, organic, no first
 touch), draws ROAS per day/week/month as inline SVG, and drills into one
 campaign (settings history, conversion actions, ad groups, days, orders).
-Range comes from `period`+`timeframe` (the registration report's labels),
-a `preset`, or `since`/`until`. Queries live in `includes/ads_roas_lib.php`;
-the revenue source is pluggable (see development.md).
+Range comes from `period`+`timeframe` (the registration report's labels;
+`period` alone picks the period containing `since` or today), a `preset`,
+or `since`/`until` (the Custom choice). The pager steps one period, or one
+range length for a custom range. `campaigns` (comma list of ids) limits
+spend, revenue, tiles and the trend to those campaigns; on the page,
+unticking campaign or first-touch rows recomputes the table totals and
+shares in the browser, and a button reloads the tiles and chart for the
+ticked campaigns. Queries live in `includes/ads_roas_lib.php`; the revenue
+source is pluggable (see development.md).
 
 Click-through window is stored on `stats_ad_network`. The entity pull sets
 it from the network's own purchase-action lookback; the page asks only when

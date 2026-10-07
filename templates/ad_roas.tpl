@@ -2,7 +2,7 @@
 {function name=roas_x v=null}{if $v === null || $v === ''}<span class="text-muted">—</span>{else}{$v|string_format:"%.2f"}x{/if}{/function}
 {function name=roas_pct v=null}{if $v === null || $v === ''}<span class="text-muted">—</span>{else}{math equation="v*100" v=$v format="%.0f"}%{/if}{/function}
 {function name=roas_num v=null}{if $v === null || $v === ''}<span class="text-muted">—</span>{else}{$v|string_format:"%.2f"}{/if}{/function}
-<script>
+{literal}<script>
 (function(){
 	function num(td){
 		var v = td.getAttribute('data-sort');
@@ -26,8 +26,127 @@
 		});
 		rows.forEach(function(r){ tbody.appendChild(r); });
 	});
+
+	// Period select: a fixed period reloads at once; custom reveals the date inputs.
+	document.addEventListener('change', function(e){
+		if (e.target.id !== 'roas-period') { return; }
+		var form = document.getElementById('roas-range-form'), dates = form.querySelector('.roas-custom-dates');
+		if (e.target.value === 'custom') { dates.classList.remove('is-hidden'); form.querySelector('#roas-since').focus(); return; }
+		form.submit();
+	});
+
+	function numAttr(el, k) {
+		var td = el.querySelector('td[data-k="' + k + '"]');
+		var raw = td ? td.getAttribute('data-sort') : el.getAttribute('data-' + k);
+		if (raw === null || raw === '') { return null; }
+		var v = parseFloat(raw); return isNaN(v) ? null : v;
+	}
+	function moneyPrefix(cell) { var m = /^\s*([^\d\-]*)/.exec(cell.textContent || ''); return m ? m[1] : ''; }
+	function fmt(v, kind, prefix) {
+		if (v === null) { return '\u2014'; }
+		if (kind === 'money') { return prefix + v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+		if (kind === 'x') { return v.toFixed(2) + 'x'; }
+		if (kind === 'int') { return Math.round(v).toLocaleString(); }
+		return v.toFixed(2);
+	}
+
+	// Unticked rows hide; the count becomes a button that shows them again.
+	var reveal = {}, recalcs = {};
+	function renderCount(el, n, total, key) {
+		if (n === total) { el.textContent = n + '/' + total; return; }
+		el.textContent = '';
+		var b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'btn btn-xs btn-default roas-pick-toggle';
+		b.setAttribute('data-key', key);
+		b.textContent = n + '/' + total + ' \u00b7 ' + (reveal[key] ? el.getAttribute('data-hide') : el.getAttribute('data-show'));
+		el.appendChild(b);
+	}
+	document.addEventListener('click', function(e){
+		var b = e.target.closest ? e.target.closest('.roas-pick-toggle') : null;
+		if (!b) { return; }
+		var k = b.getAttribute('data-key');
+		reveal[k] = !reveal[k];
+		if (recalcs[k]) { recalcs[k](); }
+	});
+
+	// Pickers attach once the tables exist.
+	document.addEventListener('DOMContentLoaded', function(){
+	// Campaign picker: unticked rows hide and leave the totals.
+	(function(){
+		var table = document.getElementById('roas-campaigns'); if (!table) { return; }
+		var prefix = null;
+		function recalc() {
+			var all = Array.prototype.slice.call(table.tBodies[0].rows), picked = [];
+			all.forEach(function(r){
+				var on = r.querySelector('input.roas-pick').checked;
+				r.style.display = (on || reveal.campaigns) ? '' : 'none';
+				r.classList.toggle('roas-off', !on);
+				if (on) { picked.push(r); }
+			});
+			Array.prototype.forEach.call(table.tFoot.querySelectorAll('[data-calc]'), function(cell){
+				if (prefix === null && cell.getAttribute('data-fmt') === 'money') { prefix = moneyPrefix(cell); }
+				var spec = cell.getAttribute('data-calc').split(':'), kind = cell.getAttribute('data-fmt'), out = null, p;
+				if (spec[0] === 'sum') { out = 0; picked.forEach(function(r){ var v = numAttr(r, spec[1]); if (v !== null) { out += v; } }); }
+				else if (spec[0] === 'div') { p = spec[1].split('/'); var a = 0, b = 0; picked.forEach(function(r){ var x = numAttr(r, p[0]), y = numAttr(r, p[1]); if (x !== null) { a += x; } if (y !== null) { b += y; } }); out = b > 0 ? a / b : null; }
+				else if (spec[0] === 'wavg') { p = spec[1].split('*'); var sw = 0, w = 0; picked.forEach(function(r){ var x = numAttr(r, p[0]), y = numAttr(r, p[1]); if (x !== null && y !== null) { sw += x * y; w += y; } }); out = w > 0 ? sw / w : null; }
+				var mul = parseFloat(cell.getAttribute('data-mul') || '');
+				if (cell.hasAttribute('data-mul')) { out = (out !== null && !isNaN(mul) && mul > 0) ? out * mul : null; }
+				cell.textContent = fmt(out, kind, prefix || '');
+			});
+			if (picked.length === all.length) { reveal.campaigns = false; }
+			Array.prototype.forEach.call(document.querySelectorAll('.roas-pick-count'), function(e){ renderCount(e, picked.length, all.length, 'campaigns'); });
+			var apply = document.getElementById('roas-pick-apply');
+			if (apply) {
+				var ids = picked.map(function(r){ return r.getAttribute('data-campaign'); });
+				apply.href = apply.getAttribute('data-base') + '&campaigns=' + encodeURIComponent(ids.join(','));
+				apply.style.display = (picked.length < all.length && picked.length > 0) ? '' : 'none';
+			}
+			var master = table.querySelector('input.roas-pick-all');
+			if (master) { master.checked = picked.length === all.length; master.indeterminate = picked.length > 0 && picked.length < all.length; }
+		}
+		recalcs.campaigns = recalc;
+		table.addEventListener('change', function(e){
+			if (e.target.classList.contains('roas-pick-all')) { Array.prototype.forEach.call(table.querySelectorAll('input.roas-pick'), function(c){ c.checked = e.target.checked; }); }
+			if (e.target.classList.contains('roas-pick') || e.target.classList.contains('roas-pick-all')) { recalc(); }
+		});
+		recalc();
+	})();
+
+	// First-touch picker: shares and the total row follow the ticked rows.
+	(function(){
+		var table = document.getElementById('roas-recon'); if (!table) { return; }
+		var prefix = null;
+		function recalc() {
+			var all = Array.prototype.slice.call(table.tBodies[0].rows), t = {orders: 0, buyers: 0, revenue: 0}, n = 0;
+			all.forEach(function(r){ var on = r.querySelector('input.roas-recon-pick').checked; r.style.display = (on || reveal.recon) ? '' : 'none'; r.classList.toggle('roas-off', !on); if (!on) { return; } n++; t.orders += parseFloat(r.getAttribute('data-orders')) || 0; t.buyers += parseFloat(r.getAttribute('data-buyers')) || 0; t.revenue += parseFloat(r.getAttribute('data-revenue')) || 0; });
+			all.forEach(function(r){
+				var on = r.querySelector('input.roas-recon-pick').checked;
+				var rev = parseFloat(r.getAttribute('data-revenue')) || 0, share = (on && t.revenue > 0) ? rev / t.revenue : null;
+				var cell = r.querySelector('.roas-recon-share'), bar = r.querySelector('.roas-bar');
+				if (cell) { cell.textContent = share === null ? '\u2014' : Math.round(share * 100) + '%'; }
+				if (bar) { bar.style.width = share === null ? '0' : (share * 100).toFixed(1) + '%'; }
+			});
+			var revCell = table.tFoot.querySelector('[data-recon="revenue"]');
+			if (prefix === null && revCell) { prefix = moneyPrefix(revCell); }
+			table.tFoot.querySelector('[data-recon="orders"]').textContent = fmt(t.orders, 'int');
+			table.tFoot.querySelector('[data-recon="buyers"]').textContent = fmt(t.buyers, 'int');
+			if (revCell) { revCell.textContent = fmt(t.revenue, 'money', prefix || ''); }
+			if (n === all.length) { reveal.recon = false; }
+			Array.prototype.forEach.call(table.querySelectorAll('.roas-recon-count'), function(e){ renderCount(e, n, all.length, 'recon'); });
+			var master = table.querySelector('input.roas-recon-pick-all');
+			if (master) { master.checked = n === all.length; master.indeterminate = n > 0 && n < all.length; }
+		}
+		recalcs.recon = recalc;
+		table.addEventListener('change', function(e){
+			if (e.target.classList.contains('roas-recon-pick-all')) { Array.prototype.forEach.call(table.querySelectorAll('input.roas-recon-pick'), function(c){ c.checked = e.target.checked; }); }
+			if (e.target.classList.contains('roas-recon-pick') || e.target.classList.contains('roas-recon-pick-all')) { recalc(); }
+		});
+		recalc();
+	})();
+	});
 })();
-</script>
+</script>{/literal}
 <div class="display statistics ad-roas{if $roasCohort} roas-cohort-hl{/if}">
 	<div class="header">
 		<h1>{tr}Ad ROAS{/tr}
@@ -37,31 +156,25 @@
 	<div class="body">
 		{formfeedback hash=$feedback}
 
-		<form class="roas-toolbar" method="get" action="{$smarty.const.STATS_PKG_URL}ad_roas.php">
-			<div class="form-group">
-				<div class="btn-group btn-group-sm" role="group" aria-label="{tr}Preset ranges{/tr}">
-					{foreach from=$roasPresets key=code item=label}
-						<a class="btn btn-default{if $roasRange.preset eq $code} active{/if}" href="{$smarty.const.STATS_PKG_URL}ad_roas.php?preset={$code|escape}&amp;network={$roasNetwork|escape}">{tr}{$label}{/tr}</a>
-					{/foreach}
-				</div>
-			</div>
+		<form class="roas-toolbar" id="roas-range-form" method="get" action="{$smarty.const.STATS_PKG_URL}ad_roas.php">
+			{if $roasCampaignFilterStr}<input type="hidden" name="campaigns" value="{$roasCampaignFilterStr|escape}" />{/if}
 			<div class="form-group">
 				<label class="sr-only" for="roas-period">{tr}Period{/tr}</label>
 				<select id="roas-period" class="form-control input-sm" name="period">
-					{foreach from=$roasPeriods item=p}
-						<option value="{$p|escape}" {if $roasRange.period eq $p}selected="selected"{/if}>{tr}{$p|capitalize}{/tr}</option>
+					{foreach from=$roasPeriodChoices key=code item=label}
+						<option value="{$code}" {if ($roasRange.period and $roasRange.period eq $code) or (!$roasRange.period and $code eq 'custom')}selected="selected"{/if}>{tr}{$label}{/tr}</option>
 					{/foreach}
 				</select>
 			</div>
-			<div class="form-group">
-				<label class="sr-only" for="roas-timeframe">{tr}Timeframe{/tr}</label>
-				<input id="roas-timeframe" class="form-control input-sm" type="text" name="timeframe" value="{$roasRange.timeframe|escape}" placeholder="2026-09 · 2026 Week 37 · 2026-Q3" size="14" />
+			<div class="form-group roas-pager">
+				{if $roasPrevUrl}<a class="btn btn-default btn-sm" href="{$roasPrevUrl|escape}" title="{tr}Previous{/tr}">{booticon iname="fa-chevron-left"}</a>{else}<span class="btn btn-default btn-sm disabled">{booticon iname="fa-chevron-left"}</span>{/if}
+				<span class="roas-range-label">{$roasRange.display|escape}</span>
+				{if $roasNextUrl}<a class="btn btn-default btn-sm" href="{$roasNextUrl|escape}" title="{tr}Next{/tr}">{booticon iname="fa-chevron-right"}</a>{else}<span class="btn btn-default btn-sm disabled" title="{tr}Up to today{/tr}">{booticon iname="fa-chevron-right"}</span>{/if}
 			</div>
-			<div class="form-group">
+			<div class="form-group roas-custom-dates{if $roasRange.period} is-hidden{/if}">
 				<label class="sr-only" for="roas-since">{tr}Since{/tr}</label>
 				<input id="roas-since" class="form-control input-sm" type="date" name="since" value="{$roasSince|escape}" />
-			</div>
-			<div class="form-group">
+				<span class="roas-sub">{tr}to{/tr}</span>
 				<label class="sr-only" for="roas-until">{tr}Until{/tr}</label>
 				<input id="roas-until" class="form-control input-sm" type="date" name="until" value="{$roasUntil|escape}" />
 			</div>
@@ -81,13 +194,6 @@
 					<a class="btn btn-default btn-sm" href="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasBaseQuery}&amp;download=1">{tr}CSV{/tr}</a>
 				{/if}
 			</div>
-			{if $roasPrevUrl || $roasNextUrl}
-				<div class="form-group roas-pager">
-					{if $roasPrevUrl}<a class="btn btn-default btn-sm" href="{$roasPrevUrl|escape}" title="{tr}Previous{/tr}">{booticon iname="fa-chevron-left"}</a>{/if}
-					<span class="roas-sub">{$roasRange.timeframe|escape}</span>
-					{if $roasNextUrl}<a class="btn btn-default btn-sm" href="{$roasNextUrl|escape}" title="{tr}Next{/tr}">{booticon iname="fa-chevron-right"}</a>{/if}
-				</div>
-			{/if}
 		</form>
 
 		{if $roasReport}
@@ -212,9 +318,10 @@
 
 			{if $roasReport.reconciliation}
 				<h2>{tr}Where paid orders in this range come from{/tr}</h2>
-				<table class="table table-condensed roas-recon">
+				<table class="table table-condensed roas-recon" id="roas-recon">
 					<thead>
 						<tr>
+							<th class="roas-pick-col"><input type="checkbox" class="roas-recon-pick-all" checked="checked" title="{tr}Select all{/tr}" /></th>
 							<th>{tr}First touch{/tr}</th>
 							<th class="text-right">{tr}Orders{/tr}</th>
 							<th class="text-right">{tr}Buyers{/tr}</th>
@@ -225,23 +332,25 @@
 					</thead>
 					<tbody>
 						{foreach from=$recon.rows item=b}
-							<tr class="{if $b.is_network}roas-recon-net{/if}">
+							<tr class="{if $b.is_network}roas-recon-net{/if}" data-orders="{$b.orders}" data-buyers="{$b.buyers}" data-revenue="{$b.revenue}">
+								<td class="roas-pick-col"><input type="checkbox" class="roas-recon-pick" checked="checked" /></td>
 								<td>{if $b.is_network}<strong>{$roasReport.network_label|escape}:</strong> {/if}{tr}{$b.label}{/tr}</td>
 								<td class="text-right">{$b.orders}</td>
 								<td class="text-right">{$b.buyers}</td>
 								<td class="text-right">{call roas_money v=$b.revenue}</td>
-								<td class="text-right">{call roas_pct v=$b.revenue_share}</td>
+								<td class="text-right roas-recon-share">{call roas_pct v=$b.revenue_share}</td>
 								<td class="roas-barcell"><div class="roas-bar" style="width:{math equation="v*100" v=$b.revenue_share format="%.1f"}%"></div></td>
 							</tr>
 						{/foreach}
 					</tbody>
 					<tfoot>
 						<tr>
-							<th>{tr}All paid orders{/tr}</th>
-							<th class="text-right">{$recon.total.orders}</th>
-							<th class="text-right">{$recon.total.buyers}</th>
-							<th class="text-right">{call roas_money v=$recon.total.revenue}</th>
-							<th class="text-right">100%</th>
+							<th></th>
+							<th><span class="roas-sub roas-recon-count" data-show="{tr}show all{/tr}" data-hide="{tr}hide unselected{/tr}"></span></th>
+							<th class="text-right" data-recon="orders">{$recon.total.orders}</th>
+							<th class="text-right" data-recon="buyers">{$recon.total.buyers}</th>
+							<th class="text-right" data-recon="revenue">{call roas_money v=$recon.total.revenue}</th>
+							<th class="text-right" data-recon="share">100%</th>
 							<th></th>
 						</tr>
 					</tfoot>
@@ -298,12 +407,18 @@
 				<span><span class="roas-swatch sw-network"></span>{$roasReport.network_label|escape} {tr}reports{/tr}</span>
 				<span><span class="roas-swatch sw-commerce"></span>{tr}Our books{/tr}</span>
 				<span><span class="roas-swatch sw-target"></span>{tr}Gap and target{/tr}</span>
-				<span class="roas-sub">{tr}Click a heading to sort.{/tr}</span>
+				<span class="roas-sub">{tr}Click a heading to sort. Untick a campaign to drop it from the totals.{/tr}</span>
+				<span class="roas-pick-bar">
+					<span class="roas-sub"><span class="roas-pick-count" data-show="{tr}show all{/tr}" data-hide="{tr}hide unselected{/tr}"></span> {tr}selected{/tr}</span>
+					<a id="roas-pick-apply" class="btn btn-default btn-xs" data-base="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasUnfilteredQuery}" href="#" style="display:none">{tr}Tiles and chart for selected{/tr}</a>
+					{if $roasCampaignFilter}<a class="btn btn-default btn-xs" href="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasUnfilteredQuery}">{tr}All campaigns{/tr}</a>{/if}
+				</span>
 			</div>
 			<div class="table-responsive">
-				<table class="table table-condensed table-striped table-hover roas-table roas-sortable">
+				<table class="table table-condensed table-striped table-hover roas-table roas-sortable roas-campaigns" id="roas-campaigns">
 					<thead>
 						<tr>
+							<th class="roas-pick-col"><input type="checkbox" class="roas-pick-all" checked="checked" title="{tr}Select all{/tr}" /></th>
 							<th data-sortable="text">{tr}Campaign{/tr}</th>
 							<th data-sortable="text">{tr}Bidding{/tr}</th>
 							<th class="text-right grp-net" data-sortable="num">{tr}Spend{/tr}</th>
@@ -328,7 +443,8 @@
 					</thead>
 					<tbody>
 						{foreach from=$roasReport.rows item=row}
-							<tr{if $row.campaign_id eq $roasCampaignId} class="info"{/if}>
+							<tr{if $row.campaign_id eq $roasCampaignId} class="info"{/if} data-campaign="{$row.campaign_id|escape}" data-cohort_ltv="{$row.cohort_ltv}" data-cohort_buyers="{$row.cohort_buyers}">
+								<td class="roas-pick-col"><input type="checkbox" class="roas-pick" checked="checked" /></td>
 								<td>
 									<a href="{$smarty.const.STATS_PKG_URL}ad_roas.php?{$roasBaseQuery}&amp;campaign_id={$row.campaign_id|escape}#roas-campaign">{$row.campaign_name|escape}</a>
 									<div class="roas-sub"><code>{$row.campaign_id|escape}</code>
@@ -343,54 +459,55 @@
 									{if $row.bidding_scope eq 'portfolio'}<span class="roas-sub">({tr}portfolio{/tr})</span>{/if}
 									<div class="roas-sub">{if $row.budget_amount}{call roas_money v=$row.budget_amount}/{tr}day{/tr}{/if}{if $row.target_cpa} · {tr}tCPA{/tr} {call roas_money v=$row.target_cpa}{/if}</div>
 								</td>
-								<td class="text-right" data-sort="{$row.spend}">{call roas_money v=$row.spend}</td>
-								<td class="text-right" data-sort="{$row.clicks}">{$row.clicks}</td>
-								<td class="text-right" data-sort="{$row.cpc}">{call roas_money v=$row.cpc}</td>
-								<td class="text-right" data-sort="{$row.network_value}">{call roas_money v=$row.network_value}<div class="roas-sub">{call roas_num v=$row.network_conversions} {tr}conv.{/tr}</div></td>
-								<td class="text-right" data-sort="{$row.network_roas}">{call roas_x v=$row.network_roas}</td>
-								<td class="text-right" data-sort="{$row.value_by_conv_date}">{call roas_money v=$row.value_by_conv_date}<div class="roas-sub">{call roas_x v=$row.network_roas_conv_date}</div></td>
-								<td class="text-right" data-sort="{$row.budget_lost_is}">{call roas_pct v=$row.budget_lost_is}{if $row.search_is !== null}<div class="roas-sub">{tr}IS{/tr} {call roas_pct v=$row.search_is}</div>{/if}</td>
-								<td class="text-right" data-sort="{$row.period_orders}">{$row.period_orders}</td>
-								<td class="text-right" data-sort="{$row.period_revenue}">{call roas_money v=$row.period_revenue}<div class="roas-sub">{tr}AOV{/tr} {call roas_money v=$row.aov}</div></td>
-								<td class="text-right" data-sort="{$row.commerce_roas}">
+								<td class="text-right" data-k="spend" data-sort="{$row.spend}">{call roas_money v=$row.spend}</td>
+								<td class="text-right" data-k="clicks" data-sort="{$row.clicks}">{$row.clicks}</td>
+								<td class="text-right" data-k="cpc" data-sort="{$row.cpc}">{call roas_money v=$row.cpc}</td>
+								<td class="text-right" data-k="network_value" data-sort="{$row.network_value}">{call roas_money v=$row.network_value}<div class="roas-sub">{call roas_num v=$row.network_conversions} {tr}conv.{/tr}</div></td>
+								<td class="text-right" data-k="network_roas" data-sort="{$row.network_roas}">{call roas_x v=$row.network_roas}</td>
+								<td class="text-right" data-k="value_by_conv_date" data-sort="{$row.value_by_conv_date}">{call roas_money v=$row.value_by_conv_date}<div class="roas-sub">{call roas_x v=$row.network_roas_conv_date}</div></td>
+								<td class="text-right" data-k="budget_lost_is" data-sort="{$row.budget_lost_is}">{call roas_pct v=$row.budget_lost_is}{if $row.search_is !== null}<div class="roas-sub">{tr}IS{/tr} {call roas_pct v=$row.search_is}</div>{/if}</td>
+								<td class="text-right" data-k="period_orders" data-sort="{$row.period_orders}">{$row.period_orders}</td>
+								<td class="text-right" data-k="period_revenue" data-sort="{$row.period_revenue}">{call roas_money v=$row.period_revenue}<div class="roas-sub">{tr}AOV{/tr} {call roas_money v=$row.aov}</div></td>
+								<td class="text-right" data-k="commerce_roas" data-sort="{$row.commerce_roas}">
 									<strong class="{if $row.vs_target eq 'above'}roas-above{elseif $row.vs_target eq 'below'}roas-below{/if}">{call roas_x v=$row.commerce_roas}</strong>
 								</td>
-								<td class="text-right grp-cohort" data-sort="{$row.cohort_users}">{$row.cohort_users}<div class="roas-sub">{$row.cohort_buyers} {tr}buyers{/tr}</div></td>
-								<td class="text-right grp-cohort" data-sort="{$row.cohort_revenue}">{call roas_money v=$row.cohort_revenue}<div class="roas-sub">{$row.cohort_orders} {tr}orders{/tr}</div></td>
-								<td class="text-right grp-cohort" data-sort="{$row.cohort_roas}">{call roas_x v=$row.cohort_roas}</td>
-								<td class="text-right" data-sort="{$row.ltv_roas}">{call roas_x v=$row.ltv_roas}<div class="roas-sub">{call roas_money v=$row.cohort_ltv}</div></td>
-								<td class="text-right" data-sort="{$row.cac}">{call roas_money v=$row.cac}</td>
-								<td class="text-right" data-sort="{$row.target_roas}">
+								<td class="text-right grp-cohort" data-k="cohort_users" data-sort="{$row.cohort_users}">{$row.cohort_users}<div class="roas-sub">{$row.cohort_buyers} {tr}buyers{/tr}</div></td>
+								<td class="text-right grp-cohort" data-k="cohort_revenue" data-sort="{$row.cohort_revenue}">{call roas_money v=$row.cohort_revenue}<div class="roas-sub">{$row.cohort_orders} {tr}orders{/tr}</div></td>
+								<td class="text-right grp-cohort" data-k="cohort_roas" data-sort="{$row.cohort_roas}">{call roas_x v=$row.cohort_roas}</td>
+								<td class="text-right" data-k="ltv_roas" data-sort="{$row.ltv_roas}">{call roas_x v=$row.ltv_roas}<div class="roas-sub">{call roas_money v=$row.cohort_ltv}</div></td>
+								<td class="text-right" data-k="cac" data-sort="{$row.cac}">{call roas_money v=$row.cac}</td>
+								<td class="text-right" data-k="target_roas" data-sort="{$row.target_roas}">
 									{call roas_x v=$row.target_roas}
 									{if $row.target_roas !== null}<div class="roas-sub">{if $row.target_source eq 'history'}{tr}history{/tr}{elseif $row.target_source eq 'mixed'}{tr}partly current{/tr}{else}{tr}current{/tr}{/if}{if $row.target_variants > 1} · {call roas_x v=$row.target_min}–{call roas_x v=$row.target_max}{/if}</div>{/if}
 								</td>
-								<td class="text-right" data-sort="{$row.value_ratio}">{call roas_num v=$row.value_ratio}{if $row.value_ratio_period !== null}<div class="roas-sub">{tr}conv.{/tr} {call roas_num v=$row.value_ratio_period}</div>{/if}</td>
-								<td class="text-right" data-sort="{$row.suggested_target}">{call roas_x v=$row.suggested_target}</td>
+								<td class="text-right" data-k="value_ratio" data-sort="{$row.value_ratio}">{call roas_num v=$row.value_ratio}{if $row.value_ratio_period !== null}<div class="roas-sub">{tr}conv.{/tr} {call roas_num v=$row.value_ratio_period}</div>{/if}</td>
+								<td class="text-right" data-k="suggested_target" data-sort="{$row.suggested_target}">{call roas_x v=$row.suggested_target}</td>
 							</tr>
 						{/foreach}
 					</tbody>
 					<tfoot>
 						<tr>
-							<th>{tr}Total{/tr}</th>
 							<th></th>
-							<th class="text-right">{call roas_money v=$tot.spend}</th>
-							<th class="text-right">{$tot.clicks}</th>
-							<th class="text-right">{call roas_money v=$tot.cpc}</th>
-							<th class="text-right">{call roas_money v=$tot.network_value}</th>
-							<th class="text-right">{call roas_x v=$tot.network_roas}</th>
-							<th class="text-right">{call roas_money v=$tot.value_by_conv_date}</th>
+							<th><span class="roas-sub roas-pick-count" data-show="{tr}show all{/tr}" data-hide="{tr}hide unselected{/tr}"></span></th>
 							<th></th>
-							<th class="text-right">{$tot.period_orders}</th>
-							<th class="text-right">{call roas_money v=$tot.period_revenue}</th>
-							<th class="text-right">{call roas_x v=$tot.commerce_roas}</th>
-							<th class="text-right">{$tot.cohort_users}</th>
-							<th class="text-right">{call roas_money v=$tot.cohort_revenue}</th>
-							<th class="text-right">{call roas_x v=$tot.cohort_roas}</th>
-							<th class="text-right">{call roas_x v=$tot.ltv_roas}</th>
-							<th class="text-right">{call roas_money v=$tot.cac}</th>
-							<th class="text-right">{call roas_x v=$tot.target_roas}</th>
-							<th class="text-right">{call roas_num v=$tot.value_ratio}</th>
-							<th class="text-right">{call roas_x v=$tot.suggested_target}</th>
+							<th class="text-right" data-calc="sum:spend" data-fmt="money">{call roas_money v=$tot.spend}</th>
+							<th class="text-right" data-calc="sum:clicks" data-fmt="int">{$tot.clicks}</th>
+							<th class="text-right" data-calc="div:spend/clicks" data-fmt="money">{call roas_money v=$tot.cpc}</th>
+							<th class="text-right" data-calc="sum:network_value" data-fmt="money">{call roas_money v=$tot.network_value}</th>
+							<th class="text-right" data-calc="div:network_value/spend" data-fmt="x">{call roas_x v=$tot.network_roas}</th>
+							<th class="text-right" data-calc="sum:value_by_conv_date" data-fmt="money">{call roas_money v=$tot.value_by_conv_date}</th>
+							<th></th>
+							<th class="text-right" data-calc="sum:period_orders" data-fmt="int">{$tot.period_orders}</th>
+							<th class="text-right" data-calc="sum:period_revenue" data-fmt="money">{call roas_money v=$tot.period_revenue}</th>
+							<th class="text-right" data-calc="div:period_revenue/spend" data-fmt="x">{call roas_x v=$tot.commerce_roas}</th>
+							<th class="text-right" data-calc="sum:cohort_users" data-fmt="int">{$tot.cohort_users}</th>
+							<th class="text-right" data-calc="sum:cohort_revenue" data-fmt="money">{call roas_money v=$tot.cohort_revenue}</th>
+							<th class="text-right" data-calc="div:cohort_revenue/spend" data-fmt="x">{call roas_x v=$tot.cohort_roas}</th>
+							<th class="text-right" data-calc="div:cohort_ltv/spend" data-fmt="x">{call roas_x v=$tot.ltv_roas}</th>
+							<th class="text-right" data-calc="div:spend/cohort_buyers" data-fmt="money">{call roas_money v=$tot.cac}</th>
+							<th class="text-right" data-calc="wavg:target_roas*spend" data-fmt="x">{call roas_x v=$tot.target_roas}</th>
+							<th class="text-right" data-calc="div:network_value/cohort_revenue" data-fmt="num">{call roas_num v=$tot.value_ratio}</th>
+							<th class="text-right" data-calc="div:network_value/cohort_revenue" data-fmt="x" data-mul="{$roasReport.assumptions.desired_commerce_roas}">{call roas_x v=$tot.suggested_target}</th>
 						</tr>
 					</tfoot>
 				</table>

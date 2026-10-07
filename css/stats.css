@@ -86,3 +86,11 @@
 .ad-roas .roas-campaign { margin-top: 2em; border-top: 1px solid var(--roas-grid); padding-top: 1em; }
 .ad-roas .roas-campaign h3 { font-size: 15px; margin-top: 1.2em; }
 .referrer-stats .ref-period { color: #52514e; font-weight: normal; }
+.ad-roas .roas-pick-col { width: 1.6em; text-align: center; }
+.ad-roas .roas-pick-col input { margin: 0; }
+.ad-roas .roas-range-label { display: inline-block; min-width: 12em; text-align: center; font-weight: 600; margin: 0 .3em; }
+.ad-roas .roas-custom-dates.is-hidden { display: none; }
+.ad-roas .roas-pick-bar { margin-left: auto; display: inline-flex; gap: .5em; align-items: center; }
+.ad-roas tr.roas-off td { opacity: .5; }
+.ad-roas tr.roas-off td.roas-pick-col { opacity: 1; }
+.ad-roas .roas-pick-toggle { margin-left: .3em; }
