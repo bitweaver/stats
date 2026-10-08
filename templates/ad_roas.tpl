@@ -107,7 +107,10 @@
 		}
 		recalcs.campaigns = recalc;
 		table.addEventListener('change', function(e){
-			if (e.target.classList.contains('roas-pick-all')) { Array.prototype.forEach.call(table.querySelectorAll('input.roas-pick'), function(c){ c.checked = e.target.checked; }); }
+			if (e.target.classList.contains('roas-pick-all')) {
+				Array.prototype.forEach.call(table.querySelectorAll('input.roas-pick'), function(c){ c.checked = e.target.checked; });
+				if (!e.target.checked) { reveal.campaigns = true; } // unselect all keeps the rows in view for re-ticking
+			}
 			if (e.target.classList.contains('roas-pick') || e.target.classList.contains('roas-pick-all')) { recalc(); }
 		});
 		recalc();
@@ -139,7 +142,10 @@
 		}
 		recalcs.recon = recalc;
 		table.addEventListener('change', function(e){
-			if (e.target.classList.contains('roas-recon-pick-all')) { Array.prototype.forEach.call(table.querySelectorAll('input.roas-recon-pick'), function(c){ c.checked = e.target.checked; }); }
+			if (e.target.classList.contains('roas-recon-pick-all')) {
+				Array.prototype.forEach.call(table.querySelectorAll('input.roas-recon-pick'), function(c){ c.checked = e.target.checked; });
+				if (!e.target.checked) { reveal.recon = true; }
+			}
 			if (e.target.classList.contains('roas-recon-pick') || e.target.classList.contains('roas-recon-pick-all')) { recalc(); }
 		});
 		recalc();
@@ -167,16 +173,25 @@
 				</select>
 			</div>
 			<div class="form-group roas-pager">
-				{if $roasPrevUrl}<a class="btn btn-default btn-sm" href="{$roasPrevUrl|escape}" title="{tr}Previous{/tr}">{booticon iname="fa-chevron-left"}</a>{else}<span class="btn btn-default btn-sm disabled">{booticon iname="fa-chevron-left"}</span>{/if}
-				<span class="roas-range-label">{$roasRange.display|escape}</span>
-				{if $roasNextUrl}<a class="btn btn-default btn-sm" href="{$roasNextUrl|escape}" title="{tr}Next{/tr}">{booticon iname="fa-chevron-right"}</a>{else}<span class="btn btn-default btn-sm disabled" title="{tr}Up to today{/tr}">{booticon iname="fa-chevron-right"}</span>{/if}
+				<label class="sr-only" for="roas-range-label">{tr}Range{/tr}</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-btn">
+						{if $roasPrevUrl}<a class="btn btn-default" href="{$roasPrevUrl|escape}" title="{tr}Previous{/tr}">{booticon iname="fa-chevron-left"}</a>{else}<button type="button" class="btn btn-default" disabled="disabled">{booticon iname="fa-chevron-left"}</button>{/if}
+					</span>
+					<input id="roas-range-label" class="form-control roas-range-label" type="text" value="{$roasRange.display|escape}" readonly="readonly" tabindex="-1" />
+					<span class="input-group-btn">
+						{if $roasNextUrl}<a class="btn btn-default" href="{$roasNextUrl|escape}" title="{tr}Next{/tr}">{booticon iname="fa-chevron-right"}</a>{else}<button type="button" class="btn btn-default" disabled="disabled" title="{tr}Up to today{/tr}">{booticon iname="fa-chevron-right"}</button>{/if}
+					</span>
+				</div>
 			</div>
 			<div class="form-group roas-custom-dates{if $roasRange.period} is-hidden{/if}">
 				<label class="sr-only" for="roas-since">{tr}Since{/tr}</label>
-				<input id="roas-since" class="form-control input-sm" type="date" name="since" value="{$roasSince|escape}" />
-				<span class="roas-sub">{tr}to{/tr}</span>
 				<label class="sr-only" for="roas-until">{tr}Until{/tr}</label>
-				<input id="roas-until" class="form-control input-sm" type="date" name="until" value="{$roasUntil|escape}" />
+				<div class="input-group input-group-sm">
+					<input id="roas-since" class="form-control" type="date" name="since" value="{$roasSince|escape}" />
+					<span class="input-group-addon">{tr}to{/tr}</span>
+					<input id="roas-until" class="form-control" type="date" name="until" value="{$roasUntil|escape}" />
+				</div>
 			</div>
 			{if $roasNetworks}
 				<div class="form-group">

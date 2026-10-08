@@ -19,8 +19,10 @@
 	--roas-bad: #d03b3b;
 }
 .ad-roas .header h1 small { font-size: 60%; color: var(--roas-ink-2); }
-.ad-roas .roas-toolbar { display: flex; flex-wrap: wrap; gap: .5em .75em; align-items: center; margin-bottom: .75em; }
-.ad-roas .roas-toolbar .form-group { margin: 0; }
+.ad-roas .roas-toolbar { display: flex; flex-wrap: wrap; gap: .5em .75em; align-items: center; margin: 0 0 .75em 0; padding: 0; width: 100%; }
+.ad-roas .roas-toolbar .form-group { margin: 0; padding: 0; }
+.ad-roas .roas-toolbar > :first-child { margin-left: 0; padding-left: 0; }
+.ad-roas .roas-toolbar > :last-child { margin-right: 0; padding-right: 0; }
 .ad-roas .roas-toolbar input[type=text] { width: 15em; }
 .ad-roas .roas-pager .roas-sub { margin: 0 .4em; }
 .ad-roas .roas-help { color: var(--roas-ink-2); }
@@ -88,7 +90,8 @@
 .referrer-stats .ref-period { color: #52514e; font-weight: normal; }
 .ad-roas .roas-pick-col { width: 1.6em; text-align: center; }
 .ad-roas .roas-pick-col input { margin: 0; }
-.ad-roas .roas-range-label { display: inline-block; min-width: 12em; text-align: center; font-weight: 600; margin: 0 .3em; }
+.ad-roas .roas-pager .input-group, .ad-roas .roas-custom-dates .input-group { width: auto; display: inline-table; vertical-align: middle; }
+.ad-roas .form-control.roas-range-label { width: 15em; text-align: center; font-weight: 600; background: #fff; cursor: default; box-shadow: none; }
 .ad-roas .roas-custom-dates.is-hidden { display: none; }
 .ad-roas .roas-pick-bar { margin-left: auto; display: inline-flex; gap: .5em; align-items: center; }
 .ad-roas tr.roas-off td { opacity: .5; }
