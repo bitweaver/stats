@@ -136,7 +136,8 @@ scripts. Never infer a deployed database's exact migration state from the base
 schema alone.
 
 `admin/upgrades/1.0.2.php` adds `stats_landing_urls` and
-`stats_referer_users_map.landing_url_id`. Some deployments created those
+`stats_referer_users_map.landing_url_id`. Apply the same change on an
+existing site with `admin/install_1.0.2.sql`. Some deployments created those
 objects out of band before the upgrade existed.
 
 ## Presentation

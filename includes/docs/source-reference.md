@@ -18,6 +18,7 @@
 - `admin/upgrade_inc.php`
 - `admin/upgrades/1.0.1.php`
 - `admin/upgrades/1.0.2.php` — landing URL table and map column
+- `admin/install_1.0.2.sql` — same 1.0.2 objects for `psql -f` on an existing site DB
 - `includes/bit_setup_inc.php`
 - `includes/stats_functions_inc.php` — first-touch cookies and persist helpers
 - `includes/ads_roas_lib.php` — ROAS report: period/preset helpers, revenue source seam, spend/target/revenue/reconciliation queries, series + inline SVG, campaign drill-down, per-user revenue map, CSV spec
